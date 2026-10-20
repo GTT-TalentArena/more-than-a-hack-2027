@@ -1,4 +1,4 @@
-# More than a Hack 2027
+# More than a Hack 2026/2027
 
 ## Guia del proyecto - Phase 1: Ball Possession
 
