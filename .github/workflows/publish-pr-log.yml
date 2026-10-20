@@ -138,24 +138,37 @@ jobs:
             fs.writeFileSync(output, content, 'utf8');
             core.info(`Generated ${output}`);
 
-      - name: Commit and push log
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          set -e
-
-          git -C website config user.name "github-actions[bot]"
-          git -C website config user.email \
-            "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git -C website add content/log/
-
-          if git -C website diff --cached --quiet; then
-            echo "No new changes to publish."
-            exit 0
-          fi
-
-          git -C website commit -m \
-            "docs(log): add entry for PR #${PR_NUMBER}"
-
-          git -C website push origin HEAD:main
+            - name: Open PR in website repo
+              env:
+                PR_NUMBER: ${{ github.event.pull_request.number }}
+                GH_TOKEN: ${{ secrets.LOG_REPO_TOKEN }}
+              working-directory: website
+              run: |
+                set -e
+                BRANCH="log/pr-${PR_NUMBER}"
+      
+                git config user.name "github-actions[bot]"
+                git config user.email \
+                  "41898282+github-actions[bot]@users.noreply.github.com"
+      
+                git checkout -b "$BRANCH"
+                git add content/log/
+      
+                if git diff --cached --quiet; then
+                  echo "No new changes to publish."
+                  exit 0
+                fi
+      
+                git commit -m "docs(log): add entry for PR #${PR_NUMBER}"
+                git push origin "$BRANCH"
+      
+                gh pr create \
+                  --repo GTT-TalentArena/gtt-talentarena.github.io \
+                  --base main \
+                  --head "$BRANCH" \
+                  --title "docs(log): add entry for PR #${PR_NUMBER}" \
+                  --body "Entrada automática del log para PR #${PR_NUMBER}."
+      
+                gh pr merge "$BRANCH" \
+                  --repo GTT-TalentArena/gtt-talentarena.github.io \
+                  --squash --auto
