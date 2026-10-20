@@ -43,14 +43,22 @@ through controlled experiments.
 
 ## Project log
 
-Every study, experiment (including the failed ones), iteration and decision goes into the team log:
-**[gtt-talentarena.github.io/log](https://gtt-talentarena.github.io/log/)**.
+The team log at **[gtt-talentarena.github.io/log](https://gtt-talentarena.github.io/log/)** is our notebook on the
+**possession model**: what we study, the improvements we find and the tests we run in this repository. It is not a
+changelog of the website.
 
-To add an entry — by hand or with an LLM — create one Markdown file in
-[`GTT-TalentArena/gtt-talentarena.github.io/content/log/`](https://github.com/GTT-TalentArena/gtt-talentarena.github.io/tree/main/content/log)
-following the instructions at the top of
-[`lib/log.ts`](https://github.com/GTT-TalentArena/gtt-talentarena.github.io/blob/main/lib/log.ts). Aggregate metrics
-and conclusions only: never match data.
+How we work:
+
+1. **Study first, in Spanish**, in a Markdown file under [`docs/`](.) of this repository.
+2. When it is clear, and **before writing any code**, publish what we found and the proposed improvements as a log
+   entry in English, linking that file.
+3. Then code and test here, and log every experiment and iteration with its result — including the failures —
+   linking the commit or pull request.
+
+Current focus: H/A/D/X rules, possession changes, temporal continuity, hysteresis, minimum duration, smoothing, and
+the state of the art. To add an entry (by hand or with an LLM), follow the instructions at the top of
+[`lib/log.ts`](https://github.com/GTT-TalentArena/gtt-talentarena.github.io/blob/main/lib/log.ts) in the website
+repository. Aggregate metrics and conclusions only: never match data.
 
 <sub><code>04 — APPROACH</code></sub>
 
