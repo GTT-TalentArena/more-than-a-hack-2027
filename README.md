@@ -1,3 +1,12 @@
+<!-- GTT: cabecera del equipo. Debajo de la línea, el README original de Metrica Sports (no editar para sincronizar con upstream sin conflictos). -->
+<a href="docs/README.md">
+  <img alt="GTT — who has the ball? Our fork of More than a Hack 2027." src="https://raw.githubusercontent.com/GTT-TalentArena/.github/main/brand/social-challenge.png" width="100%">
+</a>
+
+> **This is GTT’s fork** of the official challenge. Team, approach and status → **[docs/README.md](docs/README.md)** · [GTT on GitHub](https://github.com/GTT-TalentArena)
+
+---
+
 # More than a Hack 2027 — Phase 1: Ball Possession
 
 **Organised by [Metrica Sports](https://metrica-sports.com), [FC Barcelona](https://www.fcbarcelona.com)

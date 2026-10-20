@@ -2,8 +2,8 @@
 
 ## Guia del proyecto - Phase 1: Ball Possession
 
-> **Equipo:** G-T-T-TalentArena  
-> **Repositorio:** [more-than-a-hack-2027](https://github.com/G-T-T-TalentArena/more-than-a-hack-2027)  
+> **Equipo:** [GTT-TalentArena](https://github.com/GTT-TalentArena)  
+> **Repositorio:** [more-than-a-hack-2027](https://github.com/GTT-TalentArena/more-than-a-hack-2027)  
 > **Objetivo:** detectar quien tiene la posesion del balon en cada frame.
 
 ---
