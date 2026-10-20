@@ -1,5 +1,5 @@
 <a href="https://gtt-talentarena.github.io">
-  <img alt="GTT — Més que dades (more than data). Football analytics team at More than a Hack 2027." src="https://raw.githubusercontent.com/GTT-TalentArena/.github/main/profile/assets/banner.png" width="100%">
+  <img alt="GTT — Més que dades (more than data). Football analytics team at More than a Hack 2027." src="https://raw.githubusercontent.com/GTT-TalentArena/.github/main/profile/assets/banner.svg" width="100%">
 </a>
 
 # GTT — TalentArena
