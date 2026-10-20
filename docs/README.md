@@ -43,9 +43,10 @@ through controlled experiments.
 
 ## Project log
 
-The team log at **[gtt-talentarena.github.io/log](https://gtt-talentarena.github.io/log/)** is our notebook on the
+The team log at **[gtt-talentarena.github.io/log](https://gtt-talentarena.github.io/log/)** records our work on the
 **possession model**: what we study, the improvements we find and the tests we run in this repository. It is not a
-changelog of the website.
+changelog of the website. The studies themselves (in Spanish, under `docs/`) are kept apart: the log summarises and
+links them.
 
 How we work:
 
