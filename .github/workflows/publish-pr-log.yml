@@ -39,13 +39,76 @@ jobs:
             const fs = require('fs');
             const path = require('path');
 
-            const pr = context.payload.pull_request;
-            const date = new Date(pr.merged_at)
-              .toISOString().slice(0, 10);
+            const TYPES = ['study', 'code', 'experiment', 'iteration', 'data', 'decision'];
+            const OUTCOMES = ['success', 'failure', 'mixed', 'open'];
+            const NEEDS_OUTCOME = ['experiment', 'iteration'];
 
-            function yamlQuote(value) {
-              return JSON.stringify(String(value ?? ''));
+            const pr = context.payload.pull_request;
+            const defaultDate = new Date(pr.merged_at).toISOString().slice(0, 10);
+
+            const raw = (pr.body || '').replace(/\r\n/g, '\n').trim();
+            const match = raw.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+            if (!match) {
+              throw new Error(
+                'La descripción del PR debe empezar por el front matter entre ---'
+              );
             }
+
+            // Quita comentarios de la plantilla: líneas completas con # y
+            // comentarios al final de type/outcome. Quita también las claves vacías.
+            const lines = match[1]
+              .split('\n')
+              .filter(l => !/^\s*#/.test(l))
+              .map(l => (/^(type|outcome):/.test(l) ? l.replace(/\s+#.*$/, '') : l))
+              .filter(l => l.trim() !== '')
+              .filter(l => !/^(date|outcome):\s*$/.test(l));
+
+            const body = match[2].trim();
+
+            function get(key) {
+              const line = lines.find(l => l.startsWith(`${key}:`));
+              if (!line) return '';
+              return line.slice(key.length + 1).trim().replace(/^"(.*)"$/, '$1');
+            }
+
+            const title = get('title');
+            const type = get('type');
+            const outcome = get('outcome');
+            const date = get('date') || defaultDate;
+
+            if (!title) {
+              throw new Error('Falta title en el front matter');
+            }
+            if (!TYPES.includes(type)) {
+              throw new Error(
+                `type inválido o ausente: "${type}". Valores: ${TYPES.join(', ')}`
+              );
+            }
+            if (NEEDS_OUTCOME.includes(type) && !OUTCOMES.includes(outcome)) {
+              throw new Error(
+                `outcome es obligatorio en "${type}". Valores: ${OUTCOMES.join(', ')}`
+              );
+            }
+            if (outcome && !OUTCOMES.includes(outcome)) {
+              throw new Error(
+                `outcome inválido: "${outcome}". Valores: ${OUTCOMES.join(', ')}`
+              );
+            }
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+              throw new Error(`date inválida: "${date}". Formato AAAA-MM-DD`);
+            }
+
+            // Completa title/date/authors si faltan; el resto se copia tal cual
+            const out = [...lines];
+            if (!lines.some(l => l.startsWith('date:'))) {
+              const i = out.findIndex(l => l.startsWith('title:'));
+              out.splice(i + 1, 0, `date: ${date}`);
+            }
+            if (!lines.some(l => l.startsWith('authors:'))) {
+              out.push(`authors: [${pr.user.login}]`);
+            }
+
+            const content = ['---', ...out, '---', '', body, ''].join('\n');
 
             function slugify(value) {
               return value
@@ -57,76 +120,10 @@ jobs:
                 .slice(0, 70) || 'change';
             }
 
-            const author = pr.user.login;
-            const title = pr.title;
-            const body = (pr.body || '').trim();
-
-            const summaryText = body
-              .replace(/```[\s\S]*?```/g, ' ')
-              .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
-              .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
-              .replace(/[#>*_`~-]/g, ' ')
-              .replace(/\s+/g, ' ')
-              .trim();
-
-            const summary = (
-              summaryText ||
-              `Changes included in pull request #${pr.number}.`
-            ).slice(0, 200);
-
-            const files = await github.paginate(
-              github.rest.pulls.listFiles,
-              {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: pr.number,
-                per_page: 100
-              }
-            );
-
-            const fileList = files.length
-              ? files.map(file =>
-                  `- \`${file.filename}\` (${file.status}; +${file.additions} / -${file.deletions})`
-                ).join('\n')
-              : '- No files found.';
-
-            const content = [
-              '---',
-              `title: ${yamlQuote(title)}`,
-              `date: ${date}`,
-              'type: change',
-              `authors: [${author}]`,
-              `summary: ${yamlQuote(summary)}`,
-              'tags: [development, pull-request]',
-              '---',
-              '',
-              '## Context',
-              '',
-              `Automatically generated from [PR #${pr.number}](${pr.html_url}).`,
-              '',
-              '## Description',
-              '',
-              body || 'No description was provided in the pull request.',
-              '',
-              '## Files changed',
-              '',
-              fileList,
-              '',
-              '## Pull request',
-              '',
-              `[View pull request #${pr.number}](${pr.html_url})`,
-              ''
-            ].join('\n');
-
-            const directory = path.join(
-              process.env.WEBSITE_DIR, 'content', 'log'
-            );
-
+            const directory = path.join(process.env.WEBSITE_DIR, 'content', 'log');
             fs.mkdirSync(directory, { recursive: true });
 
-            const filename =
-              `${date}-${slugify(title)}-pr-${pr.number}.md`;
-
+            const filename = `${date}-${slugify(title)}.md`;
             const output = path.join(directory, filename);
 
             if (fs.existsSync(output)) {
