@@ -9,4 +9,4 @@
 
 Comparación con la v0 (registro de b-gpt): 354 → 347 posesiones, D 33,41 % → 35,19 %, media 11,95 → 11,87 s. Sin GT: no indica si acierta más.
 
-Evaluaciones públicas usadas por esta variante: 0. Pendiente de Alejandro si tiene cupo propio o comparte las 5 del candidato B.
+Cupo público compartido con el candidato B (decisión de Alejandro, 21:45): **1 de 5 usadas** en total (la #1, de la v0); quedan 4.

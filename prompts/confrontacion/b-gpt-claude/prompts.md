@@ -18,3 +18,8 @@ Mensajes de Edu a Claude Code en esta variante, en orden. Las respuestas, resumi
 > el effort esta en medium
 
 **Respuesta:** Claude implementó el cambio con 3 tests sintéticos (el principal falla con la v0 y pasa con la v1), comprobó el determinismo con 199.319 frames sintéticos, documentó la variante y abrió este registro.
+
+## 4. 2026-10-21 · 21:46
+> (captura de WhatsApp) Alejandro: «Te quedan 4» · «Y las horas cuentan dentro»
+
+**Respuesta:** Claude anotó en el registro que el cupo público y las horas son compartidos con el candidato B.
