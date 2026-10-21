@@ -12,11 +12,15 @@
 | 5 | 2026-10-21 | `6b83b32` | v2 con datos reales ×2 (Edu) | 345 posesiones · media 9,62 s · mediana 5,8 s · D 47,76 % · X 0 % · huecos ≥ 10 s etiquetados vivos 9,2 → 0,6 min · mismo SHA-256 en las dos (`c818b572…`) | No |
 | 6 | 2026-10-21 | `6b83b32` | evaluación pública con Docker (bootstrap 1000) sobre la v2 | spellF1 **0.3122** [0.185, 0.449] · macroF1 0.6652 · 24 posesiones · 10,8 s · código 5 (por debajo de smooth50) · D precisión 0,589 / recall 0,406 (v1: 0,997 / 0,257) | **Sí, #3 del candidato B** |
 | s4 | 2026-10-21 | (este commit) | tests sintéticos y `--synthetic` ×2 (v3) | 42 pruebas OK; la del balón tapado por un jugador falla con la v2; mismo SHA-256 en las dos; validador OK | No (sintético) |
+| 7 | 2026-10-21 | `13ffe9b` | v3 con datos reales ×2 (Edu) | 340 posesiones · media 11,02 s · mediana 6,58 s · D 41,05 % · X 0 % · huecos vivos: 5–10 s 2,62 · 10–30 s 4,07 · > 30 s 0,62 min · mismo SHA-256 en las dos (`a5372e72…`) | No |
+| 8 | 2026-10-21 | `13ffe9b` | evaluación pública con Docker (bootstrap 1000) sobre la v3 | spellF1 **0.3895** · macroF1 **0.6901** [0.470, 0.822] · 21 posesiones · 13,4 s · código 0 · D precisión 0,998 / recall 0,317 | **Sí, #4 del candidato B** |
 
 Comparación con la v0 (registro de b-gpt): 354 → 347 posesiones, D 33,41 % → 35,19 %, media 11,95 → 11,87 s. Sin GT: no indica si acierta más.
 
-Cupo público compartido con el candidato B (decisión de Alejandro, 21:45): **3 de 5 usadas** en total (#1 la v0, #2 la v1, #3 la v2); quedan 2.
+Cupo público compartido con el candidato B (decisión de Alejandro, 21:45): **4 de 5 usadas** en total (#1 la v0, #2 la v1, #3 la v2, #4 la v3); queda 1, reservada para la versión que se congele.
 
 Lectura fijada antes de evaluar: diferencias < ~0,06 de spellF1 son una posesión en esta ventana. Resultado: la v1 **no se distingue** de la v0 en la ventana pública (el cambio no actúa en esos 5 min); su posible efecto está en el resto del partido y solo lo puede valorar la revisión ciega.
 
 Lectura de la #3 con el criterio fijado antes: resultado **mixto** (spellF1 baja > 0,06 pero macroF1 no baja). La hipótesis acierta en parte (falta mucha D) pero no todos los huecos largos son paradas.
+
+Lectura de la #4 con el criterio fijado antes («mejora clara: spellF1 ≥ 0,3895 sin bajar macroF1»): **se cumple**; la v3 pasa a ser la versión de la variante.
