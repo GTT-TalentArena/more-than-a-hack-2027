@@ -8,7 +8,7 @@ Una fila por evaluación pública (A8, máximo 5, cupo compartido entre la v0 y 
 | 2 | v1 (+ Claude) · `02bda8f` | Balón perdido tras salir del campo = parada | 0.3895 [0.242, 0.537] | 0.6620 | 21 | 35.19 % | 347 |
 | 3 | v2 (+ Claude) · `6b83b32` | Huecos largos sin balón (≥ 5 s, jugadores seguidos) = parada | 0.3122 [0.185, 0.449] ⚠️ | 0.6652 | 24 | 47.76 % | 345 |
 | 4 | v3 (+ Claude) · `13ffe9b` | Solo los huecos sin balón que empiezan o acaban como un saque (balón tapado o en vuelo = juego vivo) | 0.3895 | **0.6901** [0.470, 0.822] | 21 | 41.05 % | 340 |
-| 5 | | | | | | | |
+| 5 | v4 (+ Claude, effort max) · `8ae2aa5` | Un toque no es un cambio: tramo del rival < 3 s entre dos del mismo equipo, sin parada, vuelve al que tenía el balón | **0.4000** [0.213, 0.587] | **0.6983** [0.472, 0.836] | 13 | 41.05 % | 220 |
 
 Referencias: `baseline_smooth50` en la ventana pública = spellF1 0.3256 [0.214, 0.447] · macroF1 0.6207 · 26 posesiones.
 
@@ -28,3 +28,7 @@ Desglose de D en la ventana pública:
 | v1 | 0.997 | 0.257 | 0.409 | 23 |
 | v2 | 0.589 | 0.406 | 0.481 | 29 |
 | v3 | 0.998 | 0.317 | 0.481 | 23 |
+
+**Iteración 5 (v4): pasa el criterio fijado y es la versión final de la variante.** spellF1 0,3895 → 0,4000 y macroF1 0,6901 → 0,6983, ambas mejoras por debajo del ruido de la ventana. Acierto de equipo con balón vivo 0,860 → 0,873. F1 por umbral de IoU: a 0,3–0,4 sube (0,474 → 0,533); a 0,5–0,7 baja ligeramente (0,474 → 0,467, 0,316 → 0,267, 0,211 → 0,200). Posesiones en la ventana 21 → 13 (GT 17): la regla de 3 s quita cambios falsos, pero también funde algunas posesiones cortas reales. Es la principal incertidumbre de la v4. No se ajusta (no quedan evaluaciones públicas y sería sobreajustar a 17 posesiones); queda para el documento técnico y la siguiente ronda.
+
+**Resumen de la variante:** v0 (Codex) → v4 (Codex + Claude), spellF1 0,3895 → 0,4000 y macroF1 0,6620 → 0,6983 en la ventana pública (smooth50: 0,3256 / 0,6207). Las 5 evaluaciones públicas del candidato B están usadas.

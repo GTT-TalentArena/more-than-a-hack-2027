@@ -70,3 +70,8 @@ Mensajes de Edu a Claude Code en esta variante, en orden. Las respuestas, resumi
 > si no me equivoco mis compañeros estan haciendo estudios crees que deveriamos lanzar las evaluaciones sin esperar los estudios de los compañeros?
 
 **Respuesta:** Claude recomendó aplazar la evaluación #5 (la última) hasta el corte de entradas comunes del 22-O, para gastarla en la versión que se congele; en `main` solo está el estudio común ya conocido (`docs/ESTUDIO_POSESION.md`) y no hay PRs abiertas. Recordó que lo que estudie el candidato A no puede consultarse hasta la congelación (A10) y propuso preguntar a Alejandro si los estudios publicados después del 22-O cuentan en esta ronda.
+
+## 13. 2026-10-21 · ~22:50
+> (Edu pega la tabla de la evaluación pública #5 de la v4)
+
+**Respuesta:** Claude constató que la v4 cumple el criterio fijado y pasa a ser la versión final de la variante, y explicó que las mejoras son menores que el ruido y que la v4 da menos posesiones que el GT (13 frente a 17). No ajusta el umbral de 3 s para no sobreajustar a la ventana. Registró la iteración 5 y cerró la tabla de iteraciones.

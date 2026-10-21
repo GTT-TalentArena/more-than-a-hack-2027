@@ -18,10 +18,11 @@
 | 9 | 2026-10-21 | `620823d` | v3 + diagnósticos v4 con datos reales (Edu) | mismo SHA-256 que la v3 (`a5372e72…`) · duelos 0,54 min, 18/241 cambios junto a duelo · balón quieto vivo fuera del área 0,73 min · huecos por línea reaparecidos rápido 9,92 min (32) · 70 idas y vueltas < 3 s (2,1 min) · 100 tramos D (mediana 15,6 s) | No |
 | s6 | 2026-10-21 | (este commit) | tests sintéticos y `--synthetic` ×2 (v4) | 46 pruebas OK; la nueva prueba principal falla con la v3; mismo SHA-256 en las dos; validador OK; 38 idas y vueltas fusionadas en el partido sintético | No (sintético) |
 | 10 | 2026-10-21 | `8ae2aa5` | v4 con datos reales ×2 (Edu) | 220 posesiones · media 17,03 s · mediana 11,62 s · D 41,05 % (idéntico a la v3) · X 0 % · 60 idas y vueltas fusionadas · cambios H↔A 241 → 121 · idas y vueltas < 3 s 0 · posesiones < 2 s 57 → 13 · 100 tramos D sin cambios · mismo SHA-256 en las dos (`f7d8f604…`) | No |
+| 11 | 2026-10-21 | `8ae2aa5` | evaluación pública con Docker (bootstrap 1000) sobre la v4 (Edu) | spellF1 **0.4000** [0.213, 0.587] · macroF1 **0.6983** [0.472, 0.836] · 13 posesiones · 21,6 s · código 0 · acierto de equipo 0,873 · F1 de D 0,481 | **Sí, #5 del candidato B** |
 
 Comparación con la v0 (registro de b-gpt): 354 → 347 posesiones, D 33,41 % → 35,19 %, media 11,95 → 11,87 s. Sin GT: no indica si acierta más.
 
-Cupo público compartido con el candidato B (decisión de Alejandro, 21:45): **4 de 5 usadas** en total (#1 la v0, #2 la v1, #3 la v2, #4 la v3); queda 1, reservada para la versión que se congele.
+Cupo público compartido con el candidato B (decisión de Alejandro, 21:45): **5 de 5 usadas** en total (#1 la v0, #2 la v1, #3 la v2, #4 la v3, #5 la v4). No quedan evaluaciones públicas.
 
 Lectura fijada antes de evaluar: diferencias < ~0,06 de spellF1 son una posesión en esta ventana. Resultado: la v1 **no se distingue** de la v0 en la ventana pública (el cambio no actúa en esos 5 min); su posible efecto está en el resto del partido y solo lo puede valorar la revisión ciega.
 
@@ -32,3 +33,5 @@ Lectura de la #4 con el criterio fijado antes («mejora clara: spellF1 ≥ 0,389
 Comprobación de la v4 antes de la evaluación #5 (expectativas fijadas en analisis-v4.md §6): D idéntico (41,05 %), posesiones 340 → 220 y cambios H↔A 241 → 121 dentro de lo esperado, 0 idas y vueltas < 3 s, determinista. **Se cumplen todas**: la v4 puede gastar la evaluación pública #5.
 
 **Evaluación pública #5 aplazada (2026-10-21, ~22:45).** Es la última del candidato B y se reserva para la versión que se congele. Se espera al corte de entradas comunes del protocolo (A6: `main` del 22-O) por si los estudios de los compañeros publicados en `main` justifican una v5. Nada de la rama del candidato A se consulta (A10). Si no hay estudios comunes relevantes, se evalúa la v4 tal cual, con el criterio ya fijado.
+
+**Evaluación #5 (v4).** Edu decidió lanzarla el mismo 21-O, sin esperar al corte de entradas comunes del 22-O que se había propuesto. El protocolo lo permite: era la quinta de las 5. Criterio fijado (spellF1 ≥ 0,3895 y macroF1 ≥ 0,6901): **se cumple**, y la v4 es la versión final de la variante. Las mejoras sobre la v3 están dentro del ruido de la ventana, y la v4 da menos posesiones que el GT (13 frente a 17); ver iteraciones.md. Cualquier cambio posterior ya no puede comprobarse con la ventana pública y, tras la congelación del 29-O, cuenta como una ronda nueva.
