@@ -11,8 +11,10 @@ permissions: {}
 
 jobs:
   notify:
-    # Un run saltado (p. ej. sin la etiqueta que lo activa) no es noticia
-    if: github.event.workflow_run.conclusion != 'skipped'
+    # Un run saltado no es noticia, y las PRs desde forks ajenos no escriben en nuestro Discord
+    if: >-
+      github.event.workflow_run.conclusion != 'skipped' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - name: Enviar a Discord
