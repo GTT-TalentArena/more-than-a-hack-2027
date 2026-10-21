@@ -173,3 +173,22 @@ Solo estos ficheros de texto; no toques el código ni el método.
 
 **Resumen de actuación:** Se leyó el protocolo y se crearon exclusivamente los cinco registros de texto; se anotaron la evaluación pública #1, las desviaciones y los campos de horas pendientes de declaración de Edu.
 Se verificaron Codex CLI 0.163.0 y la configuración local `gpt-6-astra`/`high`, sin afirmar un snapshot no expuesto; se comprobó el entorno previo para evitar el Python del sistema sin pip, sin instalar ni cambiar código.
+
+## 8. Error al localizar o leer XML — 2026-10-21
+
+````text
+   ~/dev/personal/GTT/more-than-a-hack-2027     cand/b-gpt    python -m solution.b_gpt --out evaluation/results/b_gpt.csv
+ERROR: Cannot read XML input or invalid XML syntax.
+````
+
+**Resumen de actuación:** Se revisó únicamente el código del lector y se explicó que el mensaje agrupaba XML ausente y XML mal formado; se preguntó si `MTAH_DATA_DIR` estaba definido.
+Se preparó una mejora de diagnóstico cuyo parche no llegó a aplicarse; no se ejecutaron datos reales ni se modificó finalmente el código.
+
+## 9. Resolución mediante export — 2026-10-21
+
+````text
+vale ahora si, he lanzado el export, y me ha devuelto una respuesta
+````
+
+**Resumen de actuación:** Se tomó la confirmación de Edu de que definir la variable resolvía la incidencia y se descartó el cambio de diagnóstico, conservando lector y método.
+Se anotaron los dos mensajes y la ejecución local completada; no se solicitó ninguna evaluación pública nueva y el contador A8 se mantuvo en 1 de 5.

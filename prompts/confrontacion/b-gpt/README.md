@@ -50,11 +50,17 @@ el nuevo paquete con ese intérprete:
 ```bash
 git switch cand/b-gpt
 source solution/control_v1/.venv/bin/activate
+export MTAH_DATA_DIR="$HOME/mtah2027"
 python -m solution.b_gpt --out evaluation/results/b_gpt.csv
 ```
 
 Esto reutiliza el entorno existente; el paquete entregado sigue siendo `solution/b_gpt/`.
 No implica que el error de `pip` del Python del sistema haya sido reparado.
+
+Posteriormente Edu comunicó un error genérico al leer XML. Tras definir
+`MTAH_DATA_DIR` mediante `export`, confirmó que el comando devolvió una respuesta.
+No fue necesario modificar el lector ni el método. No se recibieron ni abrieron
+los archivos del partido ni sus resultados por frame para resolver la incidencia.
 
 ## Contenido y alcance
 

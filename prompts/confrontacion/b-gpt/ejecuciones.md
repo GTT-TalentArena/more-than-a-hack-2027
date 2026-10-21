@@ -7,6 +7,8 @@
 | 3 | 2026-10-21 | sin commit | `python -m unittest solution.control_v1.test_synthetic -v` | Batería ampliada: 22 tests; 20 pasaron y 2 omitidos por falta de pandas. Solo sintéticos. | No |
 | 4 | 2026-10-21 | sin commit; contenido registrado después en `ce9c575` | `solution/control_v1/.venv/bin/python -m unittest solution.b_gpt.test_synthetic solution.b_gpt.test_diagnostics -v` | 34 tests pasados en 14.117 s; validación oficial sobre sintéticos y dos CSV sintéticos completos con SHA-256 idéntico. | No |
 | 5 | 2026-10-21 | sin commit; contenido registrado después en `ce9c575` | `solution/control_v1/.venv/bin/python -m solution.b_gpt --synthetic --out <temporal_sintetico>/synthetic.csv`, seguido de `solution/control_v1/.venv/bin/python evaluation/validate_submission.py <temporal_sintetico>/synthetic.csv` | Ambos comandos terminaron con código 0; 5.301 s en conjunto; memoria máxima reportada por el candidato 221.14 MiB; stdout limitado a cinco agregados. | No |
+| 6 | 2026-10-21 | `d91b063` en el espacio de trabajo al comunicar la incidencia | `python -m solution.b_gpt --out evaluation/results/b_gpt.csv` | Edu comunicó `Cannot read XML input or invalid XML syntax.`; no se obtuvieron métricas. | No |
+| 7 | 2026-10-21 | `d91b063` en el espacio de trabajo; código del candidato sin cambios | Mismo comando, después de definir `MTAH_DATA_DIR` mediante `export` | Edu confirmó que recibió una respuesta. Valores agregados todavía no comunicados; ninguna GT consultada por el agente. | No |
 
 Evaluaciones públicas usadas: 1 de 5
 
