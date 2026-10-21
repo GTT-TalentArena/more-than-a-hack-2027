@@ -23,3 +23,8 @@ Mensajes de Edu a Claude Code en esta variante, en orden. Las respuestas, resumi
 > (captura de WhatsApp) Alejandro: «Te quedan 4» · «Y las horas cuentan dentro»
 
 **Respuesta:** Claude anotó en el registro que el cupo público y las horas son compartidos con el candidato B.
+
+## 5. 2026-10-21 · evaluación pública
+> (Edu pega la tabla de la evaluación pública #2 de la v1)
+
+**Respuesta:** Claude constató que la v1 da exactamente los mismos números que la v0 en la ventana pública (0.3895 / 0.6620 / 21 posesiones), lo registró como evaluación #2 de 5 y concluyó, con el criterio fijado de antemano, que no se distingue en esa ventana.

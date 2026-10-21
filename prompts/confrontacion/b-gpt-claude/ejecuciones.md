@@ -6,7 +6,10 @@
 | s2 | 2026-10-21 | (este commit) | `python -m solution.b_gpt --synthetic` ×2 | mismo SHA-256 en las dos; validador oficial OK (199.319 filas); ~4,6 s | No (sintético) |
 | 1 | 2026-10-21 | `02bda8f` | `python -m solution.b_gpt --out evaluation/results/b_gpt_claude.csv` (Edu, datos reales) | 347 posesiones · media 11,87 s · mediana 6,84 s · D 35,19 % · X 0 % (mitades puntuadas) · `out_of_play_gap_frames` 6.787 · validador OK · 8,55 s | No |
 | 2 | 2026-10-21 | `02bda8f` | igual, con `--out …/b_gpt_claude_r2.csv` | mismo SHA-256 que la #1 (`68f2ed57…`) · 8,46 s | No |
+| 3 | 2026-10-21 | `02bda8f` | evaluación pública con Docker (`docker/pipeline.py evaluar`, bootstrap 1000) sobre `b_gpt_claude.csv` | spellF1 **0.3895** · macroF1 0.6620 · 21 posesiones · 13,6 s — **idéntico a la v0** en la ventana pública | **Sí, #2 del candidato B** |
 
 Comparación con la v0 (registro de b-gpt): 354 → 347 posesiones, D 33,41 % → 35,19 %, media 11,95 → 11,87 s. Sin GT: no indica si acierta más.
 
-Cupo público compartido con el candidato B (decisión de Alejandro, 21:45): **1 de 5 usadas** en total (la #1, de la v0); quedan 4.
+Cupo público compartido con el candidato B (decisión de Alejandro, 21:45): **2 de 5 usadas** en total (#1 la v0, #2 esta v1); quedan 3.
+
+Lectura fijada antes de evaluar: diferencias < ~0,06 de spellF1 son una posesión en esta ventana. Resultado: la v1 **no se distingue** de la v0 en la ventana pública (el cambio no actúa en esos 5 min); su posible efecto está en el resto del partido y solo lo puede valorar la revisión ciega.
