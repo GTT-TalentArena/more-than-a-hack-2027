@@ -65,3 +65,8 @@ Mensajes de Edu a Claude Code en esta variante, en orden. Las respuestas, resumi
 > (Edu pega las dos ejecuciones de la v4, los hashes y el bloque de estructura)
 
 **Respuesta:** Claude comprobó que la v4 cumple todas las expectativas fijadas antes de ejecutarla y dio paso a la evaluación pública #5.
+
+## 12. 2026-10-21 · ~22:45
+> si no me equivoco mis compañeros estan haciendo estudios crees que deveriamos lanzar las evaluaciones sin esperar los estudios de los compañeros?
+
+**Respuesta:** Claude recomendó aplazar la evaluación #5 (la última) hasta el corte de entradas comunes del 22-O, para gastarla en la versión que se congele; en `main` solo está el estudio común ya conocido (`docs/ESTUDIO_POSESION.md`) y no hay PRs abiertas. Recordó que lo que estudie el candidato A no puede consultarse hasta la congelación (A10) y propuso preguntar a Alejandro si los estudios publicados después del 22-O cuentan en esta ronda.

@@ -30,3 +30,5 @@ Lectura de la #3 con el criterio fijado antes: resultado **mixto** (spellF1 baja
 Lectura de la #4 con el criterio fijado antes («mejora clara: spellF1 ≥ 0,3895 sin bajar macroF1»): **se cumple**; la v3 pasa a ser la versión de la variante.
 
 Comprobación de la v4 antes de la evaluación #5 (expectativas fijadas en analisis-v4.md §6): D idéntico (41,05 %), posesiones 340 → 220 y cambios H↔A 241 → 121 dentro de lo esperado, 0 idas y vueltas < 3 s, determinista. **Se cumplen todas**: la v4 puede gastar la evaluación pública #5.
+
+**Evaluación pública #5 aplazada (2026-10-21, ~22:45).** Es la última del candidato B y se reserva para la versión que se congele. Se espera al corte de entradas comunes del protocolo (A6: `main` del 22-O) por si los estudios de los compañeros publicados en `main` justifican una v5. Nada de la rama del candidato A se consulta (A10). Si no hay estudios comunes relevantes, se evalúa la v4 tal cual, con el criterio ya fijado.
