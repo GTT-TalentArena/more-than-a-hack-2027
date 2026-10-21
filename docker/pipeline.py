@@ -9,7 +9,8 @@ reimplementa ninguna métrica. Cada ejecución escribe en <salidas>/<id>/ y aña
 <salidas>/runs.jsonl con el commit, la configuración, el hash de cada CSV y las métricas agregadas.
 
 Códigos de salida: 0 bien · 1 error inesperado · 2 CSV inválido o ausente · 3 faltan los datos del
-partido · 4 dos ejecuciones iguales no dan el mismo CSV.
+partido · 4 dos ejecuciones iguales no dan el mismo CSV · 5 algún CSV propio queda por debajo de
+baseline_smooth50 (calidad baja; los baseline_* no cuentan, son la referencia).
 
 Guía: docs/DOCKER.md
 """
@@ -35,7 +36,7 @@ REFERENCE = "baseline_smooth50"
 # En la ventana pública (5 min) el GT tiene 17 posesiones de 14,2 s de media (evaluation/gt/*_meta.json)
 SPLIT = "public-5min"
 
-OK, ERROR, INVALID, NO_DATA, NOT_REPRODUCIBLE = 0, 1, 2, 3, 4
+OK, ERROR, INVALID, NO_DATA, NOT_REPRODUCIBLE, LOW_QUALITY = 0, 1, 2, 3, 4, 5
 
 
 class Stop(Exception):
@@ -114,6 +115,15 @@ def metrics(report_path):
     }
 
 
+def below_reference(entries):
+    """CSV propios válidos con menos spellF1 que la referencia. Los baseline_* son la referencia: no cuentan."""
+    reference = next((e["metricas"]["spellF1"] for e in entries if e["nombre"] == REFERENCE and e.get("metricas")), None)
+    if reference is None:
+        return []
+    return [e["nombre"] for e in entries
+            if e.get("metricas") and not e["nombre"].startswith("baseline_") and e["metricas"]["spellF1"] < reference]
+
+
 def comparison(entries):
     """Tabla Markdown contra baseline_smooth50, en el mismo split."""
     reference = next((e["metricas"] for e in entries if e["nombre"] == REFERENCE and e.get("metricas")), None)
@@ -122,12 +132,15 @@ def comparison(entries):
         "| CSV | spellF1 | Δ vs smooth50 | macroF1 | posesiones | duración media (s) | sha256 |",
         "|---|---|---|---|---|---|---|",
     ]
+    low = set(below_reference(entries))
     for e in entries:
         m = e.get("metricas")
         if not m:
             rows.append("| {} | ❌ inválido: {} | | | | | `{}` |".format(e["nombre"], e.get("motivo", ""), e["sha256"][:12]))
             continue
         delta = "{:+.4f}".format(m["spellF1"] - reference["spellF1"]) if reference else "—"
+        if e["nombre"] in low:
+            delta += " ⚠️"
         rows.append("| {} | {:.4f} | {} | {:.4f} | {} | {:.1f} | `{}` |".format(
             e["nombre"], m["spellF1"], delta, m["macroF1"], m["posesiones"], m["duracion_media_s"], e["sha256"][:12]))
     notes = [
@@ -185,7 +198,13 @@ def evaluate(source_dir, out, bootstrap):
 
     if not all(e["valido"] for e in entries):
         return entries, INVALID
-    return entries, (OK if code == 0 else ERROR)
+    if code != 0:
+        return entries, ERROR
+    low = below_reference(entries)
+    if low:
+        print("⚠️  Por debajo de {} en spellF1 (calidad baja): {}".format(REFERENCE, ", ".join(low)))
+        return entries, LOW_QUALITY
+    return entries, OK
 
 
 def regenerate_baseline(out):
@@ -202,6 +221,7 @@ def cmd_evaluar(args, out, record):
     record["config"] = {"resultados": os.path.relpath(source, ROOT) if source.startswith(ROOT) else source, "bootstrap": args.bootstrap}
     entries, code = evaluate(source, out, args.bootstrap)
     record["csv"] = entries
+    record["por_debajo_de_referencia"] = below_reference(entries)
     return code
 
 
@@ -237,7 +257,7 @@ def cmd_baseline(args, out, record):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0], formatter_class=argparse.RawDescriptionHelpFormatter,
-                                     epilog="Códigos de salida: 0 bien · 1 error · 2 CSV inválido · 3 faltan datos · 4 no reproducible")
+                                     epilog="Códigos de salida: 0 bien · 1 error · 2 CSV inválido · 3 faltan datos · 4 no reproducible · 5 por debajo de smooth50")
     sub = parser.add_subparsers(dest="modo", required=True)
     evaluar = sub.add_parser("evaluar", help="valida y puntúa CSV contra el GT público")
     evaluar.add_argument("--resultados", help="carpeta con los CSV (por defecto, evaluation/results)")

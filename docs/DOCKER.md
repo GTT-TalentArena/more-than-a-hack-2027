@@ -113,8 +113,9 @@ Y una línea por ejecución en `salidas/runs.jsonl`:
 | 2 | algún CSV es inválido, o no hay CSV |
 | 3 | faltan los datos del partido |
 | 4 | dos ejecuciones iguales no dan el mismo CSV |
+| 5 | algún CSV propio es válido pero queda **por debajo de `baseline_smooth50`** en spellF1 (calidad baja). Sale marcado ⚠️ en la tabla. Los `baseline_*` no cuentan: son la referencia |
 
-Un CSV inválido **no** se salta en silencio: aparece marcado ❌ en la tabla, con su motivo, y el proceso termina con 2.
+Un CSV inválido **no** se salta en silencio: aparece marcado ❌ en la tabla, con su motivo, y el proceso termina con 2. Si a la vez hay CSV inválidos y CSV por debajo de la referencia, gana el 2.
 
 ## Problemas frecuentes
 
