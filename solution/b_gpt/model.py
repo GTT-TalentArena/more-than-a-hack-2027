@@ -353,10 +353,45 @@ def decode(scores, acquire, dead_seed, live, restart_team, cfg=CONFIG):
     return result
 
 
+# v1 (Claude): GT-free diagnostics to locate under-detected stoppages. Aggregates only
+# (counts and minutes); they never change a label.
+GAP_BINS_S = (0, 1, 3, 5, 10, 30)
+SLOW_PLAYERS_MPS = (1.0, 1.5, 2.0)
+
+
+def dead_time_diagnostics(f, states, fps):
+    live = states != 2
+    seen = f["quality"] > 0
+    out = {}
+    lengths = [(a, b) for a, b in runs(~seen)]
+    for i, lo in enumerate(GAP_BINS_S):
+        hi = GAP_BINS_S[i + 1] if i + 1 < len(GAP_BINS_S) else None
+        sel = [(a, b) for a, b in lengths if (b - a) >= lo * fps and (hi is None or (b - a) < hi * fps)]
+        key = "ball_missing_{}s{}".format(lo, "_{}s".format(hi) if hi else "_plus")
+        out[key] = dict(runs=len(sel),
+                        minutes=round(sum(b - a for a, b in sel) / fps / 60, 2),
+                        minutes_labelled_live=round(sum(int(live[a:b].sum()) for a, b in sel) / fps / 60, 2))
+    ball_slow = ~seen | (np.isfinite(f["speed"]) & (f["speed"] < 2.0))
+    for limit in SLOW_PLAYERS_MPS:
+        slow = persistent(ball_slow & np.isfinite(f["activity"]) & (f["activity"] < limit), round(3 * fps))
+        out["slow_phase_players_below_{}mps".format(limit)] = dict(
+            minutes=round(slow.sum() / fps / 60, 2),
+            minutes_labelled_live=round((slow & live).sum() / fps / 60, 2))
+    return out
+
+
+def merge_diagnostics(total, part):
+    for key, values in part.items():
+        bucket = total.setdefault(key, {})
+        for name, value in values.items():
+            bucket[name] = round(bucket.get(name, 0) + value, 2)
+
+
 def predict(tracking, events, names, blocks, fps, pitch, cfg=CONFIG):
     labels = np.full(len(tracking.ball), "X", dtype="<U1")
     totals = dict(graded_frames=0, observed_ball_frames=0, control_frames=0,
-                  dead_evidence_frames=0, supported_restarts=0, out_of_play_gap_frames=0)
+                  dead_evidence_frames=0, supported_restarts=0, out_of_play_gap_frames=0,
+                  dead_time_diagnostics={})
     for _, start, last in blocks:
         stop = last + 1
         if not (0 <= start < stop <= len(labels)):
@@ -377,4 +412,5 @@ def predict(tracking, events, names, blocks, fps, pitch, cfg=CONFIG):
         totals["dead_evidence_frames"] += int(np.sum(evidence[2]))
         totals["supported_restarts"] += evidence[5]
         totals["out_of_play_gap_frames"] += evidence[6]
+        merge_diagnostics(totals["dead_time_diagnostics"], dead_time_diagnostics(f, states, fps))
     return labels, totals
