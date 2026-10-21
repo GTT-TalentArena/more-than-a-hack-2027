@@ -28,3 +28,13 @@ Mensajes de Edu a Claude Code en esta variante, en orden. Las respuestas, resumi
 > (Edu pega la tabla de la evaluación pública #2 de la v1)
 
 **Respuesta:** Claude constató que la v1 da exactamente los mismos números que la v0 en la ventana pública (0.3895 / 0.6620 / 21 posesiones), lo registró como evaluación #2 de 5 y concluyó, con el criterio fijado de antemano, que no se distingue en esa ventana.
+
+## 6. 2026-10-21 · ~21:50
+> (nueva sesión) como va  →  (Edu pega el hash y el bloque `dead_time_diagnostics` de la ejecución #4)
+
+**Respuesta:** Claude observó que casi no hay huecos cortos sin balón y que los 132 huecos de ≥ 5 s (~43 min) encajan en número y duración con las paradas de un partido; implementó la v2 (huecos largos sin balón con jugadores seguidos = evidencia de parada; corte total de datos ≠ parada), adaptó 4 tests de la v0 que asumían lo contrario y añadió 3.
+
+## 7. 2026-10-21 · durante la sesión
+> Molines me dice, cuando hayamos hecho las 5 iteraciones me tienes que dar una tabla las 5 variables mas importantes y todas las iteraciones 1,2,3,4,5 y los valores para que se vea el cambio
+
+**Respuesta:** Claude creó `iteraciones.md` con 5 variables (spellF1, macroF1 y posesiones públicas; % D y posesiones del partido completo).

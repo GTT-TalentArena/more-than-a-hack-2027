@@ -196,14 +196,23 @@ def stoppage_evidence(f, phase, fps, cfg=CONFIG):
     quiet_missing = persistent(~seen & quiet_players, round(3.0 * fps))
     # v1 (Claude): occlusion after the ball has left the pitch, whatever the players do.
     out_gap = out_of_play_gaps(f, fps, cfg)
+    # v2 (Claude): long ball-less stretches are stoppages in this tracking (see config).
+    # Long ones are strong evidence; medium ones moderate, left to the decoder.
+    # Only while the players are tracked: ball and players missing together is a data
+    # outage, not a stoppage.
+    tracked_without_ball = ~seen & (f["count"] >= 8)
+    long_gap = persistent(tracked_without_ball, round(cfg.long_gap_s * fps))
+    medium_gap = persistent(tracked_without_ball, round(cfg.medium_gap_s * fps)) & ~long_gap
     moving = seen & f["inside"] & np.isfinite(speed) & (speed > 2.0)
     running = np.isfinite(activity) & (activity > 2.0)
     # The out-of-play gap carries the same weight as a ball seen outside, and running
     # players do not count against it: they move during throw-ins and goal kicks.
-    margin = (3.8 * (outside | out_gap) + 1.6 * still + 1.0 * quiet_missing
-              - 1.6 * moving - .65 * (running & ~out_gap) - .35 * seen - .35 * phase)
-    seed = outside | still | quiet_missing | out_gap
-    live = moving | (running & ~outside & ~out_gap) | ((phase > .65) & ~seed)
+    gap = out_gap | long_gap | medium_gap
+    margin = (3.8 * (outside | out_gap | long_gap) + 1.6 * still + 1.6 * medium_gap
+              + 1.0 * (quiet_missing & ~gap)
+              - 1.6 * moving - .65 * (running & ~gap) - .35 * seen - .35 * phase)
+    seed = outside | still | quiet_missing | gap
+    live = moving | (running & ~outside & ~gap) | ((phase > .65) & ~seed)
     return margin, seed, live, out_gap
 
 

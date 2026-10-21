@@ -11,6 +11,8 @@
 | Comando de entrega | `python -m solution.b_gpt --out evaluation/results/b_gpt_claude.csv` |
 | Paquete | `solution/b_gpt/` (mismo paquete; el cambio está descrito en su README, sección «Variante v1») |
 
+Versiones de la variante: **v1** (`02bda8f`, balón perdido tras salir del campo = parada) y **v2** (huecos largos sin balón = parada). Detalle en el README del paquete.
+
 Objetivo: comparar tres resultados en la ronda 1 — **A** (Opus), **B v0** (solo GPT) y **B + Claude** — y medir si una IA mejora lo que hizo la otra. La v0 se conserva intacta en su tag.
 
 Mismas restricciones que el resto del protocolo (A5–A8): Claude no ha visto los datos del partido ni ningún CSV de etiquetas reales; solo código, documentación y datos sintéticos. Edu ejecuta en local y devuelve solo agregados.

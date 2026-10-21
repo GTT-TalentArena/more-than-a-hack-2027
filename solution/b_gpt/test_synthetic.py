@@ -35,12 +35,24 @@ class SyntheticBehaviour(unittest.TestCase):
         self.assertGreater(np.mean(result == truth), .98)
         self.assertTrue(np.all(result[530:660] == "D"))
 
-    def test_missing_ball_does_not_mean_dead(self):
+    def test_short_missing_ball_does_not_mean_dead(self):
+        # v2 (Claude): a short occlusion (< medium_gap_s) keeps the possession.
         truth = np.full(800, "H")
         tracking = from_labels(truth, missing=False)
-        tracking.ball[150:650] = np.nan
+        tracking.ball[150:250] = np.nan
         result, _ = predict(tracking, [], NAMES, [(1, 0, 799)], 25, PITCH)
         self.assertTrue(np.all(result == "H"))
+
+    def test_long_missing_ball_with_tracked_players_is_dead(self):
+        # v2 (Claude): 20 s without the ball while the players are tracked and running is a
+        # stoppage in this tracking; play resumes when the ball is located again.
+        truth = np.full(1200, "H")
+        tracking = from_labels(truth, missing=False)
+        tracking.ball[300:800] = np.nan
+        result, _ = predict(tracking, [], NAMES, [(1, 0, 1199)], 25, PITCH)
+        self.assertTrue(np.all(result[310:790] == "D"))
+        self.assertTrue(np.all(result[:290] == "H"))
+        self.assertTrue(np.all(result[820:] == "H"))
 
     def test_ball_lost_after_leaving_pitch_is_dead_even_with_running_players(self):
         # v1 (Claude): exit over the touchline, then the tracker loses the ball for 6 s while
@@ -60,10 +72,18 @@ class SyntheticBehaviour(unittest.TestCase):
         truth = np.full(900, "H")
         tracking = from_labels(truth, missing=False)
         tracking.ball[301, :2] = [50, -.5]
-        tracking.ball[302:452] = np.nan
+        tracking.ball[302:402] = np.nan  # v2: short, so only the exit rule could make it D
         result, totals = predict(tracking, [], NAMES, [(1, 0, 899)], 25, PITCH)
         self.assertTrue(np.all(result == "H"))
         self.assertEqual(totals["out_of_play_gap_frames"], 0)
+
+    def test_ball_and_players_missing_is_an_outage_not_a_stoppage(self):
+        truth = np.full(1200, "H")
+        tracking = from_labels(truth, missing=False)
+        tracking.ball[300:800] = np.nan
+        tracking.players[300:800] = np.nan
+        result, _ = predict(tracking, [], NAMES, [(1, 0, 1199)], 25, PITCH)
+        self.assertFalse(np.any(result == "D"))
 
     def test_out_of_play_gap_is_capped_by_restart_look_back(self):
         truth = np.full(2000, "H")
@@ -93,7 +113,7 @@ class SyntheticBehaviour(unittest.TestCase):
     def test_change_after_occlusion_is_not_backdated_to_start_of_gap(self):
         truth = np.array(list("H" * 400 + "A" * 400))
         tracking = from_labels(truth, missing=False)
-        tracking.ball[250:400] = np.nan
+        tracking.ball[300:400] = np.nan  # v2: short occlusion (< medium_gap_s)
         result, _ = predict(tracking, [], NAMES, [(1, 0, 799)], 25, PITCH)
         self.assertTrue(np.all(result[:400] == "H"))
         self.assertTrue(np.all(result[400:] == "A"))

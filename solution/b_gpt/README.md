@@ -10,7 +10,7 @@ carpetas nuevas. No se publica en `main` ni en la web.
 ## Variante v1: v0 + mejora de Claude
 
 Esta rama (`cand/b-gpt-claude`) parte de la v0 congelada en el tag **`b-gpt-v0`** (solo
-Codex, ChatGPT-6 Astra high) y añade **un único cambio**, escrito por Claude Code
+Codex, ChatGPT-6 Astra high) y añade los cambios v1 y v2, escritos por Claude Code
 (Claude Opus 5.5, effort medium) con la aprobación de Alejandro como evaluador. Registro
 propio en `prompts/confrontacion/b-gpt-claude/`.
 
@@ -29,6 +29,19 @@ Motivo: Smart Tagging solo anota una parte de las reanudaciones, así que muchas
 (saques de banda y de puerta sin anotar) solo se pueden detectar con el tracking. Nada se
 ha elegido con la ventana pública. `evidence_totals.out_of_play_gap_frames` informa en el
 `.summary.json` de cuántos frames afecta el cambio.
+
+**v2 · Huecos largos sin balón = parada.** Diagnósticos sin GT del partido completo
+(`evidence_totals.dead_time_diagnostics`, ejecución de Edu) muestran que en este tracking el
+balón casi nunca falta poco tiempo (< 0,2 min de huecos de menos de 5 s en todo el partido),
+pero falta en **132 tramos de ≥ 5 s que suman ~43 min**: un número parecido al de paradas de
+un partido y una duración que, sumada a la `D` ya detectada fuera de ellos, da ≈ 47 % de `D`,
+en línea con el tiempo efectivo de LaLiga. Vidal-Codina et al. (2022) describen proveedores
+que marcan el balón parado dejándolo sin datos. La v1 etiquetaba como vivos 12,6 min de esos
+tramos. Ahora, con los jugadores seguidos (≥ 8), un tramo sin balón de **≥ `long_gap_s` = 10 s**
+es evidencia fuerte de parada y uno de **≥ `medium_gap_s` = 5 s**, moderada; los jugadores
+corriendo no cuentan en contra. Si faltan balón y jugadores a la vez es un corte de datos, no
+una parada. Los umbrales salen de la duración de una reanudación (saque de banda rápido 5–10 s;
+faltas, saques de puerta y córners, más de 10 s), no de ninguna puntuación.
 
 Comando de esta variante (no pisa el CSV de la v0):
 
