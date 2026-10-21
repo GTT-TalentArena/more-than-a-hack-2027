@@ -1,0 +1,55 @@
+# Avisa en el Discord de GTT (#ci-tests) cuando termina un workflow de este repo; el deploy de la web avisa desde su propio repo.
+# Las URLs de los webhooks viven en los secrets DISCORD_WEBHOOK_DEPLOYS y DISCORD_WEBHOOK_CI; sin secret, no hace nada.
+name: Discord notifications
+
+on:
+  workflow_run:
+    workflows: ["Validate log front matter", "Publish merged PR to website log"]
+    types: [completed]
+
+permissions: {}
+
+jobs:
+  notify:
+    # Un run saltado (p. ej. sin la etiqueta que lo activa) no es noticia
+    if: github.event.workflow_run.conclusion != 'skipped'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enviar a Discord
+        env:
+          RUN: ${{ toJSON(github.event.workflow_run) }}
+          REPO: ${{ github.repository }}
+          DEPLOY_WORKFLOWS: ""
+          SITE_URL: https://gtt-talentarena.github.io
+          HOOK_DEPLOYS: ${{ secrets.DISCORD_WEBHOOK_DEPLOYS }}
+          HOOK_CI: ${{ secrets.DISCORD_WEBHOOK_CI }}
+        run: |
+          name=$(jq -r .name <<<"$RUN")
+          if [ "$name" = "$DEPLOY_WORKFLOWS" ]; then hook=$HOOK_DEPLOYS; else hook=$HOOK_CI; SITE_URL=""; fi
+          if [ -z "$hook" ]; then echo "Secret del webhook sin configurar: no se avisa."; exit 0; fi
+
+          conclusion=$(jq -r .conclusion <<<"$RUN")
+          case "$conclusion" in
+            success)   icon="✅"; color=3066993 ;;
+            failure)   icon="❌"; color=10813508 ;;   # grana #a50044
+            cancelled) icon="⏹️"; color=9807270 ;;
+            *)         icon="⚠️"; color=15105570 ;;
+          esac
+
+          jq -n --argjson run "$RUN" --arg repo "$REPO" --arg icon "$icon" \
+                --arg conclusion "$conclusion" --argjson color "$color" --arg site "$SITE_URL" '
+            ($run.head_commit.message // "" | split("\n")[0] | .[0:200]) as $msg |
+            {embeds: [{
+              title: "\($icon) \($run.name) · \($conclusion)",
+              url: $run.html_url,
+              color: $color,
+              description: ("`\($run.head_sha[0:7])` \($msg)" + (if $site != "" and $conclusion == "success" then "\n🌐 \($site)" else "" end)),
+              fields: [
+                {name: "Repo", value: $repo, inline: true},
+                {name: "Rama", value: $run.head_branch, inline: true},
+                {name: "Por", value: $run.actor.login, inline: true}
+              ],
+              timestamp: $run.updated_at
+            }]}' > payload.json
+
+          curl -fsS -H "Content-Type: application/json" -d @payload.json "$hook" -o /dev/null
