@@ -223,3 +223,35 @@ Cierra el registro de esta sesión en prompts/confrontacion/b-gpt/ (rama cand/b-
 
 **Resumen de actuación:** Se cerró la sesión con 0 h 51 min y se confirmó ChatGPT-6 Astra/high a través de Codex, sin inventar un snapshot; se conservaron las dependencias en `solution/b_gpt/.venv/` y se eliminó la carpeta antigua sin leer sus resultados.
 Se dejó preparado el comando de repetición, medición, hashes y validación para Edu; se registraron únicamente documentación y limpieza en cand/b-gpt, sin cambiar el método, ejecutar datos reales ni hacer push.
+
+## 12. Resultado de la ejecución local #2 — 2026-10-21
+
+````text
+   ~/dev/personal/GTT/more-than-a-hack-2027     cand/b-gpt  time python -m solution.b_gpt --out evaluation/results/b_gpt_r2.csv
+{"mean_duration_seconds": 11.953446327683617, "median_duration_seconds": 6.779999999999999, "n_possessions": 354, "percent_D": 33.40677464638008, "percent_X": 0.0}
+python -m solution.b_gpt --out evaluation/results/b_gpt_r2.csv  9.05s user 0.19s system 108% cpu 8.545 total
+
+   ~/dev/personal/GTT/more-than-a-hack-2027     cand/b-gpt  sha256sum evaluation/results/b_gpt.csv evaluation/results/b_gpt_r2.csv                                                                                                                8.56s   
+60ea141519a8978cfb840496d7c39f040b40fba3b0610a81fd1a68160f822f6d  evaluation/results/b_gpt.csv
+60ea141519a8978cfb840496d7c39f040b40fba3b0610a81fd1a68160f822f6d  evaluation/results/b_gpt_r2.csv
+
+   ~/dev/personal/GTT/more-than-a-hack-2027     cand/b-gpt  python evaluation/validate_submission.py evaluation/results/b_gpt_r2.csv
+OK    b_gpt_r2.csv
+      199319 rows, frame 0..199318
+
+      label counts
+        H    64304   32.3%
+        A    41484   20.8%
+        D    53069   26.6%
+        X    40462   20.3%
+
+      reports 354 possessions of mean 12.0 s
+      (counted with each X as a gap; the scorer bridges abstentions inside a real
+       possession, so its count can be lower than this one)
+
+Valid. Note this checks the format only -- it says nothing about whether the labels are right.
+Score it against the public ground truth with run_evaluation.py.
+````
+
+**Resumen de actuación:** Se registró la ejecución local #2, no pública: 8.545 s reales, hashes SHA-256 idénticos, 199319 filas válidas y los agregados comunicados por Edu.
+Se explicó la diferencia de denominadores entre el resumen de las mitades y el validador del vídeo completo; no se abrió ningún CSV, no se cambió el método, no se hizo push y A8 permaneció en 1 de 5.

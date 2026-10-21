@@ -47,15 +47,39 @@ quedaron como ejecutables versionados y no se inventan comandos para reproducirl
 ## Repetición de inferencia para comprobar determinismo
 
 La primera inferencia completa comunicada por Edu figura en la entrada 7 del registro
-anterior. La repetición solicitada al cerrar la sesión se identificará como **ejecución
+anterior. La repetición solicitada al cerrar la sesión se identifica como **ejecución
 local #2 (no pública)**. Esta numeración de inferencias reales es independiente de la
 numeración de entradas históricas y de las evaluaciones públicas A8.
 
-La ejecución local #2 **aún no se ha realizado ni registrado como completada**: Edu
-la ejecutará y devolverá ambos SHA-256, el tiempo y el resultado del validador.
-No se anticipan valores ni se consume una evaluación pública por comprobar el formato.
+La ejecución local #2 está **completada según los resultados comunicados por Edu**.
+El agente no ejecutó la inferencia ni abrió los CSV: registra los hashes, tiempos y
+agregados enviados por el participante. Esta comprobación de formato y determinismo
+no consulta la GT y no consume A8.
 
-Comandos desde la raíz del repositorio, para ejecutar exclusivamente por Edu:
+| # local | Fecha | Commit de referencia | Comando | Resultado agregado | ¿Pública (A8)? |
+|---|---|---|---|---|---|
+| 1 | 2026-10-21 | Código de `ce9c575`; véase entrada histórica 7 | `python -m solution.b_gpt --out evaluation/results/b_gpt.csv` | 354 posesiones; media 11.953446327683617 s; mediana 6.779999999999999 s; D 33.40677464638008 %; X 0.0 % en las mitades. SHA-256 comunicado junto a la repetición. | No |
+| 2 | 2026-10-21 | `819efb2`, versión disponible al solicitar la repetición; método de `ce9c575` sin cambios | `time python -m solution.b_gpt --out evaluation/results/b_gpt_r2.csv` | 8.545 s reales, 9.05 s de CPU de usuario, 0.19 s de sistema, 108 % CPU; mismos cinco agregados; SHA-256 idéntico; validador oficial OK, 199319 filas, índices 0..199318. | No |
+
+SHA-256 comunicado para **ambos** archivos (`b_gpt.csv` y `b_gpt_r2.csv`):
+
+```text
+60ea141519a8978cfb840496d7c39f040b40fba3b0610a81fd1a68160f822f6d
+```
+
+El validador informó, sobre **todo el vídeo**, H 64304 (32.3 %), A 41484 (20.8 %),
+D 53069 (26.6 %) y X 40462 (20.3 %), con 354 posesiones de media redondeada 12.0 s.
+No contradice el resumen del candidato: este último usa exclusivamente los 158857
+frames de las mitades publicadas, donde D es 33.40677464638008 % y X es 0.0 %.
+Los 40462 frames X coinciden con la extensión publicada no puntuada.
+
+Estos resultados respaldan la reproducibilidad byte a byte de las dos ejecuciones
+locales comunicadas, el contrato de salida y un tiempo de inferencia inferior a
+30 minutos en el equipo de Edu. No prueban la exactitud de las etiquetas ni permiten
+estimar el spellF1 del partido completo. El tiempo de ejecución no se suma como
+una sesión nueva al registro de horas activas declarado por el participante.
+
+Comandos de esta comprobación, ejecutados exclusivamente por Edu desde la raíz:
 
 ```bash
 source solution/b_gpt/.venv/bin/activate
@@ -66,5 +90,5 @@ python evaluation/validate_submission.py evaluation/results/b_gpt_r2.csv
 ```
 
 `time` utiliza el medidor del shell zsh, sin requerir `/usr/bin/time`. El CSV original
-se conserva. Los hashes, el tiempo y la salida agregada del validador pueden devolverse
+se conserva. Solo los hashes, el tiempo y la salida agregada del validador se devolvieron
 al agente; los archivos CSV y su contenido por frame permanecen en local.

@@ -19,6 +19,7 @@ Registro de la sección D del [protocolo de confrontación](../../../docs/experi
 | Tiempo restante | **7 h 9 min** |
 | Commit del candidato al abrir este registro | `ce9c575` |
 | Evaluaciones públicas usadas | **1 de 5** |
+| Repetición local #2 | Completada por Edu: **8.545 s**, SHA-256 idéntico al primer CSV y validación oficial correcta; no pública |
 
 Edu confirmó ChatGPT-6 Astra, razonamiento `high`, utilizado a través de Codex.
 La comprobación local anterior leyó únicamente los campos `model`, `model_provider`,
