@@ -37,7 +37,8 @@ def synthetic_baseline(tracking):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--out", default="evaluation/results/b_gpt.csv")
+    # v1 (Claude): its own default name, so it never overwrites the v0 (Codex-only) CSV
+    parser.add_argument("--out", default="evaluation/results/b_gpt_claude.csv")
     parser.add_argument("--data-dir", help="Optional data root; otherwise MTAH_DATA_DIR.")
     parser.add_argument("--baseline", default="evaluation/results/baseline_smooth50.csv")
     parser.add_argument("--synthetic", action="store_true",
@@ -76,7 +77,7 @@ def main(argv=None):
     for source in sorted(Path(__file__).parent.glob("*.py")):
         digest.update(source.name.encode())
         digest.update(source.read_bytes())
-    report = dict(candidate="b_gpt", synthetic=bool(args.synthetic), config=asdict(CONFIG),
+    report = dict(candidate="b_gpt", variant="v1: v0 + Claude (out-of-play gaps)", synthetic=bool(args.synthetic), config=asdict(CONFIG),
                   python=platform.python_version(), numpy=np.__version__,
                   code_sha256=digest.hexdigest(), evidence_totals=totals,
                   elapsed_seconds=round(time.perf_counter() - started, 3),

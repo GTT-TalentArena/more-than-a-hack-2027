@@ -7,6 +7,35 @@ externos. Esta primera versión conserva el algoritmo y todos los parámetros de
 Las versiones siguientes se registran mediante commits en **`cand/b-gpt`**, no mediante
 carpetas nuevas. No se publica en `main` ni en la web.
 
+## Variante v1: v0 + mejora de Claude
+
+Esta rama (`cand/b-gpt-claude`) parte de la v0 congelada en el tag **`b-gpt-v0`** (solo
+Codex, ChatGPT-6 Astra high) y añade **un único cambio**, escrito por Claude Code
+(Claude Opus 5.5, effort medium) con la aprobación de Alejandro como evaluador. Registro
+propio en `prompts/confrontacion/b-gpt-claude/`.
+
+**Balón perdido tras salir del campo = parada.** Un balón que ha salido no puede volver
+al juego sin un saque (reglas 9 y 15–17). La v0 solo detectaba la salida mientras *veía*
+el balón fuera; si el tracking lo perdía justo después —lo habitual al salir del encuadre—
+y los jugadores seguían moviéndose, como en un saque de banda o de puerta, mantenía la
+posesión. Ahora, si el balón se vio fuera de forma clara (persistente, como en la v0, o a
+más de `clear_out_m` = 1 m de la línea) y a continuación desaparece, todo el hueco cuenta
+como evidencia de parada con el mismo peso que un balón visto fuera, y los jugadores
+corriendo no cuentan en contra. El hueco termina cuando el balón vuelve a localizarse y
+nunca dura más que `stop_lookback_s` (45 s). El resto del método y de los parámetros es
+idéntico a la v0.
+
+Motivo: Smart Tagging solo anota una parte de las reanudaciones, así que muchas paradas
+(saques de banda y de puerta sin anotar) solo se pueden detectar con el tracking. Nada se
+ha elegido con la ventana pública. `evidence_totals.out_of_play_gap_frames` informa en el
+`.summary.json` de cuántos frames afecta el cambio.
+
+Comando de esta variante (no pisa el CSV de la v0):
+
+```bash
+python -m solution.b_gpt --out evaluation/results/b_gpt_claude.csv
+```
+
 ## Ejecución local
 
 Desde la raíz de `more-than-a-hack-2027`, con Python 3.11–3.14:

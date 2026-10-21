@@ -42,6 +42,37 @@ class SyntheticBehaviour(unittest.TestCase):
         result, _ = predict(tracking, [], NAMES, [(1, 0, 799)], 25, PITCH)
         self.assertTrue(np.all(result == "H"))
 
+    def test_ball_lost_after_leaving_pitch_is_dead_even_with_running_players(self):
+        # v1 (Claude): exit over the touchline, then the tracker loses the ball for 6 s while
+        # players keep jogging (2.7 m/s), as at a throw-in. Play resumes with the ball back inside.
+        truth = np.full(900, "H")
+        tracking = from_labels(truth, missing=False)
+        tracking.ball[300:302, :2] = [50, -1.5]
+        tracking.ball[302:452] = np.nan
+        result, totals = predict(tracking, [], NAMES, [(1, 0, 899)], 25, PITCH)
+        self.assertTrue(np.all(result[310:450] == "D"))
+        self.assertTrue(np.all(result[:290] == "H"))
+        self.assertTrue(np.all(result[470:] == "H"))
+        self.assertEqual(totals["out_of_play_gap_frames"], 150)
+
+    def test_gap_without_a_clear_exit_keeps_possession(self):
+        # Same occlusion, but the ball was last seen just over the line by tracking noise only.
+        truth = np.full(900, "H")
+        tracking = from_labels(truth, missing=False)
+        tracking.ball[301, :2] = [50, -.5]
+        tracking.ball[302:452] = np.nan
+        result, totals = predict(tracking, [], NAMES, [(1, 0, 899)], 25, PITCH)
+        self.assertTrue(np.all(result == "H"))
+        self.assertEqual(totals["out_of_play_gap_frames"], 0)
+
+    def test_out_of_play_gap_is_capped_by_restart_look_back(self):
+        truth = np.full(2000, "H")
+        tracking = from_labels(truth, missing=False)
+        tracking.ball[100:102, :2] = [50, -1.5]
+        tracking.ball[102:1902] = np.nan
+        _, totals = predict(tracking, [], NAMES, [(1, 0, 1999)], 25, PITCH)
+        self.assertEqual(totals["out_of_play_gap_frames"], round(CONFIG.stop_lookback_s * 25))
+
     def test_flight_past_opponent_retains_previous_team(self):
         truth = np.full(700, "H")
         tracking = from_labels(truth, missing=False)

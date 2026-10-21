@@ -111,9 +111,31 @@ def features(ball_raw, players, teams, fps, pitch, cfg=CONFIG):
     outside = ((ball < -cfg.outside_margin_m) |
                (ball > np.asarray(pitch) + cfg.outside_margin_m)).any(axis=1)
     inside = ((ball >= 0) & (ball <= np.asarray(pitch))).all(axis=1)
+    # Metres beyond the nearest line (0 inside); NaN where the ball is not located.
+    beyond = np.max(np.concatenate([-ball, ball - np.asarray(pitch), np.zeros((n, 1))], axis=1), axis=1)
     control[outside] = 0
-    return dict(ball=ball, quality=quality, speed=speed, activity=activity,
-                count=count, nearest=nearest, control=control, outside=outside, inside=inside)
+    return dict(ball=ball, quality=quality, speed=speed, activity=activity, count=count,
+                nearest=nearest, control=control, outside=outside, inside=inside, beyond=beyond)
+
+
+def out_of_play_gaps(f, fps, cfg=CONFIG):
+    """v1 (Claude): frames where the ball is lost right after clearly leaving the pitch.
+
+    A ball that has left the field cannot re-enter play without a restart (Laws 9, 15-17),
+    so the occlusion that follows a clear exit is a stoppage even if players keep moving,
+    as they do at throw-ins and goal kicks. The gap ends when the ball is located again,
+    and never lasts longer than the restart look-back used elsewhere.
+    """
+    observed = f["quality"] == 1
+    exit_ = observed & f["outside"] & (
+        persistent(f["outside"] & observed, max(2, round(.16 * fps)))
+        | (np.nan_to_num(f["beyond"], nan=0.) > cfg.clear_out_m))
+    gaps = np.zeros(len(observed), bool)
+    cap = round(cfg.stop_lookback_s * fps)
+    for a, b in runs(~observed):
+        if a > 0 and exit_[a - 1]:
+            gaps[a:min(b, a + cap)] = True
+    return gaps
 
 
 def normalise_name(name):
@@ -163,7 +185,7 @@ def tag_priors(events, n, names, fps):
     return votes[:, 0] - votes[:, 1], np.max(votes, axis=1)
 
 
-def stoppage_evidence(f, phase, fps):
+def stoppage_evidence(f, phase, fps, cfg=CONFIG):
     quality, speed, activity = f["quality"], f["speed"], f["activity"]
     seen = quality > 0
     quiet_players = np.isfinite(activity) & (activity < 1.2)
@@ -172,13 +194,17 @@ def stoppage_evidence(f, phase, fps):
     still = persistent(stationary & quiet_players, round(2.0 * fps))
     # Missingness alone has exactly zero dead-ball evidence.
     quiet_missing = persistent(~seen & quiet_players, round(3.0 * fps))
+    # v1 (Claude): occlusion after the ball has left the pitch, whatever the players do.
+    out_gap = out_of_play_gaps(f, fps, cfg)
     moving = seen & f["inside"] & np.isfinite(speed) & (speed > 2.0)
     running = np.isfinite(activity) & (activity > 2.0)
-    margin = (3.8 * outside + 1.6 * still + 1.0 * quiet_missing
-              - 1.6 * moving - .65 * running - .35 * seen - .35 * phase)
-    seed = outside | still | quiet_missing
-    live = moving | (running & ~outside) | ((phase > .65) & ~seed)
-    return margin, seed, live
+    # The out-of-play gap carries the same weight as a ball seen outside, and running
+    # players do not count against it: they move during throw-ins and goal kicks.
+    margin = (3.8 * (outside | out_gap) + 1.6 * still + 1.0 * quiet_missing
+              - 1.6 * moving - .65 * (running & ~out_gap) - .35 * seen - .35 * phase)
+    seed = outside | still | quiet_missing | out_gap
+    live = moving | (running & ~outside & ~out_gap) | ((phase > .65) & ~seed)
+    return margin, seed, live, out_gap
 
 
 def restart_candidates(events, f, margin, fps, cfg=CONFIG):
@@ -229,7 +255,7 @@ def restart_candidates(events, f, margin, fps, cfg=CONFIG):
 def build_evidence(f, events, names, fps, cfg=CONFIG):
     n = len(f["control"])
     tag, phase = tag_priors(events, n, names, fps)
-    margin, dead_seed, live = stoppage_evidence(f, phase, fps)
+    margin, dead_seed, live, out_gap = stoppage_evidence(f, phase, fps, cfg)
     restarts = restart_candidates(events, f, margin, fps, cfg)
     restart_live = np.zeros(n, bool)
     kickoff_seen = False
@@ -291,7 +317,7 @@ def build_evidence(f, events, names, fps, cfg=CONFIG):
             team = 0 if control[kick + candidates[0]] > 0 else 1
         if team is not None:
             restart_team[kick:min(n, kick + round(.6 * fps)), team] = True
-    return scores / fps, acquire, dead_seed, live, restart_team, supported
+    return scores / fps, acquire, dead_seed, live, restart_team, supported, int(out_gap.sum())
 
 
 def decode(scores, acquire, dead_seed, live, restart_team, cfg=CONFIG):
@@ -330,7 +356,7 @@ def decode(scores, acquire, dead_seed, live, restart_team, cfg=CONFIG):
 def predict(tracking, events, names, blocks, fps, pitch, cfg=CONFIG):
     labels = np.full(len(tracking.ball), "X", dtype="<U1")
     totals = dict(graded_frames=0, observed_ball_frames=0, control_frames=0,
-                  dead_evidence_frames=0, supported_restarts=0)
+                  dead_evidence_frames=0, supported_restarts=0, out_of_play_gap_frames=0)
     for _, start, last in blocks:
         stop = last + 1
         if not (0 <= start < stop <= len(labels)):
@@ -350,4 +376,5 @@ def predict(tracking, events, names, blocks, fps, pitch, cfg=CONFIG):
         totals["control_frames"] += int(np.sum(np.abs(f["control"]) > .12))
         totals["dead_evidence_frames"] += int(np.sum(evidence[2]))
         totals["supported_restarts"] += evidence[5]
+        totals["out_of_play_gap_frames"] += evidence[6]
     return labels, totals
