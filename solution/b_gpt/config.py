@@ -18,7 +18,11 @@ class Config:
     # number and total length match a match's stoppages. A restart takes ~5-10 s for a quick
     # throw-in and more than 10 s for free kicks, goal kicks and corners.
     medium_gap_s: float = 5.0
-    long_gap_s: float = 10.0
+    # v3 (Claude): a gap only counts as a stoppage if the ball comes back the way a restart
+    # does (placed still, or at a line) or was lost at a line; a ball shielded by a player
+    # with his back to the camera, or lost in flight, comes back moving inside the pitch.
+    # Nothing in live play keeps the ball invisible for 30 s with a tactical camera.
+    very_long_gap_s: float = 30.0
     team_evidence: float = 4.0
     tag_evidence: float = 0.55
     team_switch_cost: float = 0.65

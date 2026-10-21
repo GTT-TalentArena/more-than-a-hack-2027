@@ -113,9 +113,12 @@ def features(ball_raw, players, teams, fps, pitch, cfg=CONFIG):
     inside = ((ball >= 0) & (ball <= np.asarray(pitch))).all(axis=1)
     # Metres beyond the nearest line (0 inside); NaN where the ball is not located.
     beyond = np.max(np.concatenate([-ball, ball - np.asarray(pitch), np.zeros((n, 1))], axis=1), axis=1)
+    # v3: signed distance to the nearest line (positive inside, negative outside).
+    line_dist = np.min(np.concatenate([ball, np.asarray(pitch) - ball], axis=1), axis=1)
     control[outside] = 0
     return dict(ball=ball, quality=quality, speed=speed, activity=activity, count=count,
-                nearest=nearest, control=control, outside=outside, inside=inside, beyond=beyond)
+                nearest=nearest, control=control, outside=outside, inside=inside, beyond=beyond,
+                line_dist=line_dist)
 
 
 def out_of_play_gaps(f, fps, cfg=CONFIG):
@@ -185,6 +188,33 @@ def tag_priors(events, n, names, fps):
     return votes[:, 0] - votes[:, 1], np.max(votes, axis=1)
 
 
+def restart_like_gaps(f, fps, cfg=CONFIG):
+    """v3 (Claude): ball-less stretches (>= medium_gap_s, players tracked) that look like a
+    stoppage: the ball was lost at a line, or comes back placed still or at a line, or the
+    gap is longer than any live sequence. A ball shielded by a player with his back to the
+    camera, or lost in flight, comes back moving inside the pitch and is left as live play.
+    """
+    observed = f["quality"] == 1
+    tracked = f["count"] >= 8
+    n = len(observed)
+    dead = np.zeros(n, bool)
+    look = max(1, round(.5 * fps))
+    for a, b in runs(~observed):
+        if b - a < round(cfg.medium_gap_s * fps) or tracked[a:b].mean() <= .5:
+            continue  # short occlusion, or ball and players missing together (data outage)
+        lost_at_line = a > 0 and observed[a - 1] and f["line_dist"][a - 1] <= cfg.clear_out_m
+        after = np.arange(b, min(n, b + look))
+        after = after[observed[after]]
+        back_at_line = len(after) > 0 and f["line_dist"][after[0]] <= cfg.clear_out_m
+        speeds = f["speed"][after]
+        speeds = speeds[np.isfinite(speeds)]
+        back_still = len(speeds) > 0 and np.median(speeds) < .65
+        very_long = b - a >= round(cfg.very_long_gap_s * fps)
+        if lost_at_line or back_at_line or back_still or very_long:
+            dead[a:b] = True
+    return dead
+
+
 def stoppage_evidence(f, phase, fps, cfg=CONFIG):
     quality, speed, activity = f["quality"], f["speed"], f["activity"]
     seen = quality > 0
@@ -196,19 +226,15 @@ def stoppage_evidence(f, phase, fps, cfg=CONFIG):
     quiet_missing = persistent(~seen & quiet_players, round(3.0 * fps))
     # v1 (Claude): occlusion after the ball has left the pitch, whatever the players do.
     out_gap = out_of_play_gaps(f, fps, cfg)
-    # v2 (Claude): long ball-less stretches are stoppages in this tracking (see config).
-    # Long ones are strong evidence; medium ones moderate, left to the decoder.
-    # Only while the players are tracked: ball and players missing together is a data
-    # outage, not a stoppage.
-    tracked_without_ball = ~seen & (f["count"] >= 8)
-    long_gap = persistent(tracked_without_ball, round(cfg.long_gap_s * fps))
-    medium_gap = persistent(tracked_without_ball, round(cfg.medium_gap_s * fps)) & ~long_gap
+    # v3 (Claude): replaces v2's "every long gap is a stoppage" (too many false D in the
+    # public window): only gaps that start or end like a restart (see restart_like_gaps).
+    restart_gap = restart_like_gaps(f, fps, cfg)
     moving = seen & f["inside"] & np.isfinite(speed) & (speed > 2.0)
     running = np.isfinite(activity) & (activity > 2.0)
     # The out-of-play gap carries the same weight as a ball seen outside, and running
     # players do not count against it: they move during throw-ins and goal kicks.
-    gap = out_gap | long_gap | medium_gap
-    margin = (3.8 * (outside | out_gap | long_gap) + 1.6 * still + 1.6 * medium_gap
+    gap = out_gap | restart_gap
+    margin = (3.8 * (outside | gap) + 1.6 * still
               + 1.0 * (quiet_missing & ~gap)
               - 1.6 * moving - .65 * (running & ~gap) - .35 * seen - .35 * phase)
     seed = outside | still | quiet_missing | gap

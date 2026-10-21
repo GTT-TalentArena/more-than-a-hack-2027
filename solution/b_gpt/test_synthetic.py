@@ -43,16 +43,38 @@ class SyntheticBehaviour(unittest.TestCase):
         result, _ = predict(tracking, [], NAMES, [(1, 0, 799)], 25, PITCH)
         self.assertTrue(np.all(result == "H"))
 
-    def test_long_missing_ball_with_tracked_players_is_dead(self):
-        # v2 (Claude): 20 s without the ball while the players are tracked and running is a
-        # stoppage in this tracking; play resumes when the ball is located again.
-        truth = np.full(1200, "H")
+    def test_shielded_ball_that_comes_back_moving_keeps_possession(self):
+        # v3 (Claude): a player with his back to the camera hides the ball for 8 s; it comes
+        # back moving inside the pitch with the same team. That is live play, not a stoppage.
+        truth = np.full(900, "H")
         tracking = from_labels(truth, missing=False)
-        tracking.ball[300:800] = np.nan
-        result, _ = predict(tracking, [], NAMES, [(1, 0, 1199)], 25, PITCH)
-        self.assertTrue(np.all(result[310:790] == "D"))
-        self.assertTrue(np.all(result[:290] == "H"))
-        self.assertTrue(np.all(result[820:] == "H"))
+        tracking.ball[300:500] = np.nan
+        result, _ = predict(tracking, [], NAMES, [(1, 0, 899)], 25, PITCH)
+        self.assertTrue(np.all(result == "H"))
+
+    def _gap_then(self, gap_frames, ball_after, players_running=True):
+        truth = np.full(300 + gap_frames + 300, "H")
+        tracking = from_labels(truth, missing=False)
+        end = 300 + gap_frames
+        tracking.ball[300:end] = np.nan
+        if ball_after is not None:
+            # The restart: ball placed at ball_after for 1 s, with the H taker next to it.
+            tracking.ball[end:end + 25, :2] = ball_after
+            tracking.players[end:end + 25, 0, :2] = np.asarray(ball_after) + [.6, 0]
+        result, _ = predict(tracking, [], NAMES, [(1, 0, len(truth) - 1)], 25, PITCH)
+        return result, end
+
+    def test_gap_ending_with_a_placed_ball_is_a_stoppage(self):
+        result, end = self._gap_then(375, (60, 30))  # 15 s, free kick in midfield
+        self.assertTrue(np.all(result[310:end - 10] == "D"))
+
+    def test_gap_ending_at_the_touchline_is_a_stoppage(self):
+        result, end = self._gap_then(200, (40, .4))  # 8 s, throw-in
+        self.assertTrue(np.all(result[310:end - 10] == "D"))
+
+    def test_very_long_gap_is_a_stoppage_even_if_play_resumes_moving(self):
+        result, end = self._gap_then(round(31 * 25), None)
+        self.assertTrue(np.all(result[310:end - 10] == "D"))
 
     def test_ball_lost_after_leaving_pitch_is_dead_even_with_running_players(self):
         # v1 (Claude): exit over the touchline, then the tracker loses the ball for 6 s while

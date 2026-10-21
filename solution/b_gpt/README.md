@@ -10,7 +10,7 @@ carpetas nuevas. No se publica en `main` ni en la web.
 ## Variante v1: v0 + mejora de Claude
 
 Esta rama (`cand/b-gpt-claude`) parte de la v0 congelada en el tag **`b-gpt-v0`** (solo
-Codex, ChatGPT-6 Astra high) y añade los cambios v1 y v2, escritos por Claude Code
+Codex, ChatGPT-6 Astra high) y añade los cambios v1, v2 y v3, escritos por Claude Code
 (Claude Opus 5.5, effort medium) con la aprobación de Alejandro como evaluador. Registro
 propio en `prompts/confrontacion/b-gpt-claude/`.
 
@@ -42,6 +42,17 @@ es evidencia fuerte de parada y uno de **≥ `medium_gap_s` = 5 s**, moderada; l
 corriendo no cuentan en contra. Si faltan balón y jugadores a la vez es un corte de datos, no
 una parada. Los umbrales salen de la duración de una reanudación (saque de banda rápido 5–10 s;
 faltas, saques de puerta y córners, más de 10 s), no de ninguna puntuación.
+
+**v3 · Solo los huecos que empiezan o acaban como un saque.** En la ventana pública la v2
+subió el recall de `D` (0,26 → 0,41) pero bajó su precisión (≈ 1,0 → 0,59): no todo hueco largo
+es una parada. Un jugador de espaldas a la cámara que protege o conduce el balón, o un balón
+perdido en vuelo, también lo hacen desaparecer con el juego vivo. La v3 sustituye la regla de la
+v2: un hueco de ≥ 5 s (con jugadores seguidos) solo es evidencia de parada si el balón **se perdió
+junto a una línea** (≤ `clear_out_m`), **reaparece quieto** (< 0,65 m/s, como en la v0: colocado
+para una falta, un saque de puerta o de centro), **reaparece junto a una línea** (saque de banda,
+córner) o el hueco dura **más de `very_long_gap_s` = 30 s**. Si reaparece moviéndose dentro del
+campo, se trata como juego vivo, como en la v1. La idea es posterior a ver el desglose de la
+evaluación pública #3 (desviación declarada en el registro).
 
 Comando de esta variante (no pisa el CSV de la v0):
 

@@ -38,3 +38,8 @@ Mensajes de Edu a Claude Code en esta variante, en orden. Las respuestas, resumi
 > Molines me dice, cuando hayamos hecho las 5 iteraciones me tienes que dar una tabla las 5 variables mas importantes y todas las iteraciones 1,2,3,4,5 y los valores para que se vea el cambio
 
 **Respuesta:** Claude creó `iteraciones.md` con 5 variables (spellF1, macroF1 y posesiones públicas; % D y posesiones del partido completo).
+
+## 8. 2026-10-21 · ~22:05
+> diria que la B, lo que hay que tener en cuenta es si un jugador esta de espaldas con el valon a la camara, ahi desapareceria el valon tambien no crees? no se si se tiene en cuenta
+
+**Respuesta:** Claude confirmó que la v2 no lo distinguía e implementó la v3: el hueco solo es parada si el balón se pierde junto a una línea, reaparece quieto o junto a una línea, o el hueco dura > 30 s; si reaparece moviéndose dentro del campo (balón tapado por un jugador o en vuelo) es juego vivo. 3 tests nuevos (el del balón tapado falla con la v2); determinismo sintético.

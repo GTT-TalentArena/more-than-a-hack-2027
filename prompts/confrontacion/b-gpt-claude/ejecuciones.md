@@ -11,6 +11,7 @@
 | s3 | 2026-10-21 | (este commit) | tests sintéticos y `--synthetic` ×2 (v2) | 39 pruebas OK; la nueva de huecos largos falla con la v1; mismo SHA-256 en las dos ejecuciones; validador OK | No (sintético) |
 | 5 | 2026-10-21 | `6b83b32` | v2 con datos reales ×2 (Edu) | 345 posesiones · media 9,62 s · mediana 5,8 s · D 47,76 % · X 0 % · huecos ≥ 10 s etiquetados vivos 9,2 → 0,6 min · mismo SHA-256 en las dos (`c818b572…`) | No |
 | 6 | 2026-10-21 | `6b83b32` | evaluación pública con Docker (bootstrap 1000) sobre la v2 | spellF1 **0.3122** [0.185, 0.449] · macroF1 0.6652 · 24 posesiones · 10,8 s · código 5 (por debajo de smooth50) · D precisión 0,589 / recall 0,406 (v1: 0,997 / 0,257) | **Sí, #3 del candidato B** |
+| s4 | 2026-10-21 | (este commit) | tests sintéticos y `--synthetic` ×2 (v3) | 42 pruebas OK; la del balón tapado por un jugador falla con la v2; mismo SHA-256 en las dos; validador OK | No (sintético) |
 
 Comparación con la v0 (registro de b-gpt): 354 → 347 posesiones, D 33,41 % → 35,19 %, media 11,95 → 11,87 s. Sin GT: no indica si acierta más.
 
