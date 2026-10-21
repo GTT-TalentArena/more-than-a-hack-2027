@@ -1,0 +1,4 @@
+# El contexto de construcción solo necesita el lock de dependencias: todo lo demás se queda
+# fuera (datos del partido, vídeos, resultados, .git…). El código se monta al ejecutar.
+*
+!docker/requirements.lock
