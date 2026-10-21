@@ -192,3 +192,13 @@ vale ahora si, he lanzado el export, y me ha devuelto una respuesta
 
 **Resumen de actuación:** Se tomó la confirmación de Edu de que definir la variable resolvía la incidencia y se descartó el cambio de diagnóstico, conservando lector y método.
 Se anotaron los dos mensajes y la ejecución local completada; no se solicitó ninguna evaluación pública nueva y el contador A8 se mantuvo en 1 de 5.
+
+## 10. Agregados de inferencia del partido completo — 2026-10-21
+
+````text
+   ~/dev/personal/GTT/more-than-a-hack-2027     cand/b-gpt    python -m solution.b_gpt --out evaluation/results/b_gpt.csv
+{"mean_duration_seconds": 11.953446327683617, "median_duration_seconds": 6.779999999999999, "n_possessions": 354, "percent_D": 33.40677464638008, "percent_X": 0.0}
+````
+
+**Resumen de actuación:** Se registraron los agregados y se comprobó su coherencia aritmética con la duración publicada: aproximadamente 3,343 posesiones/minuto, 70,525 minutos vivos y 35,379 minutos D.
+Se distinguió cobertura de exactitud y se señaló que faltan los agregados del baseline y por mitad; no se abrieron resultados ni datos reales, no se ajustó el método y A8 siguió en 1 de 5.

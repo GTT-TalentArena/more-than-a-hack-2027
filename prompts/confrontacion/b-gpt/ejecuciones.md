@@ -8,9 +8,19 @@
 | 4 | 2026-10-21 | sin commit; contenido registrado después en `ce9c575` | `solution/control_v1/.venv/bin/python -m unittest solution.b_gpt.test_synthetic solution.b_gpt.test_diagnostics -v` | 34 tests pasados en 14.117 s; validación oficial sobre sintéticos y dos CSV sintéticos completos con SHA-256 idéntico. | No |
 | 5 | 2026-10-21 | sin commit; contenido registrado después en `ce9c575` | `solution/control_v1/.venv/bin/python -m solution.b_gpt --synthetic --out <temporal_sintetico>/synthetic.csv`, seguido de `solution/control_v1/.venv/bin/python evaluation/validate_submission.py <temporal_sintetico>/synthetic.csv` | Ambos comandos terminaron con código 0; 5.301 s en conjunto; memoria máxima reportada por el candidato 221.14 MiB; stdout limitado a cinco agregados. | No |
 | 6 | 2026-10-21 | `d91b063` en el espacio de trabajo al comunicar la incidencia | `python -m solution.b_gpt --out evaluation/results/b_gpt.csv` | Edu comunicó `Cannot read XML input or invalid XML syntax.`; no se obtuvieron métricas. | No |
-| 7 | 2026-10-21 | `d91b063` en el espacio de trabajo; código del candidato sin cambios | Mismo comando, después de definir `MTAH_DATA_DIR` mediante `export` | Edu confirmó que recibió una respuesta. Valores agregados todavía no comunicados; ninguna GT consultada por el agente. | No |
+| 7 | 2026-10-21 | Código de `ce9c575`; commit exacto de ejecución no confirmado, cambios posteriores solo de documentación | `python -m solution.b_gpt --out evaluation/results/b_gpt.csv`, con `MTAH_DATA_DIR` definido | 354 posesiones; duración media 11.953446327683617 s; mediana 6.779999999999999 s; D 33.40677464638008 %; X 0.0 %. Agregados del partido completo comunicados por Edu. | No |
 
 Evaluaciones públicas usadas: 1 de 5
+
+La fila 7 incorpora la salida agregada enviada después de confirmar que `export`
+resolvía la incidencia. No se presupone una ejecución adicional por volver a pegar
+el comando. Con los 158.857 frames a 25 fps publicados, estos números corresponden
+a unos 3,343 posesiones/minuto, 70,525 minutos predichos vivos y 35,379 minutos `D`
+dentro de las mitades. Son comprobaciones aritméticas, no medidas de exactitud.
+La media mayor que la mediana es compatible con una distribución asimétrica de
+duraciones, pero por sí sola no identifica fragmentación o fusión incorrecta.
+Faltan los agregados del baseline completo y por mitad para la comparación solicitada;
+no se consultó el CSV ni se modificó ningún parámetro.
 
 La fila 1 fue ejecutada por Edu en local y comunicada al agente únicamente mediante
 agregados. Corresponde a `control_v1`, antes de su empaquetado como `b_gpt`; no se ha
