@@ -28,12 +28,35 @@ def infer(truth, missing=False, events=()):
 
 
 class SyntheticBehaviour(unittest.TestCase):
-    def test_short_control_and_stoppage_separate_same_team(self):
+    def test_short_touch_is_not_a_change_but_a_stoppage_separates_same_team(self):
+        # v4 (Claude): 0.8 s of the other team between two H spells is a touch without
+        # control (CHALLENGE.md), so it goes back to H; the stoppage still splits H in two.
         truth = np.array(list("H" * 250 + "A" * 20 + "H" * 250 + "D" * 150 + "H" * 250))
         result = infer(truth)
-        self.assertTrue(np.all(result[250:270] == "A"))
-        self.assertGreater(np.mean(result == truth), .98)
+        self.assertTrue(np.all(result[250:270] == "H"))
+        expected = np.where(truth == "A", "H", truth)
+        self.assertGreater(np.mean(result == expected), .98)
         self.assertTrue(np.all(result[530:660] == "D"))
+
+    def test_change_of_possession_that_lasts_is_kept(self):
+        truth = np.array(list("H" * 250 + "A" * 100 + "H" * 250))  # 4 s >= min_change_s
+        result = infer(truth)
+        self.assertTrue(np.all(result[260:340] == "A"))
+
+    def test_short_spell_next_to_a_stoppage_is_not_merged(self):
+        truth = np.array(list("H" * 250 + "A" * 25 + "D" * 150 + "H" * 250))
+        result = infer(truth)
+        self.assertTrue(np.all(result[252:273] == "A"))
+
+    def test_flip_back_chains_collapse_into_the_surrounding_team(self):
+        from .model import merge_flip_backs
+        H, A, D = 0, 1, 2
+        chain = np.array([H] * 100 + [A] * 10 + [H] * 5 + [A] * 10 + [H] * 100, dtype=np.int8)
+        merged, count = merge_flip_backs(chain, 25)
+        self.assertTrue(np.all(merged == H))
+        self.assertEqual(count, 2)
+        stopped = np.array([H] * 100 + [A] * 10 + [D] * 50 + [H] * 100, dtype=np.int8)
+        self.assertTrue(np.array_equal(merge_flip_backs(stopped, 25)[0], stopped))
 
     def test_short_missing_ball_does_not_mean_dead(self):
         # v2 (Claude): a short occlusion (< medium_gap_s) keeps the possession.
@@ -339,7 +362,8 @@ class SyntheticIO(unittest.TestCase):
             from evaluation import possession_metrics as pm
         except ModuleNotFoundError:
             self.skipTest("Official validator requires pandas; install pinned dependencies.")
-        truth = np.array(list("H" * 250 + "A" * 20 + "H" * 250 + "D" * 150 + "A" * 250))
+        # v4: the A spell lasts 4 s, a real change of possession (>= min_change_s).
+        truth = np.array(list("H" * 250 + "A" * 100 + "H" * 250 + "D" * 150 + "A" * 250))
         result = infer(truth)
         path = self.root / "synthetic.csv"
         write_submission(path, result, len(truth))

@@ -118,6 +118,39 @@ buscado sin efectos colaterales:
 Criterio ya fijado: si la v4 no logra **spellF1 ≥ 0,3895 y macroF1 ≥ 0,6901**, se congela la v3.
 Pasar ese umbral solo descarta un empeoramiento: con 17 posesiones, no prueba una mejora.
 
+## 6. Resultado de los diagnósticos y decisión (ejecución de Edu con la v3, sin GT)
+
+Mismo SHA-256 que la v3 (`a5372e72…`): los diagnósticos no cambian etiquetas.
+
+| Propuesta | Resultado | Criterio | Decisión |
+|---|---|---|---|
+| P1 · Duelos | 18 de 241 cambios H↔A a ≤ 0,5 s de un duelo (7,5 %); 0,54 min de duelo con el balón visible | ≥ 20 % | **No entra** |
+| P2 · Balón quieto | 0,73 min etiquetados vivos con el balón quieto fuera de la zona del portero + 0,05 min de salidas de `D` antes del golpeo = 0,78 min | ≥ 1 min | **No entra** |
+| P3 · Líneas | perdidos yendo hacia dentro rápido 0,12 min; reaparecidos junto a la línea rápido 9,92 min (32 huecos); balón quieto que se mueve en < 1 s 0 min | ≥ 0,5 min | **Cumple, pero no se aplica** (desviación, ver abajo) |
+| P4 · Idas y vueltas | 70 idas y vueltas de < 3 s (1,8 s de media), 140 de los 241 cambios H↔A (58 %) | «muchos» | **Entra** (como duración mínima del cambio, ver abajo) |
+| P6 · Perspectiva | rebotes por banda 4 frente a 1 | ≥ 3× | **Cumple la proporción, pero no se aplica**: 4 eventos, efecto ≤ 5 s |
+| Referencia | 100 tramos `D`, mediana 15,6 s, media 26,1 s, p90 56 s | literatura: ≈ 100–130 paradas de 13–27 s | La estructura de paradas de la v3 es verosímil |
+
+**Por qué no se aplica la P3.** El criterio medía cuántos minutos cambiarían, no si eran `D` falsos.
+Los datos apuntan a lo contrario de la hipótesis: los 32 huecos que reaparecen rápido junto a la
+línea duran de media 18,6 s, lo que dura un saque de banda o un córner, y son tantos como esos
+saques en un partido. Además, en todo el partido el balón solo se ve quieto 2,6 min. Lo más
+probable es que el tracking no vea el balón mientras se sostiene o se coloca para el saque, y lo
+recupere al sacar, ya en movimiento. Aplicar la P3 convertiría ≈ 10 min de `D` probablemente
+correctos en juego vivo.
+
+**Por qué la P4 se implementa como duración mínima y no como «contacto».** Con el balón visible
+apenas hay duelos (0,54 min): el balón desaparece justo en los contactos, así que medir cambios de
+dirección o de velocidad no es fiable. El propio reto ofrece otra señal de control («un jugador
+retiene el balón unos segundos»). Por eso se exige que un cambio de posesión dure ≥ `min_change_s`
+= 3 s, el mismo umbral con el que se definió el diagnóstico antes de ver los datos. Solo afecta a
+las idas y vueltas sin parada entre medias: los tramos junto a una parada no se tocan.
+
+**Expectativa de la v4, fijada antes de ejecutarla.** `D` idéntico al de la v3 (41,05 %), menos
+cambios H↔A y menos posesiones (los 70 parpadeos suman 140 cambios), ninguna ida y vuelta de < 3 s
+y determinista. Si se cumple, gasta la evaluación pública #5 con el criterio fijado (spellF1 ≥
+0,3895 y macroF1 ≥ 0,6901; si no, se congela la v3).
+
 ## Fuentes
 
 - Vidal-Codina, Evans, El Fakir, Billingham (2022). *Automatic event detection in football using tracking data*. Sports Engineering. https://arxiv.org/abs/2202.00804

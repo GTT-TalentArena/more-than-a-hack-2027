@@ -388,6 +388,29 @@ def decode(scores, acquire, dead_seed, live, restart_team, cfg=CONFIG):
     return result
 
 
+def merge_flip_backs(states, fps, cfg=CONFIG):
+    """v4 (Claude): a spell of one team shorter than min_change_s between two spells of the
+    other team, with no stoppage in between, goes back to the team that had the ball: a touch,
+    a deflection or a duel without control is not a change of possession (CHALLENGE.md). The
+    shortest one is merged first, so a chain of flickers collapses into the surrounding team.
+    Spells next to a stoppage are never touched: after a restart there is a clear possessor."""
+    states = states.copy()
+    limit = round(cfg.min_change_s * fps)
+    merged = 0
+    while True:
+        starts = np.r_[0, np.flatnonzero(np.diff(states)) + 1]
+        ends = np.r_[starts[1:], len(states)]
+        values, lengths = states[starts], ends - starts
+        inner = np.arange(1, len(values) - 1)
+        candidate = ((values[inner] != 2) & (values[inner - 1] != 2)
+                     & (values[inner - 1] == values[inner + 1]) & (lengths[inner] < limit))
+        if not candidate.any():
+            return states, merged
+        i = inner[candidate][np.argmin(lengths[inner][candidate])]
+        states[starts[i]:ends[i]] = values[i - 1]
+        merged += 1
+
+
 # v1 (Claude): GT-free diagnostics to locate under-detected stoppages. Aggregates only
 # (counts and minutes); they never change a label.
 GAP_BINS_S = (0, 1, 3, 5, 10, 30)
@@ -604,7 +627,7 @@ def predict(tracking, events, names, blocks, fps, pitch, cfg=CONFIG):
     labels = np.full(len(tracking.ball), "X", dtype="<U1")
     totals = dict(graded_frames=0, observed_ball_frames=0, control_frames=0,
                   dead_evidence_frames=0, supported_restarts=0, out_of_play_gap_frames=0,
-                  dead_time_diagnostics={})
+                  merged_flip_backs=0, dead_time_diagnostics={})
     parts = []
     for _, start, last in blocks:
         stop = last + 1
@@ -616,6 +639,9 @@ def predict(tracking, events, names, blocks, fps, pitch, cfg=CONFIG):
                         for e in events if e["end"] > start and e["start"] < stop]
         evidence = build_evidence(f, local_events, names, fps, cfg)
         states = decode(*evidence[:5], cfg=cfg)
+        # v4 (Claude): there-and-back spells under min_change_s are touches, not changes.
+        states, merged = merge_flip_backs(states, fps, cfg)
+        totals["merged_flip_backs"] += merged
         labels[start:stop] = np.array(list("HAD"))[states]
         if not evidence[1].any() and not evidence[4].any():
             # An entirely unobserved half provides no basis for a home-team tie-break.

@@ -10,7 +10,7 @@ carpetas nuevas. No se publica en `main` ni en la web.
 ## Variante v1: v0 + mejora de Claude
 
 Esta rama (`cand/b-gpt-claude`) parte de la v0 congelada en el tag **`b-gpt-v0`** (solo
-Codex, ChatGPT-6 Astra high) y añade los cambios v1, v2 y v3, escritos por Claude Code
+Codex, ChatGPT-6 Astra high) y añade los cambios v1, v2, v3 y v4, escritos por Claude Code
 (Claude Opus 5.5, effort medium) con la aprobación de Alejandro como evaluador. Registro
 propio en `prompts/confrontacion/b-gpt-claude/`.
 
@@ -53,6 +53,17 @@ para una falta, un saque de puerta o de centro), **reaparece junto a una línea*
 córner) o el hueco dura **más de `very_long_gap_s` = 30 s**. Si reaparece moviéndose dentro del
 campo, se trata como juego vivo, como en la v1. La idea es posterior a ver el desglose de la
 evaluación pública #3 (desviación declarada en el registro).
+
+**v4 · Un toque no es un cambio de posesión** (Claude, effort max). Los diagnósticos sin GT
+del partido completo mostraron 70 «idas y vueltas» de menos de 3 s (1,8 s de media): el equipo B
+«tiene» el balón un instante entre dos tramos del equipo A, y suman el 58 % de los cambios H↔A.
+`CHALLENGE.md` dice que un toque sin control, un desvío o un duelo sin control posterior no son
+cambio de posesión, y propone como señal de control que un jugador retenga el balón unos
+segundos. Ahora un tramo de **menos de `min_change_s` = 3 s** del rival entre dos tramos del mismo
+equipo, **sin parada entre medias**, vuelve al equipo que tenía el balón; primero el más corto,
+así una cadena de parpadeos se funde con el equipo de alrededor. Los tramos junto a una parada no
+se tocan. No cambia ningún `D`. Análisis y decisión en
+`prompts/confrontacion/b-gpt-claude/analisis-v4.md`.
 
 Comando de esta variante (no pisa el CSV de la v0):
 

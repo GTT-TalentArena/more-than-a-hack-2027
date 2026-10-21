@@ -23,6 +23,11 @@ class Config:
     # with his back to the camera, or lost in flight, comes back moving inside the pitch.
     # Nothing in live play keeps the ball invisible for 30 s with a tactical camera.
     very_long_gap_s: float = 30.0
+    # v4 (Claude, effort max): a spell of one team shorter than this between two spells of
+    # the other team, with no stoppage in between, is a touch, a deflection or a duel, not a
+    # change of possession (CHALLENGE.md: control = "a player keeps the ball for a few
+    # seconds"). Same 3 s that defined the there-and-back diagnostic before seeing the data.
+    min_change_s: float = 3.0
     team_evidence: float = 4.0
     tag_evidence: float = 0.55
     team_switch_cost: float = 0.65

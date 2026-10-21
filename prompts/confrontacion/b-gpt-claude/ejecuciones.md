@@ -15,6 +15,8 @@
 | 7 | 2026-10-21 | `13ffe9b` | v3 con datos reales ×2 (Edu) | 340 posesiones · media 11,02 s · mediana 6,58 s · D 41,05 % · X 0 % · huecos vivos: 5–10 s 2,62 · 10–30 s 4,07 · > 30 s 0,62 min · mismo SHA-256 en las dos (`a5372e72…`) | No |
 | 8 | 2026-10-21 | `13ffe9b` | evaluación pública con Docker (bootstrap 1000) sobre la v3 | spellF1 **0.3895** · macroF1 **0.6901** [0.470, 0.822] · 21 posesiones · 13,4 s · código 0 · D precisión 0,998 / recall 0,317 | **Sí, #4 del candidato B** |
 | s5 | 2026-10-21 | (este commit) | tests sintéticos y `--synthetic` (v3 + diagnósticos v4) | 43 pruebas OK; mismo SHA-256 sintético que la v3 (`9ec36b1a…`): los diagnósticos no cambian etiquetas | No (sintético) |
+| 9 | 2026-10-21 | `620823d` | v3 + diagnósticos v4 con datos reales (Edu) | mismo SHA-256 que la v3 (`a5372e72…`) · duelos 0,54 min, 18/241 cambios junto a duelo · balón quieto vivo fuera del área 0,73 min · huecos por línea reaparecidos rápido 9,92 min (32) · 70 idas y vueltas < 3 s (2,1 min) · 100 tramos D (mediana 15,6 s) | No |
+| s6 | 2026-10-21 | (este commit) | tests sintéticos y `--synthetic` ×2 (v4) | 46 pruebas OK; la nueva prueba principal falla con la v3; mismo SHA-256 en las dos; validador OK; 38 idas y vueltas fusionadas en el partido sintético | No (sintético) |
 
 Comparación con la v0 (registro de b-gpt): 354 → 347 posesiones, D 33,41 % → 35,19 %, media 11,95 → 11,87 s. Sin GT: no indica si acierta más.
 

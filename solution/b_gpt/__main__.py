@@ -77,7 +77,7 @@ def main(argv=None):
     for source in sorted(Path(__file__).parent.glob("*.py")):
         digest.update(source.name.encode())
         digest.update(source.read_bytes())
-    report = dict(candidate="b_gpt", variant="v3: v0 + Claude (out-of-play gaps, restart-like ball-less gaps)", synthetic=bool(args.synthetic), config=asdict(CONFIG),
+    report = dict(candidate="b_gpt", variant="v4: v0 + Claude (out-of-play gaps, restart-like ball-less gaps, no change without control)", synthetic=bool(args.synthetic), config=asdict(CONFIG),
                   python=platform.python_version(), numpy=np.__version__,
                   code_sha256=digest.hexdigest(), evidence_totals=totals,
                   elapsed_seconds=round(time.perf_counter() - started, 3),

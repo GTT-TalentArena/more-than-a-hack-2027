@@ -55,3 +55,8 @@ Mensajes de Edu a Claude Code en esta variante, en orden. Las respuestas, resumi
 > Reglas de siempre: no leer ni ejecutar nada con los datos del partido; código, documentación y datos sintéticos; yo ejecuto en local y te paso solo agregados; no mirar la rama cand/a-opus.
 
 **Respuesta:** ver [analisis-v4.md](analisis-v4.md): casos no cubiertos, propuestas ordenadas por fundamento y diagnósticos sin GT para dimensionarlas antes de programarlas.
+
+## 10. 2026-10-21 · ~22:28
+> (Edu pega el hash y el bloque `v4_diagnostics` de la ejecución #9)
+
+**Respuesta:** Claude aplicó los criterios fijados: P1 y P2 no entran, P3 y P6 cumplen pero no se aplican (desviación razonada), P4 entra. Implementó la v4 (un tramo de < 3 s del rival entre dos del mismo equipo, sin parada, vuelve al equipo que tenía el balón), adaptó 2 tests de la v0 que asumían lo contrario y añadió 4.
