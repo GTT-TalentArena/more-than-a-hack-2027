@@ -60,3 +60,8 @@ Mensajes de Edu a Claude Code en esta variante, en orden. Las respuestas, resumi
 > (Edu pega el hash y el bloque `v4_diagnostics` de la ejecución #9)
 
 **Respuesta:** Claude aplicó los criterios fijados: P1 y P2 no entran, P3 y P6 cumplen pero no se aplican (desviación razonada), P4 entra. Implementó la v4 (un tramo de < 3 s del rival entre dos del mismo equipo, sin parada, vuelve al equipo que tenía el balón), adaptó 2 tests de la v0 que asumían lo contrario y añadió 4.
+
+## 11. 2026-10-21 · ~22:40
+> (Edu pega las dos ejecuciones de la v4, los hashes y el bloque de estructura)
+
+**Respuesta:** Claude comprobó que la v4 cumple todas las expectativas fijadas antes de ejecutarla y dio paso a la evaluación pública #5.

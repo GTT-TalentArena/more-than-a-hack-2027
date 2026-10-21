@@ -17,6 +17,7 @@
 | s5 | 2026-10-21 | (este commit) | tests sintéticos y `--synthetic` (v3 + diagnósticos v4) | 43 pruebas OK; mismo SHA-256 sintético que la v3 (`9ec36b1a…`): los diagnósticos no cambian etiquetas | No (sintético) |
 | 9 | 2026-10-21 | `620823d` | v3 + diagnósticos v4 con datos reales (Edu) | mismo SHA-256 que la v3 (`a5372e72…`) · duelos 0,54 min, 18/241 cambios junto a duelo · balón quieto vivo fuera del área 0,73 min · huecos por línea reaparecidos rápido 9,92 min (32) · 70 idas y vueltas < 3 s (2,1 min) · 100 tramos D (mediana 15,6 s) | No |
 | s6 | 2026-10-21 | (este commit) | tests sintéticos y `--synthetic` ×2 (v4) | 46 pruebas OK; la nueva prueba principal falla con la v3; mismo SHA-256 en las dos; validador OK; 38 idas y vueltas fusionadas en el partido sintético | No (sintético) |
+| 10 | 2026-10-21 | `8ae2aa5` | v4 con datos reales ×2 (Edu) | 220 posesiones · media 17,03 s · mediana 11,62 s · D 41,05 % (idéntico a la v3) · X 0 % · 60 idas y vueltas fusionadas · cambios H↔A 241 → 121 · idas y vueltas < 3 s 0 · posesiones < 2 s 57 → 13 · 100 tramos D sin cambios · mismo SHA-256 en las dos (`f7d8f604…`) | No |
 
 Comparación con la v0 (registro de b-gpt): 354 → 347 posesiones, D 33,41 % → 35,19 %, media 11,95 → 11,87 s. Sin GT: no indica si acierta más.
 
@@ -27,3 +28,5 @@ Lectura fijada antes de evaluar: diferencias < ~0,06 de spellF1 son una posesió
 Lectura de la #3 con el criterio fijado antes: resultado **mixto** (spellF1 baja > 0,06 pero macroF1 no baja). La hipótesis acierta en parte (falta mucha D) pero no todos los huecos largos son paradas.
 
 Lectura de la #4 con el criterio fijado antes («mejora clara: spellF1 ≥ 0,3895 sin bajar macroF1»): **se cumple**; la v3 pasa a ser la versión de la variante.
+
+Comprobación de la v4 antes de la evaluación #5 (expectativas fijadas en analisis-v4.md §6): D idéntico (41,05 %), posesiones 340 → 220 y cambios H↔A 241 → 121 dentro de lo esperado, 0 idas y vueltas < 3 s, determinista. **Se cumplen todas**: la v4 puede gastar la evaluación pública #5.
