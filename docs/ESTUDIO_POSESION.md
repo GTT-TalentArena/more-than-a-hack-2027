@@ -696,7 +696,7 @@ Resultados (`spellF1`):
 
 | prueba | `p_short = 0` | `p_short = 0,2` | `p_short = 0,4` | GT real (`EVALUATION.md`) |
 |---|---|---|---|---|
-| retraso uniforme 3 / 8 / 25 frames | 0,999 / 0,983 / 0,864 | 0,987 / 0,921 / 0,742 | 0,966 / 0,784 / 0,536 | 0,982 / 0,893 / 0,654 |
+| retraso uniforme 3 / 8 / 25 frames | 0,999 / 0,983 / 0,864 | 0,987 / 0,921 / 0,741 | 0,966 / 0,784 / 0,533 | 0,982 / 0,893 / 0,654 |
 | 10 / 50 / 100 parpadeos de 1 frame (otro equipo) | 0,926 / 0,695 / 0,499 | 0,928 / 0,702 / 0,497 | 0,926 / 0,699 / 0,501 | — |
 | 10 / 50 / 100 huecos `D` de 1 frame | 0,951 / 0,772 / 0,598 | 0,951 / 0,777 / 0,593 | 0,952 / 0,777 / 0,598 | — |
 | ruido en fronteras σ = 5 / 12 / 25 frames | 0,999 / 0,975 / 0,890 | 0,978 / 0,886 / 0,792 | 0,927 / 0,773 / 0,670 | — |
@@ -790,10 +790,9 @@ def min_duration(codes, min_frames):
 
 
 def lag(gt, frames):
-    """Prediccion perfecta con todas las fronteras retrasadas `frames` frames."""
+    """Prediccion perfecta desplazada `frames` frames: cada frame toma la etiqueta de `frames` antes."""
     pred = gt.copy()
-    for frame, old, new in pm.transitions(gt, pm.valid_runs(gt)):
-        pred[frame:frame + frames] = old
+    pred[frames:] = gt[:-frames]
     return pred
 
 
