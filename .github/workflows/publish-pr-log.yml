@@ -1,0 +1,170 @@
+name: Publish merged PR to website log
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  publish-log:
+    if: >-
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'log')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Checkout website repository
+        uses: actions/checkout@v4
+        with:
+          repository: GTT-TalentArena/gtt-talentarena.github.io
+          ref: main
+          path: website
+          token: ${{ secrets.LOG_REPO_TOKEN }}
+
+      - name: Generate Markdown log
+        uses: actions/github-script@v7
+        env:
+          WEBSITE_DIR: website
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const TYPES = ['study', 'code', 'experiment', 'iteration', 'data', 'decision'];
+            const OUTCOMES = ['success', 'failure', 'mixed', 'open'];
+            const NEEDS_OUTCOME = ['experiment', 'iteration'];
+
+            const pr = context.payload.pull_request;
+            const defaultDate = new Date(pr.merged_at).toISOString().slice(0, 10);
+
+            const raw = (pr.body || '').replace(/\r\n/g, '\n').trim();
+            const match = raw.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+            if (!match) {
+              throw new Error(
+                'La descripción del PR debe empezar por el front matter entre ---'
+              );
+            }
+
+            // Quita comentarios de la plantilla: líneas completas con # y
+            // comentarios al final de type/outcome. Quita también las claves vacías.
+            const lines = match[1]
+              .split('\n')
+              .filter(l => !/^\s*#/.test(l))
+              .map(l => (/^(type|outcome):/.test(l) ? l.replace(/\s+#.*$/, '') : l))
+              .filter(l => l.trim() !== '')
+              .filter(l => !/^(date|outcome):\s*$/.test(l));
+
+            const body = match[2].trim();
+
+            function get(key) {
+              const line = lines.find(l => l.startsWith(`${key}:`));
+              if (!line) return '';
+              return line.slice(key.length + 1).trim().replace(/^"(.*)"$/, '$1');
+            }
+
+            const title = get('title');
+            const type = get('type');
+            const outcome = get('outcome');
+            const date = get('date') || defaultDate;
+
+            if (!title) {
+              throw new Error('Falta title en el front matter');
+            }
+            if (!TYPES.includes(type)) {
+              throw new Error(
+                `type inválido o ausente: "${type}". Valores: ${TYPES.join(', ')}`
+              );
+            }
+            if (NEEDS_OUTCOME.includes(type) && !OUTCOMES.includes(outcome)) {
+              throw new Error(
+                `outcome es obligatorio en "${type}". Valores: ${OUTCOMES.join(', ')}`
+              );
+            }
+            if (outcome && !OUTCOMES.includes(outcome)) {
+              throw new Error(
+                `outcome inválido: "${outcome}". Valores: ${OUTCOMES.join(', ')}`
+              );
+            }
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+              throw new Error(`date inválida: "${date}". Formato AAAA-MM-DD`);
+            }
+
+            // Completa title/date/authors si faltan; el resto se copia tal cual
+            const out = [...lines];
+            if (!lines.some(l => l.startsWith('date:'))) {
+              const i = out.findIndex(l => l.startsWith('title:'));
+              out.splice(i + 1, 0, `date: ${date}`);
+            }
+            if (!lines.some(l => l.startsWith('authors:'))) {
+              out.push(`authors: [${pr.user.login}]`);
+            }
+
+            const content = ['---', ...out, '---', '', body, ''].join('\n');
+
+            function slugify(value) {
+              return value
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '')
+                .slice(0, 70) || 'change';
+            }
+
+            const directory = path.join(process.env.WEBSITE_DIR, 'content', 'log');
+            fs.mkdirSync(directory, { recursive: true });
+
+            const filename = `${date}-${slugify(title)}.md`;
+            const output = path.join(directory, filename);
+
+            if (fs.existsSync(output)) {
+              core.info(`Log already exists: ${filename}`);
+              return;
+            }
+
+            fs.writeFileSync(output, content, 'utf8');
+            core.info(`Generated ${output}`);
+
+      - name: Open PR in website repo
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ secrets.LOG_REPO_TOKEN }}
+        working-directory: website
+        run: |
+          set -e
+          BRANCH="log/pr-${PR_NUMBER}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git checkout -b "$BRANCH"
+          git add content/log/
+
+          if git diff --cached --quiet; then
+            echo "No new changes to publish."
+            exit 0
+          fi
+
+          git commit -m "docs(log): add entry for PR #${PR_NUMBER}"
+          git push origin "$BRANCH"
+
+          gh pr create \
+            --repo GTT-TalentArena/gtt-talentarena.github.io \
+            --base main \
+            --head "$BRANCH" \
+            --title "docs(log): add entry for PR #${PR_NUMBER}" \
+            --body "Entrada automática del log para PR #${PR_NUMBER}."
+
+          gh pr merge "$BRANCH" \
+            --repo GTT-TalentArena/gtt-talentarena.github.io \
+            --squash --auto

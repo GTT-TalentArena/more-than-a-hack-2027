@@ -1,0 +1,87 @@
+name: Validate log front matter
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize, labeled, unlabeled]
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  validate:
+    name: validate-log-frontmatter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate front matter
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const hasLog = pr.labels.some(l => l.name === 'log');
+
+            if (!hasLog) {
+              core.info('El PR no tiene la etiqueta log: no se valida el front matter.');
+              return;
+            }
+
+            const TYPES = ['study', 'code', 'experiment', 'iteration', 'data', 'decision'];
+            const OUTCOMES = ['success', 'failure', 'mixed', 'open'];
+            const NEEDS_OUTCOME = ['experiment', 'iteration'];
+            const errors = [];
+
+            const raw = (pr.body || '').replace(/\r\n/g, '\n').trim();
+            const match = raw.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+
+            if (!match) {
+              core.setFailed('La descripción debe empezar por un front matter entre ---.');
+              return;
+            }
+
+            const lines = match[1]
+              .split('\n')
+              .filter(l => !/^\s*#/.test(l))
+              .map(l => l.replace(/\s+#.*$/, ''))
+              .filter(l => l.trim() !== '');
+            const body = match[2];
+
+            function get(key) {
+              const line = lines.find(l => l.startsWith(`${key}:`));
+              if (!line) return '';
+              return line.slice(key.length + 1).trim().replace(/^"(.*)"$/, '$1');
+            }
+
+            const title = get('title');
+            const type = get('type');
+            const outcome = get('outcome');
+            const date = get('date');
+
+            if (!title) errors.push('Falta title.');
+            if (!TYPES.includes(type)) {
+              errors.push(`type inválido o ausente: "${type}". Valores: ${TYPES.join(', ')}.`);
+            }
+            if (NEEDS_OUTCOME.includes(type) && !OUTCOMES.includes(outcome)) {
+              errors.push(`outcome es obligatorio en "${type}". Valores: ${OUTCOMES.join(', ')}.`);
+            }
+            if (outcome && !OUTCOMES.includes(outcome)) {
+              errors.push(`outcome inválido: "${outcome}".`);
+            }
+            if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+              errors.push(`date inválida: "${date}". Formato AAAA-MM-DD.`);
+            }
+            if (lines.some(l => /^\s*(value|before):\s*$/.test(l))) {
+              errors.push('Hay valores de métricas sin rellenar (value o before).');
+            }
+            if (/<[a-z]+>/i.test(raw)) {
+              errors.push('Quedan placeholders como <estudio> en la descripción.');
+            }
+            if (body.trim() === '') {
+              errors.push('El contenido después del front matter está vacío.');
+            }
+
+            if (errors.length) {
+              core.setFailed(`Front matter inválido:\n- ${errors.join('\n- ')}`);
+            } else {
+              core.info('Front matter válido.');
+            }
