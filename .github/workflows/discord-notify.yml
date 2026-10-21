@@ -4,7 +4,7 @@ name: Discord notifications
 
 on:
   workflow_run:
-    workflows: ["Validate log front matter", "Publish merged PR to website log"]
+    workflows: ["Validate log front matter", "Publish merged PR to website log", "Docker"]
     types: [completed]
 
 permissions: {}

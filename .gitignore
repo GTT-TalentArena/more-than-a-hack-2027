@@ -62,3 +62,8 @@ __pycache__/
 venv/
 env/
 .DS_Store
+
+# -- Docker / pipeline (docker/pipeline.py) ------------------------------------------------------
+# CSV, informes y runs.jsonl de cada ejecución. Pueden contener predicciones del partido entero.
+salidas/*
+!salidas/.gitkeep
