@@ -202,3 +202,24 @@ Se anotaron los dos mensajes y la ejecución local completada; no se solicitó n
 
 **Resumen de actuación:** Se registraron los agregados y se comprobó su coherencia aritmética con la duración publicada: aproximadamente 3,343 posesiones/minuto, 70,525 minutos vivos y 35,379 minutos D.
 Se distinguió cobertura de exactitud y se señaló que faltan los agregados del baseline y por mitad; no se abrieron resultados ni datos reales, no se ajustó el método y A8 siguió en 1 de 5.
+
+## 11. Cierre de sesión y limpieza — 2026-10-21
+
+````text
+Cierra el registro de esta sesión en prompts/confrontacion/b-gpt/ (rama cand/b-gpt). Solo registro y limpieza: no toques el método.
+
+1. horas.md: sesión 1 del 2026-10-21, de 20:15 a 21:06, 0 h 51 min de tiempo activo. Total usado: 0 h 51 min de 8 h. Quita los «pendiente de Edu».
+
+2. README.md del registro: modelo ChatGPT-6 Astra, nivel de razonamiento high, usado a través de Codex. Si la versión o snapshot exacto no se muestra en la interfaz, déjalo indicado así.
+
+3. prompts.md: añade este prompt con su fecha y un resumen de lo que hagas.
+
+4. Borra solution/control_v1/: es la versión anterior, sin trackear, sustituida por solution/b_gpt/.
+
+5. Haz commit de los cambios en cand/b-gpt. No hagas push: lo hago yo.
+
+6. Dime el comando exacto para ejecutar b_gpt por segunda vez escribiendo en evaluation/results/b_gpt_r2.csv, para comprobar el determinismo y el tiempo. Lo ejecutaré yo y te pasaré los dos hashes SHA-256, el tiempo y el resultado de validate_submission.py, para que lo apuntes como ejecución #2 (no pública) en ejecuciones.md.
+````
+
+**Resumen de actuación:** Se cerró la sesión con 0 h 51 min y se confirmó ChatGPT-6 Astra/high a través de Codex, sin inventar un snapshot; se conservaron las dependencias en `solution/b_gpt/.venv/` y se eliminó la carpeta antigua sin leer sus resultados.
+Se dejó preparado el comando de repetición, medición, hashes y validación para Edu; se registraron únicamente documentación y limpieza en cand/b-gpt, sin cambiar el método, ejecutar datos reales ni hacer push.

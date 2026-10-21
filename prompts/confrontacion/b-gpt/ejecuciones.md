@@ -43,3 +43,28 @@ generación/inferencia/escritura de 199.319 frames y 46 slots, 3.88 s y 178.7 Mi
 lectura de un ATD sintético de ese tamaño, 4.54 s y 138.0 MiB. No son puntuaciones
 públicas ni mediciones sobre el partido. Las líneas completas de esos scripts no
 quedaron como ejecutables versionados y no se inventan comandos para reproducirlas aquí.
+
+## Repetición de inferencia para comprobar determinismo
+
+La primera inferencia completa comunicada por Edu figura en la entrada 7 del registro
+anterior. La repetición solicitada al cerrar la sesión se identificará como **ejecución
+local #2 (no pública)**. Esta numeración de inferencias reales es independiente de la
+numeración de entradas históricas y de las evaluaciones públicas A8.
+
+La ejecución local #2 **aún no se ha realizado ni registrado como completada**: Edu
+la ejecutará y devolverá ambos SHA-256, el tiempo y el resultado del validador.
+No se anticipan valores ni se consume una evaluación pública por comprobar el formato.
+
+Comandos desde la raíz del repositorio, para ejecutar exclusivamente por Edu:
+
+```bash
+source solution/b_gpt/.venv/bin/activate
+export MTAH_DATA_DIR="$HOME/mtah2027"
+time python -m solution.b_gpt --out evaluation/results/b_gpt_r2.csv
+sha256sum evaluation/results/b_gpt.csv evaluation/results/b_gpt_r2.csv
+python evaluation/validate_submission.py evaluation/results/b_gpt_r2.csv
+```
+
+`time` utiliza el medidor del shell zsh, sin requerir `/usr/bin/time`. El CSV original
+se conserva. Los hashes, el tiempo y la salida agregada del validador pueden devolverse
+al agente; los archivos CSV y su contenido por frame permanecen en local.
