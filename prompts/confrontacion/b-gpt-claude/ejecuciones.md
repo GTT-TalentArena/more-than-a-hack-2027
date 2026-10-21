@@ -14,6 +14,7 @@
 | s4 | 2026-10-21 | (este commit) | tests sintéticos y `--synthetic` ×2 (v3) | 42 pruebas OK; la del balón tapado por un jugador falla con la v2; mismo SHA-256 en las dos; validador OK | No (sintético) |
 | 7 | 2026-10-21 | `13ffe9b` | v3 con datos reales ×2 (Edu) | 340 posesiones · media 11,02 s · mediana 6,58 s · D 41,05 % · X 0 % · huecos vivos: 5–10 s 2,62 · 10–30 s 4,07 · > 30 s 0,62 min · mismo SHA-256 en las dos (`a5372e72…`) | No |
 | 8 | 2026-10-21 | `13ffe9b` | evaluación pública con Docker (bootstrap 1000) sobre la v3 | spellF1 **0.3895** · macroF1 **0.6901** [0.470, 0.822] · 21 posesiones · 13,4 s · código 0 · D precisión 0,998 / recall 0,317 | **Sí, #4 del candidato B** |
+| s5 | 2026-10-21 | (este commit) | tests sintéticos y `--synthetic` (v3 + diagnósticos v4) | 43 pruebas OK; mismo SHA-256 sintético que la v3 (`9ec36b1a…`): los diagnósticos no cambian etiquetas | No (sintético) |
 
 Comparación con la v0 (registro de b-gpt): 354 → 347 posesiones, D 33,41 % → 35,19 %, media 11,95 → 11,87 s. Sin GT: no indica si acierta más.
 

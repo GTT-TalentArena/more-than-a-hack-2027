@@ -115,6 +115,27 @@ class SyntheticBehaviour(unittest.TestCase):
         _, totals = predict(tracking, [], NAMES, [(1, 0, 1999)], 25, PITCH)
         self.assertEqual(totals["out_of_play_gap_frames"], round(CONFIG.stop_lookback_s * 25))
 
+    def test_v4_diagnostics_are_aggregates_and_see_a_placed_ball_and_a_duel(self):
+        import json
+        truth = np.full(1500, "H")
+        tracking = from_labels(truth, missing=False)
+        # A ball placed still for 4 s in open play, with the H taker next to it.
+        tracking.ball[600:700, :2] = [60, 30]
+        tracking.players[600:700, 0, :2] = [60.4, 30]
+        # Two seconds of duel: H at 0.4 m and A at 0.7 m from the ball.
+        tracking.players[900:950, 1, :2] = tracking.ball[900:950, :2] + [-.7, 0]
+        _, totals = predict(tracking, [], NAMES, [(1, 0, 1499)], 25, PITCH)
+        diagnostics = totals["v4_diagnostics"]
+        json.dumps(diagnostics, allow_nan=False)  # aggregates only, serialisable
+        self.assertEqual(diagnostics["still_ball_1s_by_zone"]["open"]["runs_3s"], 1)
+        self.assertGreaterEqual(diagnostics["duels"]["minutes"], round(50 / 25 / 60, 2))
+        leaves = []
+        def walk(node):
+            for value in node.values():
+                walk(value) if isinstance(value, dict) else leaves.append(value)
+        walk(diagnostics)
+        self.assertTrue(all(v is None or isinstance(v, (int, float)) for v in leaves))
+
     def test_flight_past_opponent_retains_previous_team(self):
         truth = np.full(700, "H")
         tracking = from_labels(truth, missing=False)

@@ -43,3 +43,15 @@ Mensajes de Edu a Claude Code en esta variante, en orden. Las respuestas, resumi
 > diria que la B, lo que hay que tener en cuenta es si un jugador esta de espaldas con el valon a la camara, ahi desapareceria el valon tambien no crees? no se si se tiene en cuenta
 
 **Respuesta:** Claude confirmó que la v2 no lo distinguía e implementó la v3: el hueco solo es parada si el balón se pierde junto a una línea, reaparece quieto o junto a una línea, o el hueco dura > 30 s; si reaparece moviéndose dentro del campo (balón tapado por un jugador o en vuelo) es juego vivo. 3 tests nuevos (el del balón tapado falla con la v2); determinismo sintético.
+
+## 9. 2026-10-21 · 22:18 (effort max)
+> No podemos subir nada aun, todo tiene que permanecer en local,
+>
+> Effort cambiado a max (mismo modelo, Opus 5.5). Objetivo: v4 de la variante B + Claude (rama cand/b-gpt-claude, partiendo de la v3, commit 56d1b29).
+> 1. Primero, anota en prompts/confrontacion/b-gpt-claude/ (desviaciones.md, README.md y horas.md) el cambio de effort de medium a max, con la hora.
+> 2. Haz un análisis sin mirar los datos: lee el código de solution/b_gpt/, la documentación pública del reto (CHALLENGE.md, DATA.md, EVALUATION.md, FAQ.md) y busca en internet literatura de detección de posesión y balón parado con tracking. Haz una lista de casos y variables de fútbol que el modelo aún no cubre (reglas del juego, reanudaciones, porteros, duelos, etc.), con la justificación de cada uno y el riesgo de sobreajuste.
+> 3. Propónme las mejoras ordenadas por fundamento, antes de programarlas. Valídalas primero con diagnósticos del partido completo sin GT, que puedo ejecutar yo sin gastar evaluaciones públicas.
+> 4. Solo queda 1 evaluación pública. Criterio fijado antes de usarla: si la v4 no mejora a la v3 (spellF1 ≥ 0.3895 y macroF1 ≥ 0.6901), se congela la v3.
+> Reglas de siempre: no leer ni ejecutar nada con los datos del partido; código, documentación y datos sintéticos; yo ejecuto en local y te paso solo agregados; no mirar la rama cand/a-opus.
+
+**Respuesta:** ver [analisis-v4.md](analisis-v4.md): casos no cubiertos, propuestas ordenadas por fundamento y diagnósticos sin GT para dimensionarlas antes de programarlas.

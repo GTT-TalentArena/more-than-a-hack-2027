@@ -118,7 +118,7 @@ def features(ball_raw, players, teams, fps, pitch, cfg=CONFIG):
     control[outside] = 0
     return dict(ball=ball, quality=quality, speed=speed, activity=activity, count=count,
                 nearest=nearest, control=control, outside=outside, inside=inside, beyond=beyond,
-                line_dist=line_dist)
+                line_dist=line_dist, pitch=np.asarray(pitch, dtype=np.float64))
 
 
 def out_of_play_gaps(f, fps, cfg=CONFIG):
@@ -422,11 +422,190 @@ def merge_diagnostics(total, part):
             bucket[name] = round(bucket.get(name, 0) + value, 2)
 
 
+# v4 (Claude, effort max): GT-free diagnostics that size each proposal of
+# prompts/confrontacion/b-gpt-claude/analisis-v4.md before it is implemented.
+# Aggregates only (counts, minutes, seconds); they never change a label.
+PENALTY_DEPTH_M, PENALTY_HALF_WIDTH_M = 16.5, 20.16
+GOAL_AREA_DEPTH_M, GOAL_AREA_HALF_WIDTH_M = 5.5, 9.16
+DUEL_RADIUS_M = 1.0  # Vidal-Codina et al. (2022): duel zone around the ball
+ZONES = ("open", "near_line", "keeper_zone", "goal_area", "outside")
+SIDES = ("goal_line_low_x", "goal_line_high_x", "touchline_low_y", "touchline_high_y")
+
+
+def ball_zones(ball, pitch):
+    """Pitch zone of each located ball; empty string where the ball is not located.
+    keeper_zone = penalty area outside the goal area, where a goalkeeper may hold the ball."""
+    length, width = pitch
+    x, y = ball[:, 0], ball[:, 1]
+    zone = np.full(len(ball), "", dtype="<U11")
+    with np.errstate(invalid="ignore"):
+        line = np.min(np.stack([x, length - x, y, width - y], axis=1), axis=1)
+        from_goal = np.minimum(x, length - x)
+        from_axis = np.abs(y - width / 2)
+        located = np.isfinite(line)
+        zone[located] = "open"
+        zone[located & (line <= 2)] = "near_line"
+        box = located & (from_goal <= PENALTY_DEPTH_M) & (from_axis <= PENALTY_HALF_WIDTH_M)
+        zone[box] = "keeper_zone"
+        zone[box & (from_goal <= GOAL_AREA_DEPTH_M) & (from_axis <= GOAL_AREA_HALF_WIDTH_M)] = "goal_area"
+        zone[located & (line < 0)] = "outside"
+    return zone
+
+
+def next_true(mask):
+    """Index of the next True at or after each frame (len(mask) if there is none)."""
+    n = len(mask)
+    return np.minimum.accumulate(np.where(mask, np.arange(n), n)[::-1])[::-1]
+
+
+def inward_speed(ball, i, k, pitch, fps):
+    """Ball speed towards the inside of the pitch, across the nearest line, from frame i-k to i."""
+    length, width = pitch
+    v = (ball[i] - ball[i - k]) * fps / k
+    distances = [ball[i, 0], length - ball[i, 0], ball[i, 1], width - ball[i, 1]]
+    normals = ((1., 0.), (-1., 0.), (0., 1.), (0., -1.))
+    return float(np.dot(v, normals[int(np.argmin(distances))]))
+
+
+def v4_candidate_diagnostics(parts, fps, cfg=CONFIG):
+    minutes = lambda frames: round(float(frames) / fps / 60, 2)
+    still_zone = {z: dict(runs=0, frames=0, live=0, runs_3s=0, frames_3s=0, live_3s=0) for z in ZONES}
+    exits = dict(total=0, while_ball_still=0, frames=0)
+    duels = dict(frames=0, team_switches=0, near=0)
+    flips = dict(count=0, frames=0, short_spells=0)
+    dead_lengths = []
+    gap_keys = ("lost_at_line", "lost_at_line_inward_fast", "back_at_line", "back_at_line_fast",
+                "back_still", "back_still_moves_within_1s", "very_long", "left_live")
+    gaps = {key: [0, 0] for key in gap_keys}  # [number of gaps, frames]
+    outs = {side: dict(episodes=0, bounce_backs=0) for side in SIDES}
+    for f, states in parts:
+        n = len(states)
+        pitch = f["pitch"]
+        observed = f["quality"] == 1
+        speed = np.nan_to_num(f["speed"], nan=-1.)
+        live = states != 2
+        still = observed & (speed >= 0) & (speed < .65)
+        moving = observed & (speed > 2.0)
+        zone = ball_zones(f["ball"], pitch)
+
+        # P2a: ball standing still for >= 1 s, by zone, and how much of it is labelled live
+        for a, b in runs(still):
+            z = zone[(a + b) // 2]
+            if b - a < fps or z not in still_zone:
+                continue
+            bucket = still_zone[z]
+            bucket["runs"] += 1
+            bucket["frames"] += b - a
+            bucket["live"] += int(live[a:b].sum())
+            if b - a >= 3 * fps:
+                bucket["runs_3s"] += 1
+                bucket["frames_3s"] += b - a
+                bucket["live_3s"] += int(live[a:b].sum())
+
+        # P2b: exits from D while the ball is still, and time until it is really kicked
+        upcoming = next_true(moving)
+        for t in np.flatnonzero((states[:-1] == 2) & (states[1:] != 2)) + 1:
+            exits["total"] += 1
+            if still[t]:
+                exits["while_ball_still"] += 1
+                exits["frames"] += int(min(upcoming[t] - t, 30 * fps))
+
+        # P1: duels (both teams within DUEL_RADIUS_M of the ball) and H<->A switches near them
+        near = f["nearest"]
+        duel = observed & (near[:, 0] <= DUEL_RADIUS_M) & (near[:, 1] <= DUEL_RADIUS_M)
+        duels["frames"] += int(duel.sum())
+        pad = round(.5 * fps)
+        close_to_duel = mean_window(duel.astype(float), pad, pad) > 0
+        switches = np.flatnonzero((states[:-1] != 2) & (states[1:] != 2) & (states[:-1] != states[1:])) + 1
+        duels["team_switches"] += len(switches)
+        duels["near"] += int(close_to_duel[switches].sum())
+
+        # Structure: there-and-back team changes under 3 s, very short spells, dead runs
+        starts = np.r_[0, np.flatnonzero(np.diff(states)) + 1]
+        lengths = np.diff(np.r_[starts, n])
+        values = states[starts]
+        for i in range(1, len(values) - 1):
+            if (values[i] != 2 and values[i - 1] != 2 and values[i - 1] == values[i + 1]
+                    and values[i] != values[i - 1] and lengths[i] < 3 * fps):
+                flips["count"] += 1
+                flips["frames"] += int(lengths[i])
+        flips["short_spells"] += int(np.sum((values != 2) & (lengths < 2 * fps)))
+        dead_lengths += [int(length) for value, length in zip(values, lengths) if value == 2]
+
+        # P3: the line rules of restart_like_gaps, split by the direction and speed of the ball
+        tracked = f["count"] >= 8
+        look, k = max(1, round(.5 * fps)), max(1, round(.2 * fps))
+        for a, b in runs(~observed):
+            if b - a < round(cfg.medium_gap_s * fps) or tracked[a:b].mean() <= .5:
+                continue
+            g = b - a
+            lost_at_line = a > 0 and observed[a - 1] and f["line_dist"][a - 1] <= cfg.clear_out_m
+            after = np.arange(b, min(n, b + look))
+            after = after[observed[after]]
+            back = speed[after][speed[after] >= 0]
+            back_at_line = len(after) > 0 and f["line_dist"][after[0]] <= cfg.clear_out_m
+            back_still = len(back) > 0 and np.median(back) < .65
+            very_long = g >= round(cfg.very_long_gap_s * fps)
+            hits = []
+            if lost_at_line:
+                hits.append("lost_at_line")
+                if a - 1 - k >= 0 and observed[a - 1 - k] and inward_speed(f["ball"], a - 1, k, pitch, fps) > 2.0:
+                    hits.append("lost_at_line_inward_fast")
+            if back_at_line:
+                hits.append("back_at_line")
+                if len(back) > 0 and np.median(back) > 2.0:
+                    hits.append("back_at_line_fast")
+            if back_still:
+                hits.append("back_still")
+                if moving[b:min(n, b + fps)].any():
+                    hits.append("back_still_moves_within_1s")
+            if very_long:
+                hits.append("very_long")
+            if not (lost_at_line or back_at_line or back_still or very_long):
+                hits.append("left_live")
+            for key in hits:
+                gaps[key][0] += 1
+                gaps[key][1] += g
+
+        # P6: exits per side, and "bounce-backs" (inside again and moving within 1 s, never lost)
+        length, width = pitch
+        for a, b in runs(persistent(observed & f["outside"], max(2, round(.16 * fps)))):
+            x, y = f["ball"][b - 1]
+            beyond_x, beyond_y = max(-x, x - length), max(-y, y - width)
+            side = (("goal_line_low_x" if x < 0 else "goal_line_high_x") if beyond_x >= beyond_y
+                    else ("touchline_low_y" if y < 0 else "touchline_high_y"))
+            outs[side]["episodes"] += 1
+            window = slice(b, min(n, b + fps))
+            if b < n and observed[window].all() and f["inside"][window].all() and moving[window].any():
+                outs[side]["bounce_backs"] += 1
+
+    seconds = np.asarray(dead_lengths, dtype=float) / fps
+    return dict(
+        still_ball_1s_by_zone={z: dict(runs=v["runs"], minutes=minutes(v["frames"]),
+                                       minutes_labelled_live=minutes(v["live"]), runs_3s=v["runs_3s"],
+                                       minutes_3s=minutes(v["frames_3s"]),
+                                       minutes_labelled_live_3s=minutes(v["live_3s"]))
+                               for z, v in still_zone.items()},
+        dead_exits=dict(total=exits["total"], while_ball_still=exits["while_ball_still"],
+                        minutes_until_ball_moves=minutes(exits["frames"])),
+        duels=dict(minutes=minutes(duels["frames"]), team_switches=duels["team_switches"],
+                   switches_within_0_5s_of_duel=duels["near"]),
+        structure=dict(flip_backs_under_3s=flips["count"], flip_back_minutes=minutes(flips["frames"]),
+                       spells_under_2s=flips["short_spells"], dead_runs=len(dead_lengths),
+                       dead_run_seconds_mean=round(float(seconds.mean()), 1) if len(seconds) else None,
+                       dead_run_seconds_p50=round(float(np.percentile(seconds, 50)), 1) if len(seconds) else None,
+                       dead_run_seconds_p90=round(float(np.percentile(seconds, 90)), 1) if len(seconds) else None),
+        line_gaps={key: dict(gaps=v[0], minutes=minutes(v[1])) for key, v in gaps.items()},
+        out_episodes=outs,
+    )
+
+
 def predict(tracking, events, names, blocks, fps, pitch, cfg=CONFIG):
     labels = np.full(len(tracking.ball), "X", dtype="<U1")
     totals = dict(graded_frames=0, observed_ball_frames=0, control_frames=0,
                   dead_evidence_frames=0, supported_restarts=0, out_of_play_gap_frames=0,
                   dead_time_diagnostics={})
+    parts = []
     for _, start, last in blocks:
         stop = last + 1
         if not (0 <= start < stop <= len(labels)):
@@ -448,4 +627,6 @@ def predict(tracking, events, names, blocks, fps, pitch, cfg=CONFIG):
         totals["supported_restarts"] += evidence[5]
         totals["out_of_play_gap_frames"] += evidence[6]
         merge_diagnostics(totals["dead_time_diagnostics"], dead_time_diagnostics(f, states, fps))
+        parts.append((f, states))
+    totals["v4_diagnostics"] = v4_candidate_diagnostics(parts, fps, cfg)
     return labels, totals
