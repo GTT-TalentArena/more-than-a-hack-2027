@@ -1,7 +1,0 @@
-{
-  "contract_version": "1.0",
-  "model": "module",
-  "parameters": {"module": "solution.b_gpt"},
-  "seed": 0,
-  "evaluation": {"split": "public-5min", "bootstrap": 0}
-}
