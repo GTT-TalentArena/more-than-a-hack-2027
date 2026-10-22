@@ -22,7 +22,7 @@ abrir ningún dato del partido ni la GT pública. Construyó `solution/a_opus/` 
   coincide con la fuerza bruta.
 - **Resultado sintético** (3 partidos): spellF1 0,69–0,77 frente a 0,31–0,33 del baseline con los mismos datos.
   Tarda ~10 s y es determinista.
-- **Ficheros:** `solution/a_opus/*`. Commit: _pendiente_.
+- **Ficheros:** `solution/a_opus/*`. Commit: sin commit propio (versión intermedia); el código final está en `6456aab`.
 
 ## 002 · 2026-10-21 · no funciona en el terminal
 
@@ -39,7 +39,7 @@ Cambios:
 - `main()` dice dónde ha buscado los datos si no los encuentra (código 2).
 - El README tiene una receta para Windows.
 
-Comandos dados: los del venv con `MTAH_DATA_DIR`. Commit: _pendiente_.
+Comandos dados: los del venv con `MTAH_DATA_DIR`. Commit: sin commit propio (versión intermedia); el código final está en `6456aab`.
 
 ## 003 · 2026-10-21 · log de la primera ejecución real
 
@@ -63,7 +63,7 @@ v1.1:
 - λ_HA de 5 a 4.
 - Comprobaciones sin etiquetas en el log (`diagnostics.py`).
 
-Sintético v1.1: 0,723 / 0,781 / 0,753. Commit: _pendiente_.
+Sintético v1.1: 0,723 / 0,781 / 0,753. Commit: sin commit propio (versión intermedia); el código final está en `6456aab`.
 
 ## 004 · 2026-10-21 · qué hace falta para la siguiente mejora
 
@@ -89,7 +89,7 @@ Respuesta (resumen):
 - El modelo leyó el informe agregado ya existente `evaluation/reports/gtt_comet_v1_1.json`, sin abrir los
   `*_transitions.csv` y sin gastar otra evaluación pública.
 - Guardó el hash del `gtt_comet_v1_1.csv` actual para comprobar que la reejecución lo reproduce byte a byte (C1).
-- Comando dado: la v1.1 con `--log evaluation\reports\gtt_comet_v1_1_log.txt`. Commit: _pendiente_.
+- Comando dado: la v1.1 con `--log evaluation\reports\gtt_comet_v1_1_log.txt`. Commit: sin commit propio (versión intermedia); el código final está en `6456aab`.
 
 ## 006 · 2026-10-21/22 · atacar las fronteras con el estudio
 
@@ -109,7 +109,7 @@ Respuesta (resumen):
 - **Probado y descartado** (documentado en el README): evidencia por hueco según longitud, cadena de Markov de
   visibilidad y estimador de retraso por posición.
 - **Resultados.** Sintético v1.2: 0,728 / 0,789 / 0,755. Tests nuevos del fechado en el primer toque.
-  Commit: `6456aab` (v1.6), PR en la entrada 013.
+  Commit: sin commit propio (versión intermedia); el código final está en `6456aab`.
 
 ## 007 · 2026-10-22 · evaluar y mejorar hasta gastar las 5 evaluaciones
 
@@ -124,7 +124,7 @@ Respuesta (resumen):
 - **Tabla para la gráfica.** `prompts/confrontacion/a-opus/resultados.csv`: una fila por versión, con las
   métricas públicas, los agregados del partido completo sin etiquetas y la media sintética.
 - **v1.3:** toques (estudio 3.1 y P3), λ = 3 y reinicio tras hueco largo (3.4). Sintético 0,761 / 0,810 /
-  0,774. Commit: _pendiente_.
+  0,774. Commit: sin commit propio (versión intermedia); el código final está en `6456aab`.
 
 ## 008 · 2026-10-22 · log de la v1.3
 
@@ -141,7 +141,7 @@ Respuesta (resumen):
   - asignación por distancia mínima en ±3 frames;
   - log con los recuentos de cada filtro;
   - generador con `--ball-style real` para reproducir el balón suavizado.
-- **Resultados.** Sintético: ruidoso 0,775, estilo real 0,785. Commit: _pendiente_.
+- **Resultados.** Sintético: ruidoso 0,775, estilo real 0,785. Commit: sin commit propio (versión intermedia); el código final está en `6456aab`.
 
 ## 009 · 2026-10-22 · log de la v1.4
 
@@ -164,7 +164,7 @@ Respuesta (resumen):
   media subida.
 - **Descartado:** λ 2–2,5, toque a 2,5 nats y margen de 0,2 m.
 - **Resultados.** Sintético: ruidoso 0,784 (v1.4: 0,775), suavizado 0,786 (v1.4: 0,774). Evaluación n.º 5
-  reservada. Commit: _pendiente_.
+  reservada. Commit: sin commit propio (versión intermedia); el código final está en `6456aab`.
 
 ## 011 · 2026-10-22 · tabla para Molines y valoración de la v1.5
 
@@ -177,7 +177,7 @@ Respuesta (resumen):
   balones aéreos en la referencia del umbral.
 - **v1.6:** umbral con referencia de balón raso. Neutra en el sintético y dirigida al fallo real.
 - **Evaluación n.º 5:** reservada para la v1.6 si su log sale sano.
-- **Tabla:** preparada en el formato de Molines con las 4 evaluaciones hechas. Commit: _pendiente_.
+- **Tabla:** preparada en el formato de Molines con las 4 evaluaciones hechas. Commit: sin commit propio (versión intermedia); el código final está en `6456aab`.
 
 ## 012 · 2026-10-22 · log de la v1.6 y evaluación n.º 5
 
@@ -191,7 +191,7 @@ Respuesta (resumen):
   0,8391, 15 posesiones frente a 17, spellF1@0,7 0,375 y acierto de equipo 0,899. Es la mejor de las cinco, pero
   su intervalo solapa con las anteriores.
 - **Cierre:** tabla completa en `resultados.csv` y en el formato de Molines. Se agotaron las 5 evaluaciones.
-  Commit: `6456aab` (v1.6), PR en la entrada 013.
+  Commit: `6456aab` (v1.6); la PR, en la entrada 013.
 
 ## 013 · 2026-10-22 · commit, push y PR para Molines
 
