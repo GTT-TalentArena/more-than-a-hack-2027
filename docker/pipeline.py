@@ -292,7 +292,12 @@ def cmd_modelo(args, out, record):
     atomic_json(config_path, config)
     record.update(config=config, config_sha256=sha256(config_path), modelo=config["model"],
                   seed=config["seed"], seed_applied=False if config["model"] != "module" else None)
-    required = ["atd_meta", "atd_raw"] if config["model"] in ("baseline", "baseline_hold") else []
+    required = ["atd_meta", "atd_raw"] if config["model"] in ("baseline", "baseline_hold", "baseline_dead_ball") else []
+    if config["model"] == "baseline_dead_ball" and config["parameters"]["enabled"]:
+        required.append("smart_tagging")
+    if config["model"] == "baseline_dead_ball":
+        record["model_sources"] = {name: sha256(os.path.join(ROOT, name)) for name in
+                                   ("solution/dead_ball.py", "solution/hold.py", "solution/predict.py", "games.py")}
     if config["model"] == "module":
         # No es posible deducir qué fuentes usa un candidato externo; identificar el bundle
         # disponible y dejar explícito que su consumo concreto depende de su implementación.

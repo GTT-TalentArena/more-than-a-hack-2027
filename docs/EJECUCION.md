@@ -109,7 +109,7 @@ Las configuraciones se validan estrictamente; no se permiten opciones ignoradas.
 }
 ```
 
-Modelos disponibles: `baseline`, `baseline_hold` (P1), `constant` (solo pruebas) y `module`. P1 usa `configs/baseline_hold.json`; diagnóstico, variante sin hold y límites en [P1_HOLD.md](experimentos/P1_HOLD.md). Para un candidato que respeta el brief existente, configurar:
+Modelos disponibles: `baseline`, `baseline_hold` (P1), `baseline_dead_ball` (consumidor experimental P2), `constant` (solo pruebas) y `module`. P1 usa `configs/baseline_hold.json`; diagnóstico, variante sin hold y límites en [P1_HOLD.md](experimentos/P1_HOLD.md). P2 usa `configs/baseline_dead_ball.json` y su variante `_disabled`; reglas y límites en [P2_DEAD_BALL.md](experimentos/P2_DEAD_BALL.md). Para un candidato que respeta el brief existente, configurar:
 
 ```json
 {

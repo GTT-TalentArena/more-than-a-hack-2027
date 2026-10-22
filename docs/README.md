@@ -74,6 +74,8 @@ TBD — the upstream layout is described in the [root README](../README.md#what-
 
 [Estado y verificación](P0.md) · [Contrato de datos](CONTRATO_DATOS.md) · [Guía de ejecución](EJECUCION.md) · [Entorno Docker](DOCKER.md).
 
+P2: [detector experimental de interrupciones y reinicios](experimentos/P2_DEAD_BALL.md), señales, pruebas y comparación controlada.
+
 ## Development principles
 
 - **Reproducible** _by default._ — Every number we report regenerates from the repository with one command.

@@ -1,0 +1,25 @@
+{
+  "contract_version": "1.0",
+  "model": "baseline_dead_ball",
+  "parameters": {
+    "outside_margin_m": 0.5,
+    "outside_frames": 3,
+    "stationary_speed_m_s": 0.5,
+    "stationary_frames": 5,
+    "moving_speed_m_s": 2.0,
+    "moving_frames": 3,
+    "max_speed_m_s": 45.0,
+    "max_dead_s": 90.0,
+    "kickoff_radius_m": 3.0,
+    "quiet_speed_m_s": 1.5,
+    "min_players": 6,
+    "dead_threshold": 0.75,
+    "enabled": false,
+    "max_hold_frames": 25
+  },
+  "seed": 0,
+  "evaluation": {
+    "split": "public-5min",
+    "bootstrap": 1000
+  }
+}
