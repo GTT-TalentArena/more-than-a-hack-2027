@@ -2,7 +2,7 @@
 
 > Issue [#13](https://github.com/GTT-TalentArena/more-than-a-hack-2027/issues/13). Autor de implementación: Alejandro Molines. Contrato v1 sin cambios; código nuevo en inglés.
 >
-> Estado: implementación y pruebas sintéticas; diagnóstico y comparación con tracking real pendientes. No es un resultado de competición ni modifica los candidatos A/B.
+> Estado: implementación, pruebas y primera comparación pública con tracking real verificadas. Resultado: mejora pequeña de macroF1, sin mejora de spellF1 o fragmentación; revisión de compañeros y CI de P1 pendientes de confirmar. No es un resultado oficial del partido completo ni modifica los candidatos A/B.
 
 ## Hipótesis, fijada antes de resultados reales
 
@@ -66,22 +66,62 @@ python -m unittest discover -s tests -v
 
 No comparar variantes ejecutando barridos sobre el público. Coordinar el presupuesto de evaluaciones con #26. No fusionar esta mejora unilateralmente en un candidato independiente durante la ronda.
 
-## Comparación pendiente con datos reales
+## Comparación con datos reales · 22 de octubre de 2026
 
-Registrar commit limpio, entorno, hashes, configuración, dataset/ventana, run ID y duración. `results/candidato.diagnostics.json` y `run.json` conservan diagnóstico agregado; `reports/candidato.json` y `scoreboard.csv` contienen las métricas oficiales. Datos y resultados completos permanecen en `salidas/`, ignorado por Git.
+Fuente: registros e informes agregados de las dos ejecuciones realizadas por Alejandro en Arch Linux con Docker y copiados localmente para revisión. Se han leído `run.json`, el diagnóstico agregado y los campos agregados de `reports/candidato.json`. No ha sido necesario leer tracking, vídeos, CSV de predicciones ni intervalos reales por frame. Los archivos originales no se incorporan a Git.
 
-| Variante | Split | spellF1 | macroF1 | Fragmentación | Posesiones | % X |
+Condiciones verificadas:
+
+- Mismo commit `606e64142baf12469b34fe156095a4fd59757976`; ambas ejecuciones declaran árbol limpio.
+- Mismos manifiestos de entradas, hashes del evaluador y GT pública, entorno y semilla declarada. Los modelos son deterministas y no utilizan la semilla.
+- Python 3.11.17, NumPy 2.4.6, pandas 3.0.6, Linux/Arch x86_64, usando el entorno Docker del proyecto.
+- Misma evaluación `public-5min`, 7.500 frames puntuados y 17 posesiones de referencia; `bootstrap: 0`.
+- Configuraciones efectivas verificadas contra su hash: solo cambia `max_hold_frames` de 0 a 25. No hay suavizado en ninguna variante hold.
+- Ambas terminan con `codigo_salida: 0`, `estado: ok` y `determinista: true`. Esto verifica funcionamiento/repetición declarada por el pipeline, no calidad futbolística.
+
+| Variante | spellF1 público | macroF1 público | Fragmentación | Posesiones | Duración media (s) | X en frames públicos |
 |---|---|---|---|---|---|---|
-| smooth50 oficial | Público | 0.3256 publicado | 0.6207 publicado | Pendiente de registrar | Pendiente de registrar | Pendiente de registrar |
-| hold desactivado, mismo lector | Público | No medido con datos reales | No medido | No medido | No medido | No medido |
-| hold 25, mismo lector | Público | No medido con datos reales | No medido | No medido | No medido | No medido |
+| smooth50 oficial, evaluado en ambas ejecuciones | 0.3255813953 | 0.6207331924 | 1.4285714286 | 26 | 10.8031 | 0 / 7.500 (0 %) |
+| hold 0 | 0.0441379310 | 0.4573235834 | 6.0952380952 | 128 | 2.34375 | 885 / 7.500 (11,8 %) |
+| hold 25 | 0.0441379310 | 0.4603944218 | 6.0952380952 | 128 | 2.34375 | 780 / 7.500 (10,4 %) |
+
+La igualdad de spellF1 se ha comprobado también con los valores completos de los registros, no solo con la tabla redondeada. Las métricas agregadas iguales no demuestran por sí solas que todos los intervalos predichos sean idénticos.
+
+| Variante | Run ID | SHA-256 del candidato | Duración total registrada |
+|---|---|---|---|
+| hold 25 | `20261022T065406.346768Z-3d98f347ed5e-modelo` | `fc128f4f8b0abd118ec2d472e70086419d97703a5aa281f6a7c16b09b1fb0d69` | 116,8 s |
+| hold 0 | `20261022T065814.072224Z-833429669b5b-modelo` | `981dc2d811227f411da1d5cec558f160ce89728ff90ee16d2140975d3e94bf33` | 125,6 s |
+
+Los tiempos incluyen el circuito y la repetición, no solo inferencia. Dos ejecuciones secuenciales no permiten concluir que una variante sea más rápida. Los hashes anteriores se transcriben del registro; no se han vuelto a leer las predicciones para recalcularlos.
+
+### Diagnóstico agregado de ausencias
+
+Se usan los bloques publicados de las partes, **incluyendo sus interrupciones** y el tramo previo al segundo saque inicial. Se excluyen descanso y frames fuera de esos bloques. Por tanto, estas cifras no representan exclusivamente juego activo. Los recuentos de ausencia de equipo coinciden con los de ausencia de balón en este lector y estas ejecuciones.
+
+| Bloque | Frames | Sin balón | Porcentaje | Huecos | Mediana (s) | P90 (s) | Máximo (s) |
+|---|---|---|---|---|---|---|---|
+| Primera parte | 79.467 | 32.304 | 40,65 % | 69 | 11,56 | 43,328 | 138,64 |
+| Segunda parte | 79.390 | 32.339 | 40,73 % | 81 | 9,80 | 25,56 | 221,48 |
+
+Total: 64.643 frames sin balón de 158.857 frames de los bloques (40,69 %), distribuidos en 150 huecos: 17 de hasta un segundo, 1 de más de uno y hasta cinco segundos y **132 de más de cinco segundos (88 % de los huecos)**. No sumar ni promediar las medianas de ambas partes como si fueran una mediana global.
+
+Con hold 25 se conservan explícitamente 3.398 frames antes abstinentes (135,92 s repartidos por el partido; no una posesión continua). Equivale al 5,26 % de los frames sin observación. El porcentaje X en los bloques completos pasa de 40,6926 % a 38,5535 %. En la ventana pública, las abstenciones disminuyen en 105 frames (4,2 s), de 11,8 % a 10,4 %; no confundir estas ventanas.
+
+### Interpretación y decisión
+
+- MacroF1 aumenta `0.0030708384` (aproximadamente 0,307 puntos porcentuales), sin intervalos calculados y sobre una muestra pequeña: no se declara mejora generalizable.
+- spellF1, fragmentación y número de posesiones no mejoran. El relleno de X del evaluador temporal es una explicación compatible con este resultado: tanto la conservación explícita como la abstención pueden acabar arrastrando el estado previo. No se ha comparado el detalle temporal por frame.
+- La mayoría de huecos supera ampliamente el horizonte de un segundo. P1 v1 solo cubre una fracción de las ausencias; aumentar el límite sin evidencia podría arrastrar errores durante recuperaciones o interrupciones reales. Este diagnóstico no demuestra que deba aumentarse.
+- La fragmentación alta permanece. El lector nearest-player sin suavizado puede cambiar de equipo con frecuencia; comprobar sus causas requiere revisión futbolística local. No atribuirla exclusivamente a las ausencias ni afirmar que una solución concreta ya la corrige.
+- **Decisión:** conservar P1 como componente básico reproducible y experimento de resultado mixto, no sustituir smooth50 por esta variante ni seguir ajustando parámetros sobre el público. Coordinar control, interrupciones y estabilidad temporal con P3/P2/P4; los huecos avanzados corresponden a P6.
 
 La diferencia con smooth50 no puede atribuirse solo al hold: también cambian suavizado, máscaras y abstención. La comparación controlada es hold 0 frente a hold 25; fuera de sus límites, la etiqueta X y el relleno temporal pueden hacer iguales algunos resultados temporales pese a distintas etiquetas por frame. No equiparar ningún resultado público al 0.2433 privado.
 
 ## Aceptación y evidencia
 
 - Implementado: ausencia no fuerza D; reinicio por parte; hold configurable; validación de entradas; diagnóstico agregado; registro y pruebas sin datos restringidos.
-- Pendiente: diagnóstico real, comparación reproducible y análisis de mejoras/errores nuevos; revisión de Jimy para estado y Nico para máscaras/alineación; CI de la nueva rama.
+- Comprobado con registros reales: diagnóstico agregado, comparación controlada, CSV aceptado, determinismo y procedencia de resultados. Limitaciones y resultado mixto documentados; aún no hay análisis visual local de errores concretos.
+- Pendiente: revisión de Jimy para estado y Nico para máscaras/alineación; si hace falta, Pablo revisa ejemplos localmente sin publicar extractos; CI de P1 y revisión de la PR pendientes de confirmar. No se han solicitado revisiones ni publicado cambios en esta actualización documental.
 - Fuera de alcance: P2 detecta interrupciones, P3 confirma control, P4 decodifica temporalmente y P6 trata huecos avanzados.
 
 No cerrar #13 solo por disponer de los archivos.
@@ -92,4 +132,4 @@ No cerrar #13 solo por disponer de los archivos.
 
 En la primera ejecución falló una vez el test existente de concurrencia de P0. Se añadió captura de stdout/stderr para facilitar diagnóstico; diez repeticiones aisladas y la última ejecución completa pasaron. La causa del fallo intermitente no está confirmada: no se presenta como corregida y debe vigilarse en CI.
 
-Docker no está arrancado en este equipo; no se ha ejecutado el contenedor ni GitHub Actions en esta entrega. No hay datos reales en `data/`, por lo que el diagnóstico del partido y la comparación siguen pendientes. Contrato, baseline y métricas oficiales sin cambios; sin commit ni push.
+La comprobación sintética anterior se hizo en Windows sin Docker arrancado. Posteriormente Alejandro ejecutó las dos variantes con Docker en Arch y aportó los registros reales descritos arriba; por ello el diagnóstico y la comparación ya no están pendientes. GitHub Actions de P1 no se ha comprobado en esta revisión. Contrato, baseline y métricas oficiales sin cambios; esta actualización documental no hace commit ni push.
