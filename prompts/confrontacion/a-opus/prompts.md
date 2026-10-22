@@ -232,3 +232,17 @@ Respuesta (resumen). Rama `feat/p3-p4-pruebas` desde `main`, sin cambiar el mode
 - decodificadores alternativos (histéresis y votación) y `compare_decoders`, para #16;
 - tests de escenarios explícitos de P3 y P4;
 - exportación `--evidence` con los nombres del contrato P0 §6.
+
+## 018–023 · 2026-10-22 · Docker, horas y P3 con la P2
+
+Textos: "vamos con el docker entonces", "docker instalado pero no puedo ejecutar el paso 2", "revisa la terminal",
+"horas échale … 3h y 3h", "publica el comentario … en #26 y #17" y "pablo ya ha hecho su parte. nos ponemos con eso".
+
+Respuesta (resumen):
+- **Docker:** el fallo era la carpeta (sin `compose.yaml`). Ejecutado desde el worktree, el CSV es idéntico al de
+  la v1.6 y determinista. Registrado en `ejecuciones.md` (13 y 14) y comentado en #26 y #17.
+- **Horas:** 6 h de 8 en `horas.md`, como estimación de Jimy.
+- **P3 con la P2 (#14):** rama `feat/p3-p2-reinicios`. `p2.py` usa los candidatos del detector de Pablo como
+  evidencia de `D`, desactivado por defecto (`with_p2` para la variante). En sintético no cambia nada: la regla de
+  Pablo no encuentra preparaciones con el balón suavizado, y con 1 s de margen tampoco mejora a A. No se adopta sin
+  una ejecución real con log sin etiquetas.
