@@ -18,8 +18,8 @@ No reimplementa ninguna métrica: llama a `evaluation/validate_submission.py` y 
 | `Dockerfile` | Python 3.11.17 (imagen fijada por digest) + `numpy`/`pandas` con versión exacta (`docker/requirements.lock`) + git. **No lleva código ni datos.** |
 | `.dockerignore` | El contexto de construcción solo incluye `docker/requirements.lock`; todo lo demás se queda fuera. |
 | `compose.yaml` | Monta el repo en solo lectura en `/app`, los datos en solo lectura en `/datos` y `./salidas` para los resultados. Corre con tu usuario, no como root. |
-| `docker/pipeline.py` | Punto de entrada: `evaluar` y `baseline`. |
-| `.github/workflows/docker.yml` | CI: construye la imagen, evalúa los CSV públicos y comprueba que un CSV inválido falla. |
+| `docker/pipeline.py` | Punto de entrada común: `evaluar`, `baseline` y `modelo` configurable. |
+| `.github/workflows/docker.yml` | CI: imagen, referencias públicas, pruebas P0 y códigos de error. |
 
 Como el código se monta y no se copia, **no hace falta reconstruir la imagen al cambiar código**: solo al cambiar `Dockerfile` o `docker/requirements.lock`.
 
@@ -75,6 +75,8 @@ y luego los evalúa. Sin `DATOS` se usa `./data` del repo.
 
 Cada ejecución crea `salidas/<fecha>-<modo>/`:
 
+El ID incluye microsegundos y un sufijo aleatorio para evitar sobrescrituras. `run.json` se escribe atómicamente y `runs.jsonl` se añade bajo bloqueo entre procesos.
+
 | fichero | contenido |
 |---|---|
 | `comparacion.md` | tabla contra `baseline_smooth50`: **es lo que se comparte** |
@@ -112,8 +114,8 @@ Y una línea por ejecución en `salidas/runs.jsonl`:
 | 1 | error inesperado (traceback en pantalla y en los `.log`) |
 | 2 | algún CSV es inválido, o no hay CSV |
 | 3 | faltan los datos del partido |
-| 4 | dos ejecuciones iguales no dan el mismo CSV |
-| 5 | algún CSV propio es válido pero queda **por debajo de `baseline_smooth50`** en spellF1 (calidad baja). Sale marcado ⚠️ en la tabla. Los `baseline_*` no cuentan: son la referencia |
+| 4 | la repetición o la comparación exacta con el baseline publicado no coincide |
+| 5 | candidato válido bajo smooth50 **solo con `--exigir-referencia`**; por defecto es advertencia, no fallo técnico |
 
 Un CSV inválido **no** se salta en silencio: aparece marcado ❌ en la tabla, con su motivo, y el proceso termina con 2. Si a la vez hay CSV inválidos y CSV por debajo de la referencia, gana el 2.
 
@@ -124,7 +126,15 @@ Un CSV inválido **no** se salta en silencio: aparece marcado ❌ en la tabla, c
 - **Windows:** usa rutas con `/` en `DATOS`, y comparte la unidad en Docker Desktop (Settings → Resources → File sharing).
 - **Cambiar dependencias:** edita `requirements.txt`, regenera `docker/requirements.lock` con el comando de su cabecera y `docker compose build`.
 
-## Pendiente
+## P0: modelos configurables y pruebas
 
-- Cuando exista el punto de entrada del modelo (#12), añadir un modo `modelo` que lo ejecute igual que `baseline`.
-- Para la versión final (#22) se puede publicar una imagen con el código dentro, fijada a un commit.
+```bash
+docker compose run --rm modelo modelo --config configs/smoke_constant.json --repetir
+docker compose run --rm --entrypoint python evaluar -m unittest discover -s tests -v
+```
+
+La configuración constante es solo una prueba técnica sin datos. Para un baseline con entradas reales usar `configs/baseline_smooth50.json` y definir `DATOS`. Ver [EJECUCION.md](EJECUCION.md) para el contrato de nuevos modelos, registros y límites de privacidad.
+
+La referencia se identifica por hash del fichero público, no solo por el prefijo del nombre. Una métrica pública baja no selecciona el ganador; el código 5 es un control opcional. Los candidatos A/B conservan su interfaz pactada.
+
+Pendiente para #22: valorar una imagen final con código fijado a un commit y verificarla desde una instalación limpia.

@@ -1,6 +1,6 @@
 # Construye el entorno común y comprueba el pipeline sin datos del partido (docs/DOCKER.md):
 # la evaluación pública reproduce los baselines, un CSV inválido falla con 2 y uno peor que
-# baseline_smooth50 con 5.
+# baseline_smooth50 con 5 solo si se solicita el control explícito.
 # El baseline con datos reales se ejecuta solo en local.
 name: Docker
 
@@ -30,6 +30,11 @@ jobs:
       - name: Evaluar los CSV públicos
         run: docker compose run --rm --user "$(id -u):$(id -g)" evaluar
 
+      - name: Pruebas P0 (contrato, referencias públicas, generación y errores)
+        run: >
+          docker compose run --rm --user "$(id -u):$(id -g)"
+          --entrypoint python evaluar -m unittest discover -s tests -v
+
       - name: Un CSV inválido termina con código 2
         run: |
           mkdir -p salidas/invalido
@@ -46,7 +51,7 @@ jobs:
           mkdir -p salidas/peor
           cp evaluation/results/baseline_raw.csv salidas/peor/candidato.csv
           set +e
-          docker compose run --rm --user "$(id -u):$(id -g)" evaluar evaluar --resultados /salidas/peor
+          docker compose run --rm --user "$(id -u):$(id -g)" evaluar evaluar --resultados /salidas/peor --exigir-referencia
           code=$?
           set -e
           echo "código de salida: $code"
