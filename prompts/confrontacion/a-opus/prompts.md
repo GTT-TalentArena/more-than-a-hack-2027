@@ -205,3 +205,20 @@ Respuesta (resumen):
   `docker compose run --rm modelo`.
 - **Push y PR** para Alejandro, sin fusionar hasta terminar la comparación (A10).
 - **Issues:** lista de lo que se puede marcar en #26, #17, #15, #16 y #18 con esta entrega.
+
+Resultado: commits `6456aab`, `14af225` (fusión de `main`), `488a5c3` y `8b86676` subidos a `cand/a-opus`; PR #33
+abierta con Alejandro como revisor.
+
+## 014 · 2026-10-22 · issues
+
+Texto: "Sí: marca en #15, #16 y #18 las casillas que cubre el candidato A y deja en #26 y #17 un comentario con la
+parte de A y el enlace a la PR #33."
+
+Respuesta (resumen):
+- **#15:** 8 casillas marcadas. Quedan 3: señales de Nico, exportar la evidencia por frame y la batería de casos
+  explícitos.
+- **#16:** 8 marcadas. Quedan 4: votación frente a histéresis, sus casos de prueba, comparación mediante #12 y
+  demostración con ejemplos.
+- **#18:** las 9.
+- **Comentarios en #26 y #17:** la parte de A, el hash de referencia, las métricas públicas con su intervalo y el
+  aviso de que no es un resultado privado.
