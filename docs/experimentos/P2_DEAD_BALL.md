@@ -52,7 +52,7 @@ Docker, cuando su motor y la imagen común descrita en `docs/DOCKER.md` estén d
 .\scripts\verify_p2.ps1 -DataDir "D:\pcordoba\Documents\dataTA\organized" -Docker
 ```
 
-El script Docker usa `--no-build`, montaje de datos de solo lectura y el mismo pipeline. No ejecuta compilaciones del backend. El chequeo byte a byte del baseline puede detectar diferencias de finales de línea entre un checkout Windows y Linux: no editar la referencia ni presentar ese código 4 como éxito; diagnosticarlo por separado.
+El script Docker exige que exista la imagen local `gtt-mtah:local` y usa `--pull never`, montaje de datos de solo lectura y el mismo pipeline. `docker compose run` no admite `--no-build`; primero se comprueba la imagen y no se solicita `--build`. No ejecuta compilaciones del backend. El chequeo byte a byte del baseline puede detectar diferencias de finales de línea entre un checkout Windows y Linux: no editar la referencia ni presentar ese código 4 como éxito; diagnosticarlo por separado.
 
 Cada variante genera, valida y repite su CSV antes de evaluarlo; el resumen controlado comprueba configuración, código, entorno y hashes de entradas comunes. Las salidas y los informes completos quedan ignorados bajo `salidas/`. Los registros P2 incluyen hashes de los fuentes del modelo, además del commit y el estado del árbol; una ejecución con cambios pendientes no equivale a una reproducción desde un commit publicado.
 
@@ -62,9 +62,9 @@ En esta máquina se ha creado `.venv` con Python 3.12.14 y acceso a las dependen
 
 No detecta directamente silbatos, faltas o sustituciones. Un falso evento, movimiento de colocación del balón o tracking desplazado pueden provocar fronteras incorrectas. La geometría 2D no determina si el balón entero cruzó una línea ni distingue altura. Las velocidades colectivas agregan slots observados, con posibles duplicados; no representan identidades estables. Sin movimiento observado suficiente, el saque inicial puede quedar sin refinar; los demás reinicios exigen además preparación. No existe garantía de recuperar todas las interrupciones ni de mejorar el test privado.
 
-## Estado de Docker en esta máquina
+## Estado anterior de Docker
 
-22 de octubre de 2026: Docker Desktop 4.11.1 termina con `Access denied`; grupo `docker-users` vacío. Compose valida estáticamente, pero el motor no está disponible. El usuario ha indicado continuar en Python y dejar Docker pendiente. No se modifican grupos, no se cierra sesión y no se declara validación de contenedores. La documentación oficial explica este error: https://docs.docker.com/desktop/troubleshoot-and-support/troubleshoot/topics/.
+En la sesión anterior, el 22 de octubre de 2026, Docker Desktop 4.11.1 terminaba con `Access denied`; grupo `docker-users` vacío. Compose validaba estáticamente, pero el motor no estaba disponible. Se continuó en Python y Docker quedó pendiente. Ese resultado no era una validación de contenedores. La instalación y verificación del PC actual se registran más abajo.
 
 ## Corrección de aceptación antes de la versión final
 
@@ -101,7 +101,25 @@ Con P2 se generan 66 candidatos de interrupción y 54 frames candidatos de reini
 
 **Decisión: resultado mixto, conservar como componente experimental.** La mejora pública de spellF1 es pequeña y la fragmentación empeora; no se afirma mejora generalizable ni se sustituye smooth50. El objetivo de P2 es aportar señales de interrupción; el nearest-player de este consumidor sigue fragmentando y no implementa el control de #15 ni el decodificador de #16.
 
-Pendiente para aceptación/cierre de #14: motor Docker habilitado por el usuario y repetición en el entorno fijado; revisión visual local de falsos cortes y reinicios omitidos, especialmente el segundo saque; revisión de interfaces con Jimy/Alejandro/Nico, integración con el consumidor final #16 y CI/revisión de otro integrante. La entrada de log propuesta no se ha publicado. No cerrar la issue únicamente por los tests ni por la tabla pública.
+La validación Docker pendiente se completó en el PC actual, como se detalla abajo. Pendiente para aceptación/cierre de #14: revisión visual local de falsos cortes y reinicios omitidos, especialmente el segundo saque; revisión de interfaces con Jimy/Alejandro/Nico, integración con el consumidor final #16 y CI/revisión de otro integrante. La entrada de log propuesta no se ha publicado. No cerrar la issue únicamente por los tests ni por la tabla pública.
+
+## Verificación Docker en el PC actual · 22 de octubre de 2026
+
+Instalados Docker Desktop 4.96.2, motor 29.9.2, Compose 5.6.1 y WSL 3.0.3. Se habilitó VirtualMachinePlatform y, después del reinicio del usuario, arrancaron los contenedores Linux. Imagen común construida con Python 3.11.17, NumPy 2.4.6 y pandas 3.0.6. Datos locales preparados bajo `C:/Users/pablo/Documents/dataTA/organized`; siete assets comprobados y dos vídeos enlazados, sin duplicarlos. Una segunda preparación crea cero archivos. Se corrigió el preparador para omitir el README incluido en el ZIP oficial; sigue rechazando otras entradas inesperadas.
+
+Se reprodujo el modelo del commit `d0916ffc803ae2f64fb3a8e813bbb8d170d7bf65` en una copia local limpia con finales LF, bajo `salidas/docker-linux-source`. El checkout de trabajo tiene CSV públicos CRLF: no se han modificado sus referencias. Las cuatro ejecuciones registran el mismo commit, árbol limpio y código 0. Los cambios de los scripts de reproducción quedan pendientes de commit en el checkout de trabajo; no alteran el modelo evaluado.
+
+- 53 tests superados en Docker, en 33,919 s.
+- Cuatro baselines regenerados dos veces: mismos hashes entre repeticiones y coincidencia byte a byte con los publicados en Git.
+- P2 activado/desactivado: CSV completos válidos, deterministas y comparación controlada verificada, con bootstrap 1000.
+- Mismas métricas agregadas que en la comparación Python anterior: spellF1 0,0441379310 → 0,0465753425; macroF1 0,4603944218 → 0,5059441824; fragmentación 6,0952380952 → 6,2380952381. Se mantiene la decisión de resultado mixto.
+
+| Variante | Run ID Docker | SHA-256 del CSV con finales LF |
+|---|---|---|
+| Desactivada | `20261022T163100.705541Z-0aed82a57f4c-modelo` | `fc128f4f8b0abd118ec2d472e70086419d97703a5aa281f6a7c16b09b1fb0d69` |
+| Activada | `20261022T163142.231226Z-18683bc739e9-modelo` | `7d5374a4019646b4e432c0f5d910e5bb5296088e01774e4b64c68a50966af665` |
+
+Evidencia agregada local: `salidas/p2-comparison-docker-20261022T163142.json` y `salidas/docker-p2-acceptance-20261022.json`. Los registros completos permanecen en la carpeta ignorada de la copia local. Los hashes Windows anteriores y los de Docker son diferentes por los finales de línea; no se declara igualdad de bytes entre plataformas.
 
 ## Log público propuesto (EN)
 

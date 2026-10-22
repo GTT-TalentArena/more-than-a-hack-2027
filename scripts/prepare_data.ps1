@@ -13,6 +13,8 @@ foreach ($archive in Get-ChildItem -LiteralPath $sourceRoot -Filter '*.zip') {
     $zip = [IO.Compression.ZipFile]::OpenRead($archive.FullName)
     try {
         foreach ($entry in $zip.Entries) {
+            # El bundle descargado también puede incluir su README, que no es un asset.
+            if ($entry.FullName -eq 'More Than A Hack 2027 - Initial Challenge - Dataset/README.md') { continue }
             if ($entry.FullName -notmatch '(?:^|/)(tactical|broadcast)/(BAR-ATH_(?:tactical|broadcast)_(?:atd\.(?:xml|txt)|homography\.csv|smart_tagging\.xml))$') {
                 throw 'Entrada ZIP inesperada; no se extrae automáticamente.'
             }

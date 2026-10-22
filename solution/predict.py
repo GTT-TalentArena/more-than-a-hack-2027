@@ -48,6 +48,9 @@ def load_config(path):
     elif model == "baseline_dead_ball":
         from solution.dead_ball import validate_parameters
         validate_parameters(parameters)
+    elif model == "temporal_control":
+        from solution.temporal_control import validate_parameters
+        validate_parameters(parameters)
     elif model == "constant":
         if set(parameters) != {"label"} or parameters["label"] not in ("H", "A", "D", "X"):
             raise ValueError("constant requiere label H/A/D/X")
@@ -83,8 +86,11 @@ def generate(config, data_dir, output):
             labels, summary = build(str(data_dir), parameters["max_hold_frames"])
             with output.with_suffix(".diagnostics.json").open("x", encoding="utf-8") as handle:
                 json.dump(summary, handle, indent=2, allow_nan=False)
-        elif model == "baseline_dead_ball":
-            from solution.dead_ball import build
+        elif model in ("baseline_dead_ball", "temporal_control"):
+            if model == "baseline_dead_ball":
+                from solution.dead_ball import build
+            else:
+                from solution.temporal_control import build
             labels, summary = build(str(data_dir), parameters)
             with output.with_suffix(".diagnostics.json").open("x", encoding="utf-8") as handle:
                 json.dump(summary, handle, indent=2, allow_nan=False)

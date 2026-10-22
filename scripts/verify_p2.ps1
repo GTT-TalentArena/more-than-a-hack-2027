@@ -16,14 +16,15 @@ function Invoke-Checked {
 if ($Docker) {
     $env:DATOS = (Resolve-Path -LiteralPath $DataDir).Path.Replace('\', '/')
     # Usar la imagen preparada según docs/DOCKER.md. No compilar el backend.
+    Invoke-Checked @('image','inspect','gtt-mtah:local','--format','{{.Id}}')
     Invoke-Checked @('compose','config','--quiet')
-    Invoke-Checked @('compose','run','--rm','--no-build','--entrypoint','python','evaluar','-m','unittest','discover','-s','tests','-v')
-    Invoke-Checked @('compose','run','--rm','--no-build','evaluar')
-    Invoke-Checked @('compose','run','--rm','--no-build','baseline','baseline','--repetir')
+    Invoke-Checked @('compose','run','--rm','--pull','never','--entrypoint','python','evaluar','-m','unittest','discover','-s','tests','-v')
+    Invoke-Checked @('compose','run','--rm','--pull','never','evaluar')
+    Invoke-Checked @('compose','run','--rm','--pull','never','baseline','baseline','--repetir')
     foreach ($config in 'configs/baseline_dead_ball_disabled.json','configs/baseline_dead_ball.json') {
-        Invoke-Checked @('compose','run','--rm','--no-build','modelo','modelo','--config',$config,'--repetir')
+        Invoke-Checked @('compose','run','--rm','--pull','never','modelo','modelo','--config',$config,'--repetir')
     }
-    Invoke-Checked @('compose','run','--rm','--no-build','--entrypoint','python','evaluar','scripts/summarize_p2.py','--outputs','/salidas','--out',('/salidas/p2-comparison-' + [guid]::NewGuid().ToString('N') + '.json'))
+    Invoke-Checked @('compose','run','--rm','--pull','never','--entrypoint','python','evaluar','scripts/summarize_p2.py','--outputs','/salidas','--out',('/salidas/p2-comparison-' + [guid]::NewGuid().ToString('N') + '.json'))
 } else {
     $data = (Resolve-Path -LiteralPath $DataDir).Path
     $env:MTAH_DATA_DIR = $data
