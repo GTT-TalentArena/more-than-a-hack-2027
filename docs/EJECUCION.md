@@ -109,7 +109,7 @@ Las configuraciones se validan estrictamente; no se permiten opciones ignoradas.
 }
 ```
 
-Modelos disponibles: `baseline`, `constant` (solo pruebas) y `module`. Para un candidato que respeta el brief existente, configurar:
+Modelos disponibles: `baseline`, `baseline_hold` (P1), `constant` (solo pruebas) y `module`. P1 usa `configs/baseline_hold.json`; diagnóstico, variante sin hold y límites en [P1_HOLD.md](experimentos/P1_HOLD.md). Para un candidato que respeta el brief existente, configurar:
 
 ```json
 {

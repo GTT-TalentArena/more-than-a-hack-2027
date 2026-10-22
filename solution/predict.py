@@ -41,6 +41,10 @@ def load_config(path):
         if set(parameters) != {"window"}:
             raise ValueError("baseline requiere solo window")
         nonnegative_integer(parameters["window"], "window")
+    elif model == "baseline_hold":
+        if set(parameters) != {"max_hold_frames"}:
+            raise ValueError("baseline_hold requiere solo max_hold_frames")
+        nonnegative_integer(parameters["max_hold_frames"], "max_hold_frames")
     elif model == "constant":
         if set(parameters) != {"label"} or parameters["label"] not in ("H", "A", "D", "X"):
             raise ValueError("constant requiere label H/A/D/X")
@@ -71,6 +75,11 @@ def generate(config, data_dir, output):
             check_tracking_frames(raw, games.source_frames())
             codes = baseline.build(data_dir=str(data_dir))
             labels = baseline.smooth(codes, parameters["window"])
+        elif model == "baseline_hold":
+            from solution.hold import build
+            labels, summary = build(str(data_dir), parameters["max_hold_frames"])
+            with output.with_suffix(".diagnostics.json").open("x", encoding="utf-8") as handle:
+                json.dump(summary, handle, indent=2, allow_nan=False)
         else:
             labels = np.full(games.source_frames(), parameters["label"], dtype="<U1")
         baseline.write_submission(str(output), labels)
