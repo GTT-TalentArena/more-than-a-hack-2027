@@ -1,0 +1,16 @@
+{
+  "contract_version": "1.0",
+  "model": "temporal_control",
+  "parameters": {
+    "control_radius_m": 2.0,
+    "distance_margin_m": 0.75,
+    "max_control_speed_m_s": 8.0,
+    "confirmation_frames": 5,
+    "switch_cost": 8.0,
+    "dead_weight": 2.0,
+    "unknown_dead_cost": 0.05,
+    "p2_enabled": true
+  },
+  "seed": 0,
+  "evaluation": {"split": "public-5min", "bootstrap": 1000}
+}
