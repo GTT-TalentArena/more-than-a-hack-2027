@@ -222,3 +222,13 @@ Respuesta (resumen):
 - **#18:** las 9.
 - **Comentarios en #26 y #17:** la parte de A, el hash de referencia, las métricas públicas con su intervalo y el
   aviso de que no es un resultado privado.
+
+## 015–017 · 2026-10-22 · plan tras la entrega y trabajo de P3/P4
+
+Textos: el chat del equipo (A elegido; orden P2 → P3 → P4 → 0,2433), "qué podemos ir avanzando hasta entonces?" y
+"vamos con lo que puedas hacer. voy a avisar. dejamos más checks cerrados y quitamos trabajo."
+
+Respuesta (resumen). Rama `feat/p3-p4-pruebas` desde `main`, sin cambiar el modelo ni su CSV:
+- decodificadores alternativos (histéresis y votación) y `compare_decoders`, para #16;
+- tests de escenarios explícitos de P3 y P4;
+- exportación `--evidence` con los nombres del contrato P0 §6.

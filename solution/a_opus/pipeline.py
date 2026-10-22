@@ -292,6 +292,47 @@ def summarise(states_by_half):
     }
 
 
+def write_evidence(path, n_frames, halves, teams, deads, states_by_half):
+    """Per-frame signals over the whole video, named as in docs/CONTRATO_DATOS.md section 6.
+
+    control_H_score / control_A_score / control_valid are the contract's contact/control group
+    (0..1 strength of evidence, not a probability); nearest_H_m / nearest_A_m / distance_valid
+    its distance group. Extra, candidate-specific: touch_H / touch_A (touches found), team_llr
+    and dead_llr (the evidence the decoder adds up, in nats) and state (decoded 0 H, 1 A, 2 D,
+    -1 outside the graded halves). NaN and False outside the graded halves.
+    """
+    def blank(dtype, fill):
+        return np.full(n_frames, fill, dtype=dtype)
+    out = {"frame": np.arange(n_frames, dtype=np.int64),
+           "control_H_score": blank(np.float64, np.nan), "control_A_score": blank(np.float64, np.nan),
+           "control_valid": blank(bool, False), "nearest_H_m": blank(np.float64, np.nan),
+           "nearest_A_m": blank(np.float64, np.nan), "distance_valid": blank(bool, False),
+           "touch_H": blank(bool, False), "touch_A": blank(bool, False),
+           "team_llr": blank(np.float64, np.nan), "dead_llr": blank(np.float64, np.nan),
+           "state": blank(np.int8, -1)}
+    for ctx, team, dead, states in zip(halves, teams, deads, states_by_half):
+        window = slice(ctx["first"], ctx["last"] + 1)
+        valid = ctx["weight"] > 0
+        out["control_valid"][window] = valid
+        out["control_H_score"][window] = np.where(valid, ctx["c_home"], np.nan)
+        out["control_A_score"][window] = np.where(valid, ctx["c_away"], np.nan)
+        d_home, d_away = ctx["near"][HOME][0], ctx["near"][AWAY][0]
+        both = np.isfinite(d_home) & np.isfinite(d_away)
+        out["distance_valid"][window] = both
+        out["nearest_H_m"][window] = np.where(np.isfinite(d_home), d_home, np.nan)
+        out["nearest_A_m"][window] = np.where(np.isfinite(d_away), d_away, np.nan)
+        touches = ctx.get("touch_llr", np.zeros(ctx["n"]))
+        out["touch_H"][window] = touches > 0
+        out["touch_A"][window] = touches < 0
+        out["team_llr"][window] = team
+        out["dead_llr"][window] = dead
+        out["state"][window] = states
+    folder = os.path.dirname(os.path.abspath(path))
+    if not os.path.isdir(folder):
+        os.makedirs(folder)
+    np.savez_compressed(path, **out)
+
+
 def write_csv(path, labels):
     """frame,label with '\\n' line ends, so the bytes do not depend on the OS."""
     folder = os.path.dirname(os.path.abspath(path))
@@ -302,7 +343,7 @@ def write_csv(path, labels):
         handle.write("".join("{},{}\n".format(i, label) for i, label in enumerate(labels)))
 
 
-def run(out_path, data_dir=None, overrides=(), log=print):
+def run(out_path, data_dir=None, overrides=(), log=print, evidence_path=None):
     """Build the submission. Returns the aggregate report that was logged."""
     clock = time.time()
     cfg = config.build(overrides)
@@ -398,6 +439,7 @@ def run(out_path, data_dir=None, overrides=(), log=print):
             values, counts = evidence.touch_llr(ctx, cfg, threshold)
             if cfg["touch.enabled"]:
                 ctx["team_prox"] = ctx["team_prox"] + values
+                ctx["touch_llr"] = values
             for key in totals:
                 totals[key] += counts[key]
         log("[a_opus] touches: free-flight velocity change p50/p90/p95 {} m/s over {} frames -> "
@@ -471,8 +513,16 @@ def run(out_path, data_dir=None, overrides=(), log=print):
     def decode_all():
         scores = [(0.5 * team, -0.5 * team, dead + 0.5 * np.abs(team))
                   for team, dead in zip(teams, deads)]
-        states = [decode.viterbi(*s, cfg["decode.lam_ha"], cfg["decode.lam_ad"],
-                                 cfg["decode.lam_da"], cfg["decode.min_dead"]) for s in scores]
+        method = cfg["decode.method"]
+        costs = (cfg["decode.lam_ha"], cfg["decode.lam_ad"], cfg["decode.lam_da"])
+        if method == "viterbi":
+            states = [decode.viterbi(*s, *costs, cfg["decode.min_dead"]) for s in scores]
+        elif method == "hysteresis":
+            states = [decode.hysteresis(*s, *costs, cfg["decode.min_dead"]) for s in scores]
+        elif method == "vote":
+            states = [decode.vote(*s, cfg["decode.vote_half"]) for s in scores]
+        else:
+            raise ValueError("decode.method must be viterbi, hysteresis or vote")
         return states, scores
 
     states_by_half, scores_by_half = decode_all()
@@ -539,6 +589,10 @@ def run(out_path, data_dir=None, overrides=(), log=print):
                 ", ".join("{} {}".format(k, v) for k, v in report["changes"].items())))
 
     write_csv(out_path, labels)
+    if evidence_path:
+        write_evidence(evidence_path, n_frames, halves, teams, deads, states_by_half)
+        log("[a_opus] wrote per-frame evidence (local only, never commit) to {}".format(
+            evidence_path))
     log("[a_opus] wrote {} ({} rows) in {:.0f} s".format(out_path, len(labels),
                                                         time.time() - clock))
     return report
@@ -553,6 +607,9 @@ def main(argv=None):
                         help="match data folder (default: MTAH_DATA_DIR or ./data, see games.py)")
     parser.add_argument("--set", action="append", default=[], metavar="KEY=VALUE",
                         help="override a parameter of solution/a_opus/config.py (repeatable)")
+    parser.add_argument("--evidence", default=None, metavar="PATH",
+                        help="also write per-frame evidence (P0 contract names) to this .npz; "
+                             "frame-level match data: keep it local, e.g. under salidas/")
     parser.add_argument("--log", default=None, metavar="PATH",
                         help="also write the log (aggregates only) to this UTF-8 text file")
     args = parser.parse_args(argv)
@@ -563,7 +620,7 @@ def main(argv=None):
         print(error, file=sys.stderr)
         return 2
     if not args.log:
-        run(args.out, args.data_dir, args.set)
+        run(args.out, args.data_dir, args.set, evidence_path=args.evidence)
         return 0
     folder = os.path.dirname(os.path.abspath(args.log))
     if not os.path.isdir(folder):
@@ -575,5 +632,5 @@ def main(argv=None):
             handle.flush()
         from . import __version__
         log("[a_opus] version {}; overrides: {}".format(__version__, " ".join(args.set) or "none"))
-        run(args.out, args.data_dir, args.set, log=log)
+        run(args.out, args.data_dir, args.set, log=log, evidence_path=args.evidence)
     return 0

@@ -240,6 +240,10 @@ DEFAULTS = {
     # changes). A blip inside a possession still needs 6 nats: four opponent touches, or a
     # touch and ~11 frames of clear control.
     "decode.lam_ha": 3.0,
+    # viterbi (the candidate), or the alternatives compared in #16: hysteresis (CUSUM with
+    # retro-dating, same costs) and vote (windowed majority of the same evidence, +/- vote_half).
+    "decode.method": "viterbi",
+    "decode.vote_half": 25,
     "decode.lam_ad": 4.0,          # alive -> dead
     "decode.lam_da": 4.0,          # dead -> alive
     "decode.min_dead": 50,         # frames: a stoppage lasts at least 2 s
