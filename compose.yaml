@@ -34,3 +34,14 @@ services:
       # Carpeta con tactical/ (y broadcast/ si se usa). Sin DATOS, se usa ./data del repo
       - ${DATOS:-./data}:/datos:ro
     command: ["baseline"]
+
+  modelo:
+    <<: *comun
+    environment:
+      GTT_SALIDAS: /salidas
+      MTAH_DATA_DIR: /datos
+    volumes:
+      - .:/app:ro
+      - ./salidas:/salidas
+      - ${DATOS:-./data}:/datos:ro
+    command: ["modelo", "--config", "configs/baseline_smooth50.json"]
