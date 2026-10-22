@@ -26,7 +26,7 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 import games  # noqa: E402
 
-from . import atd, ballfree, config, decode, diagnostics, evidence, features  # noqa: E402
+from . import atd, ballfree, config, decode, diagnostics, evidence, features, p2  # noqa: E402
 from . import tags as tagging  # noqa: E402
 from .atd import HOME, AWAY  # noqa: E402
 
@@ -484,6 +484,14 @@ def run(out_path, data_dir=None, overrides=(), log=print, evidence_path=None):
             + ", ".join("{:+d} f {}".format(lag, "--" if a is None else "{:.1%}".format(a))
                         for lag, a in lags))
 
+    p2_found = None
+    if cfg["p2.enabled"]:
+        p2_found, p2_summary = p2.candidates(data_dir, game)
+        log("[a_opus] P2 detector (#14): {} set pieces; candidates {}".format(
+            p2_summary["set_pieces"], ", ".join(
+                "{} {} ({} with a restart)".format(kind, n, r)
+                for kind, (n, r) in sorted(p2.summary(p2_found).items()))))
+
     teams, deads = [], []
     contributions = {}
     for index, ctx in enumerate(halves):
@@ -501,6 +509,8 @@ def run(out_path, data_dir=None, overrides=(), log=print, evidence_path=None):
             team += np.where(no_ball, ballfree_llr,
                              np.where(unclear, cfg["ballfree.unclear_share"] * ballfree_llr, 0.0))
         parts = evidence.dead_components(ctx, cfg, pitch, speed_model, tag_list)
+        if p2_found is not None:
+            parts["p2"] = p2.p2_llr(ctx, p2_found, cfg)
         dead = np.zeros(ctx["n"])
         for name, values in parts.items():
             dead += values

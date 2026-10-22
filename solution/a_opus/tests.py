@@ -14,7 +14,7 @@ import tempfile
 
 import numpy as np
 
-from . import atd, decode, pipeline, synth, tags
+from . import atd, config, decode, p2, pipeline, synth, tags
 from .atd import HOME, AWAY
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -186,6 +186,24 @@ def test_alternative_decoders():
         assert states[0] == decode.H and states[-1] == decode.A
 
 
+def test_p2_adapter():
+    """P3: P2 candidates become D up to the restart and alive just after it; exits weigh 0."""
+    cfg = config.build(["p2.enabled=1"])
+    ctx = {"first": 1000, "n": 500}
+    found = [dict(start_frame=1100, end_frame=1200, restart_frame=1200, confidence=0.8,
+                  evidence=p2.PREPARATION),
+             dict(start_frame=1300, end_frame=1400, restart_frame=1400, confidence=0.85,
+                  evidence=p2.EXIT),
+             dict(start_frame=900, end_frame=1050, restart_frame=None, confidence=0.8,
+                  evidence=p2.KICKOFF)]
+    llr = p2.p2_llr(ctx, found, cfg)
+    assert np.allclose(llr[100:200], cfg["p2.dead_beta"] * 0.8)
+    assert np.allclose(llr[200:200 + cfg["p2.restart_post"]], -cfg["p2.restart_beta"])
+    assert np.allclose(llr[0:50], cfg["p2.dead_beta"] * 0.8) and llr[50] == 0
+    assert np.all(llr[300:450] == 0), "exits are already counted by out/exit"
+    assert config.build([])["p2.enabled"] == 0, "candidate A as delivered keeps P2 off"
+
+
 def write_tiny_atd(folder, with_spec, shorthand):
     """A 6-frame ATD with 4 slots, interleaved teams, optionally a bare 'NaN' for a slot."""
     meta = ['<main><Metadata>',
@@ -291,7 +309,7 @@ def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     tests = [test_decoder_is_exact, test_decoder_ties, test_first_touch_dating,
              test_p3_control_cases, test_p3_p4_scenarios, test_p4_first_frames_of_a_half,
-             test_alternative_decoders, test_parser_variants, test_tag_sides]
+             test_alternative_decoders, test_p2_adapter, test_parser_variants, test_tag_sides]
     if "--full" in argv:
         tests.append(test_end_to_end)
     failed = 0

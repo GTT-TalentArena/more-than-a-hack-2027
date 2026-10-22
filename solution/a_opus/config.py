@@ -198,6 +198,17 @@ DEFAULTS = {
     "dead.setpiece_post": 25,
     "dead.setpiece_kickoff_pre": 250,
 
+    # -- P3: the P2 detector (#14) as one more dead-ball term (p2.py) -----------------------------
+    # Off in candidate A as delivered (v1.6, frozen). On: D over each confirmed preparation and
+    # before each first kick-off, at the same per-frame scale as the set-piece and still-ball
+    # terms times P2's confidence, and alive just after the restart P2 confirmed. P2's own exits
+    # weigh 0: out_of_bounds_llr and exit_llr already count them.
+    "p2.enabled": 0,
+    "p2.dead_beta": 0.06,
+    "p2.restart_beta": 0.2,
+    "p2.restart_post": 25,
+    "p2.exit_beta": 0.0,
+
     # -- absence of the ball (study 3.3, L4) ------------------------------------------------------
     # The first real run answered L4 without labels: the ball is seen on 91% of the frames
     # decoded live and on 24% of those decoded dead, so a long absence is evidence of a stoppage.
