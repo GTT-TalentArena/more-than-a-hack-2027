@@ -1,0 +1,7 @@
+{
+  "contract_version": "1.0",
+  "model": "baseline",
+  "parameters": {"window": 50},
+  "seed": 0,
+  "evaluation": {"split": "public-5min", "bootstrap": 0}
+}

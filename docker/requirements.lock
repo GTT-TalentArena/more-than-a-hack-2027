@@ -1,0 +1,8 @@
+# Versiones exactas de requirements.txt (numpy + pandas) resueltas en la imagen base del Dockerfile.
+# Para actualizarlas: docker run --rm -v "$PWD/requirements.txt:/r.txt:ro" <imagen base> \
+#   sh -c 'pip install -q -r /r.txt && pip freeze'   y pega aquí el resultado.
+numpy==2.4.6
+packaging==26.3
+pandas==3.0.6
+python-dateutil==2.9.0.post0
+six==1.17.0

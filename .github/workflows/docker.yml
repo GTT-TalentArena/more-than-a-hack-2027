@@ -1,0 +1,62 @@
+# Construye el entorno común y comprueba el pipeline sin datos del partido (docs/DOCKER.md):
+# la evaluación pública reproduce los baselines, un CSV inválido falla con 2 y uno peor que
+# baseline_smooth50 con 5 solo si se solicita el control explícito.
+# El baseline con datos reales se ejecuta solo en local.
+name: Docker
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Construir la imagen
+        run: docker compose build
+
+      - name: La imagen no lleva código ni datos
+        run: docker run --rm --entrypoint sh gtt-mtah:local -c 'test -z "$(ls -A /app)"'
+
+      - name: Evaluar los CSV públicos
+        run: docker compose run --rm --user "$(id -u):$(id -g)" evaluar
+
+      - name: Pruebas P0 (contrato, referencias públicas, generación y errores)
+        run: >
+          docker compose run --rm --user "$(id -u):$(id -g)"
+          --entrypoint python evaluar -m unittest discover -s tests -v
+
+      - name: Un CSV inválido termina con código 2
+        run: |
+          mkdir -p salidas/invalido
+          printf 'frame,label\n0,H\n' > salidas/invalido/corto.csv
+          set +e
+          docker compose run --rm --user "$(id -u):$(id -g)" evaluar evaluar --resultados /salidas/invalido
+          code=$?
+          set -e
+          echo "código de salida: $code"
+          test "$code" -eq 2
+
+      - name: Un CSV válido por debajo de smooth50 termina con código 5
+        run: |
+          mkdir -p salidas/peor
+          cp evaluation/results/baseline_raw.csv salidas/peor/candidato.csv
+          set +e
+          docker compose run --rm --user "$(id -u):$(id -g)" evaluar evaluar --resultados /salidas/peor --exigir-referencia
+          code=$?
+          set -e
+          echo "código de salida: $code"
+          test "$code" -eq 5
+
+      - name: Comparación con baseline_smooth50
+        if: always()
+        run: cat salidas/*-evaluar/comparacion.md >> "$GITHUB_STEP_SUMMARY" || true
