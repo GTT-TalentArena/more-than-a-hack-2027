@@ -1,0 +1,6 @@
+# Candidate A, pinned. Python 3.11 (tested on 3.11.3, Windows 11, CPU only).
+#
+# The solution itself needs numpy and the standard library only. pandas is here because the
+# scorer and validator in evaluation/ need it, and so do the self-tests (solution/a_opus/tests.py).
+numpy==2.4.6
+pandas==3.0.6

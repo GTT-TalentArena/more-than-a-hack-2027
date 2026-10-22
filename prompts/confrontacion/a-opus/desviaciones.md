@@ -1,0 +1,11 @@
+# Desviaciones del protocolo · candidato A
+
+| Fecha | Acuerdo | Qué pasó | Por qué |
+|---|---|---|---|
+| 2026-10-21 | A5 (el humano ejecuta) | El LLM leyó el panel del terminal de Jimy para diagnosticar dos órdenes fallidas. Solo contenía las órdenes y un traceback, sin datos del partido. | Petición expresa de Jimy |
+| 2026-10-21/22 | A5 y A7 | El LLM leyó directamente ficheros de salida agregada: los logs escritos con `--log` y los JSON agregados de `evaluation/reports/`. Antes, Jimy los pegaba. Nunca abrió `*_transitions.csv` (llevan frames), CSV de predicciones ni datos. Calculó hashes SHA-256 de CSV para comprobar la reproducibilidad, sin leer su contenido. | Petición de Jimy ("ponte el output en una ruta accesible por ti"). A7 se respeta: solo agregados |
+| 2026-10-22 | A5 y A8 | El LLM ejecutó él mismo las evaluaciones públicas n.º 3, 4 y 5: `run_evaluation.py` sobre un único CSV cada vez, con salida agregada. | Autorizado por Jimy ("evalúa y mejora", "gasta la n.º 5 en ella"). Se respetó el máximo de 5 |
+| 2026-10-22 | A8 (uso de la ventana pública) | El detalle agregado de la ventana pública orientó en qué componentes trabajar (fronteras, toques): transiciones tardías y posesiones que faltaban. Ningún valor de parámetro se eligió por la puntuación pública: cada cambio se decidió y validó con el log sin etiquetas del partido completo y con partidos sintéticos. | Transparencia. `EVALUATION.md` permite usar la ventana para entender el tipo de error |
+| 2026-10-22 | A10 (separación) | Jimy compartió una captura con el formato de tabla que pide Alejandro. La primera fila de datos salía recortada y podría ser de otro candidato. El modelo usó solo las cabeceras de columna. | Registro preventivo |
+| 2026-10-22 | A3 (8 h de tiempo activo) | `horas.md` sigue sin rellenar a la entrega de la v1.6. | Pendiente de Jimy |
+| 2026-10-22 | A6 y A10 | Se fusionó `main` (#29–#32: Docker, contrato P0, P1) en `cand/a-opus` y se añadió `configs/candidate_a.json`, para ejecutar el candidato por la vía común. No cambia el modelo ni trae código del candidato B. | Que Alejandro pueda reproducir A con el pipeline común (#26, sección 2) |
