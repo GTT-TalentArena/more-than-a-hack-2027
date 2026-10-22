@@ -19,4 +19,6 @@ Mismas restricciones que el resto del protocolo (A5–A8): Claude no ha visto lo
 
 Análisis de la v4: [analisis-v4.md](analisis-v4.md) · Iteraciones: [iteraciones.md](iteraciones.md)
 
+**Resultado de la comparación (22-O):** Alejandro eligió el candidato A. En la ventana pública, A v1.6: spellF1 0.5250 · macroF1 0.8391; B v4: 0.4000 · 0.6983. Resultados por versión: [resultados.csv](resultados.csv).
+
 Registro: [prompts.md](prompts.md) · [horas.md](horas.md) · [ejecuciones.md](ejecuciones.md) · [desviaciones.md](desviaciones.md)
