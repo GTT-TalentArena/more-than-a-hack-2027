@@ -478,3 +478,45 @@ ruidosos y 2 con el balón suavizado como el ATD real):
 
 Sin balón observado ni interpolado, `control_valid` es falso y las puntuaciones son NaN. Ninguna ausencia se
 convierte en evidencia. Son datos del partido frame a frame: solo en local, nunca en el repositorio.
+
+## P3: integración de la P2 (#14)
+
+`solution/a_opus/p2.py` ejecuta el detector de Pablo (`solution/dead_ball.py`) sobre el partido entero, tal como él
+lo validó: su lector, sus umbrales y sus eventos. Sus candidatos se convierten en un término más de evidencia de
+balón muerto:
+- **`tagged_preparation`:** `D` desde el primer frame de balón quieto hasta el reinicio, y vivo justo después.
+  Es lo que `setpiece_llr` no sabe: en qué punto de la ventana `SET PIECES` se juega el balón.
+- **`initial_kickoff_context`:** `D` antes del primer saque inicial de cada parte.
+- **`observed_exit`:** peso 0, porque `out` y `exit` ya cuentan las salidas.
+
+Va desactivado por defecto (`p2.enabled=0`): el candidato A entregado no cambia. Con la P2 desactivada, el CSV de
+un partido sintético es idéntico byte a byte al de `main`. La variante con la P2 se lanza con:
+
+```bash
+python -m solution.a_opus.with_p2 --out salidas/a_p2.csv --log salidas/a_p2_log.txt
+```
+
+El log añade una línea con los candidatos de la P2 por tipo, sin frames. `python -m solution.a_opus.compare_p2
+<partidos sintéticos>` compara las dos variantes.
+
+**Resultado en sintético** (5 partidos con el balón suavizado como el ATD real; 3 de ellos a escala de ~1 s,
+`--smooth-half 12`):
+
+| variante | spellF1 | macroF1 | posesiones / reales | falsas de menos de 2 s | error del reinicio p50 / p90 (frames) |
+|---|---|---|---|---|---|
+| A, sin la P2 | 0,7919 | 0,9310 | 1.650 / 1.984 | 18 | 7 / 75 |
+| A + P2 tal cual | 0,7919 | 0,9310 | 1.650 / 1.984 | 18 | 7 / 75 |
+| A + P2, regla con 1 s de margen (experimento) | 0,7907 | 0,9284 | 1.663 / 1.984 | 24 | 15 / 78 |
+| ídem, reinicio fechado en el movimiento (experimento) | 0,7915 | 0,9299 | 1.656 / 1.984 | 22 | 9 / 77 |
+
+- **Tal cual, la P2 no encuentra preparaciones.** 68 de 82 ventanas tienen el balón quieto en la zona del saque,
+  pero ninguna cumple ≥ 2 m/s en los 3 frames inmediatamente posteriores. Con el balón suavizado, la velocidad
+  tarda en subir: en 54 de ellas el movimiento llega dentro de 1 s. Solo aporta el contexto del saque inicial, y
+  ahí A ya decodifica `D`.
+- **Con 1 s de margen** (solo como experimento, sin cambiar `dead_ball.py`) sí las encuentra, pero A no mejora: ya
+  fecha esos reinicios con `setpiece`, `static`, `kick` y `restart`, y el reinicio de la P2 cae unos frames antes
+  del golpeo.
+
+**Decisión:** la integración queda disponible y desactivada. No se adopta sin una ejecución real con el log sin
+etiquetas, que diga cuántas preparaciones encuentra la P2 en el ATD real. La regla del movimiento inmediato se
+comenta en #14.
