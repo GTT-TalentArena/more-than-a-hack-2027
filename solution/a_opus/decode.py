@@ -118,6 +118,69 @@ def viterbi(score_h, score_a, score_d, lam_ha, lam_ad, lam_da, min_dead):
     return states
 
 
+def _switch_cost(old, new, lam_ha, lam_ad, lam_da):
+    if old == D:
+        return lam_da
+    if new == D:
+        return lam_ad
+    return lam_ha
+
+
+def hysteresis(score_h, score_a, score_d, lam_ha, lam_ad, lam_da, min_dead):
+    """Alternative to viterbi (#16): a causal state machine with retro-dating.
+
+    For every other state a CUSUM accumulates how much better it explains the frames than the
+    current one; the state changes when that excess passes the same switch cost the decoder
+    uses, and the change is written back to where the excess started (study 4.4: "retrofechar").
+    A stoppage cannot end before min_dead frames. Same inputs and costs as viterbi, so the two
+    can be compared on equal terms; unlike viterbi it never revises a decision with later
+    evidence beyond the excursion it is accumulating.
+    """
+    scores = np.vstack([score_h, score_a, score_d]).astype(np.float64)
+    n = scores.shape[1]
+    out = np.empty(n, dtype=np.int8)
+    if n == 0:
+        return out
+    state = int(np.argmax(scores[:, :min(n, 25)].sum(axis=1)))
+    entered = 0
+    cusum = np.zeros(3)
+    start = np.zeros(3, dtype=np.int64)
+    for t in range(n):
+        best, best_excess = None, 0.0
+        for k in range(3):
+            if k == state:
+                continue
+            if cusum[k] <= 0.0:
+                start[k] = t
+                cusum[k] = 0.0
+            cusum[k] = max(0.0, cusum[k] + scores[k, t] - scores[state, t])
+            excess = cusum[k] - _switch_cost(state, k, lam_ha, lam_ad, lam_da)
+            if excess > best_excess:
+                best, best_excess = k, excess
+        if best is not None and not (state == D and t - entered < min_dead):
+            begin = max(int(start[best]), entered + (min_dead if state == D else 1))
+            out[begin:t] = best
+            state, entered = best, begin
+            cusum[:] = 0.0
+        out[t] = state
+    return out
+
+
+def vote(score_h, score_a, score_d, half):
+    """Alternative to viterbi (#16): the state with the largest summed score over +/- half frames.
+
+    The windowed majority of the baseline, applied to the same evidence instead of to the
+    nearest player. No switch cost and no minimum stoppage.
+    """
+    scores = np.vstack([score_h, score_a, score_d]).astype(np.float64)
+    cumulative = np.concatenate([np.zeros((3, 1)), np.cumsum(scores, axis=1)], axis=1)
+    n = scores.shape[1]
+    index = np.arange(n)
+    high = np.minimum(n, index + half + 1)
+    low = np.maximum(0, index - half)
+    return np.argmax(cumulative[:, high] - cumulative[:, low], axis=0).astype(np.int8)
+
+
 def date_team_changes(states, c_home, c_away, window, min_control):
     """Date every H<->A change at the new side's first touch (study 3.2: "fechado en el primer
     toque, no en la confirmación").

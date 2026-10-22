@@ -433,3 +433,48 @@ sintético.
 | `diagnostics.py` | comprobaciones sin etiquetas que imprime el log (solo agregados) |
 | `synth.py` | generador de partidos sintéticos en los formatos reales |
 | `tests.py` | tests |
+
+## Trabajo de P3 y P4 tras la entrega (#15, #16)
+
+Ni el modelo ni su CSV cambian: Viterbi sigue siendo el decodificador por defecto, y la salida es la misma byte a
+byte. Lo añadido sirve para comprobar y para integrar.
+
+**Decodificadores alternativos (#16).** Con `--set decode.method=hysteresis` o `--set decode.method=vote` se
+decodifica la misma evidencia de dos formas más:
+- **hysteresis:** CUSUM con retrofechado y los mismos costes que Viterbi (estudio 4.4).
+- **vote:** mayoría en una ventana de ±1 s, como el baseline pero sobre esta evidencia.
+
+`python -m solution.a_opus.compare_decoders <partidos sintéticos>` los compara. Sobre 5 partidos sintéticos (3
+ruidosos y 2 con el balón suavizado como el ATD real):
+
+| decodificador | spellF1 | posesiones / reales | fragmentación | cortas reales (< 5 s) conservadas | falsas de menos de 2 s | transiciones P / R a ±1 s |
+|---|---|---|---|---|---|---|
+| **Viterbi** | **0,783** | 1.580 / 1.915 | 0,88 | 214 / 627 | **17** | 0,72 / 0,63 |
+| histéresis | 0,761 | 2.010 / 1.915 | 1,11 | 298 / 627 | 195 | 0,62 / 0,69 |
+| votación | 0,659 | 2.560 / 1.915 | 1,42 | 267 / 627 | 722 | 0,50 / 0,70 |
+
+- **Viterbi** elimina el ruido sin imponer una duración mínima: conserva un tercio de las posesiones cortas reales
+  y apenas inventa falsas.
+- **La histéresis** confirma un cambio en cuanto el exceso acumulado supera el coste, y lo fecha donde empezó el
+  exceso. Recupera más posesiones cortas, pero inventa 11 veces más falsas.
+- **La votación** fragmenta como el baseline.
+
+**Casos explícitos (#15, #16).** En `python -m solution.a_opus.tests`:
+- `test_p3_control_cases`: un pase a 15 m/s que roza a un defensor no es control, una recepción sí, y un duelo no
+  da evidencia neta.
+- `test_p3_p4_scenarios`, con los costes del candidato:
+  - la intercepción cambia la posesión en el primer contacto del nuevo equipo;
+  - el rebote o desvío, el duelo sin control posterior y el ruido aislado no la cambian;
+  - una recuperación real de 1,2 s se conserva;
+  - un cambio a través de un hueco del balón se fecha donde empieza la evidencia del nuevo equipo.
+- `test_p4_first_frames_of_a_half`: una parte que empieza parada decodifica `D` primero; una que empieza en juego
+  toma el equipo de su primera evidencia desde el frame 0.
+
+**Evidencia por frame (#15, contrato P0 §6).** `--evidence salidas/evidencia.npz` escribe, para todo el vídeo:
+- `control_H_score`, `control_A_score` y `control_valid`: la fuerza de control 0..1, no una probabilidad;
+- `nearest_H_m`, `nearest_A_m` y `distance_valid`;
+- `touch_H` y `touch_A`;
+- `team_llr` y `dead_llr` (nats), y el estado decodificado.
+
+Sin balón observado ni interpolado, `control_valid` es falso y las puntuaciones son NaN. Ninguna ausencia se
+convierte en evidencia. Son datos del partido frame a frame: solo en local, nunca en el repositorio.
