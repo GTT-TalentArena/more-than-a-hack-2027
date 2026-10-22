@@ -1,0 +1,7 @@
+{
+  "contract_version": "1.0",
+  "model": "constant",
+  "parameters": {"label": "D"},
+  "seed": 0,
+  "evaluation": {"split": "public-5min", "bootstrap": 0}
+}
