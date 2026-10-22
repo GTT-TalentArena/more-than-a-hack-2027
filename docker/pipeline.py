@@ -123,6 +123,8 @@ def metrics(report_path):
         "duracion_media_s": report["mean_spell_duration_s"],
         "posesiones_gt": report["n_gt_spells"],
         "duracion_media_gt_s": report["gt_mean_spell_duration_s"],
+        "fragmentacion": report["fragmentation"],
+        "abstenciones_en_frames_puntuados": report["n_abstain_on_graded"],
     }
 
 
@@ -290,7 +292,7 @@ def cmd_modelo(args, out, record):
     atomic_json(config_path, config)
     record.update(config=config, config_sha256=sha256(config_path), modelo=config["model"],
                   seed=config["seed"], seed_applied=False if config["model"] != "module" else None)
-    required = ["atd_meta", "atd_raw"] if config["model"] == "baseline" else []
+    required = ["atd_meta", "atd_raw"] if config["model"] in ("baseline", "baseline_hold") else []
     if config["model"] == "module":
         # No es posible deducir qué fuentes usa un candidato externo; identificar el bundle
         # disponible y dejar explícito que su consumo concreto depende de su implementación.
@@ -311,6 +313,10 @@ def cmd_modelo(args, out, record):
             raise Stop(ERROR, "Falló el generador; consultar generacion.log")
     output = os.path.join(results, "candidato.csv")
     generate(output, os.path.join(out, "generacion.log"))
+    diagnostics = os.path.splitext(output)[0] + ".diagnostics.json"
+    if os.path.isfile(diagnostics):
+        with open(diagnostics, encoding="utf-8") as handle:
+            record["diagnostics"] = json.load(handle)
     if args.repetir:
         repeated = os.path.join(out, "repeticion", "candidato.csv")
         generate(repeated, os.path.join(out, "repeticion.log"))

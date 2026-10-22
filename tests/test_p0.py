@@ -188,8 +188,8 @@ class PipelineTests(unittest.TestCase):
             processes = [subprocess.Popen(command, cwd=ROOT, env=env, stdout=subprocess.PIPE,
                                           stderr=subprocess.PIPE) for _ in range(2)]
             for process in processes:
-                process.communicate(timeout=60)
-                self.assertEqual(process.returncode, 2)
+                stdout, stderr = process.communicate(timeout=60)
+                self.assertEqual(process.returncode, 2, (stdout + stderr).decode("utf-8", errors="replace"))
             self.assertEqual(len(list(Path(directory).glob("*/run.json"))), 2)
             index = [json.loads(line) for line in (Path(directory) / "runs.jsonl").read_text(encoding="utf-8").splitlines()]
             self.assertEqual(len({r["id"] for r in index}), 2)

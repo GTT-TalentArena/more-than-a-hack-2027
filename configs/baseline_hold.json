@@ -1,0 +1,7 @@
+{
+  "contract_version": "1.0",
+  "model": "baseline_hold",
+  "parameters": {"max_hold_frames": 25},
+  "seed": 0,
+  "evaluation": {"split": "public-5min", "bootstrap": 0}
+}
