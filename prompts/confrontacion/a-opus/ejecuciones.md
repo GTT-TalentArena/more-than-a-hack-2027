@@ -21,6 +21,11 @@ Solo resultados agregados (A7). Máximo 5 evaluaciones sobre la ventana pública
 | 12 | 2026-10-22 | sin commit (v1.6) | `run_evaluation.py --results <solo v1.6> --bootstrap 1000` (LLM; solo agregados) | Ventana pública: **spellF1 0,5250** (bootstrap 5–95 % 0,338–0,713) · macroF1 0,8391 · transF1@25 0,2564 (latencia media +3,8, mediana −1) · 15 posesiones frente a 17 · spellF1@0,7 0,375 · alive/dead F1 0,955 · acierto de equipo 0,899 | **sí · n.º 5 (v1.6)** |
 
 **Evaluaciones públicas usadas:** 5 de 5. No quedan más. Las versiones siguientes solo pueden validarse con el log
-sin etiquetas y con el sintético. Se cuenta una por versión puntuada, aunque las dos fueran en el mismo
+sin etiquetas y con el sintético.
+
+**Entrega para la comparación:** el código de las ejecuciones 11 y 12 (v1.6.0) es el del commit `6456aab`. Después
+solo se fusionó `main` (infraestructura común) y se añadieron documentación y `configs/candidate_a.json`, sin cambios
+en el modelo. CSV de referencia de la v1.6: SHA-256
+`ab640ee8694f259697393d822b0a6665a017878b5b29d12715f59ec8a4dbc6d5` (Python 3.11.3, numpy 2.4.6, Windows 11). Se cuenta una por versión puntuada, aunque las dos fueran en el mismo
 comando (lectura conservadora de A8). Los cambios de la v1.1 se decidieron con el log sin etiquetas de la ejecución
 n.º 1, antes de puntuar nada.

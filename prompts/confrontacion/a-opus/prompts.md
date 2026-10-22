@@ -109,7 +109,7 @@ Respuesta (resumen):
 - **Probado y descartado** (documentado en el README): evidencia por hueco según longitud, cadena de Markov de
   visibilidad y estimador de retraso por posición.
 - **Resultados.** Sintético v1.2: 0,728 / 0,789 / 0,755. Tests nuevos del fechado en el primer toque.
-  Commit: _pendiente_.
+  Commit: `6456aab` (v1.6), PR en la entrada 013.
 
 ## 007 · 2026-10-22 · evaluar y mejorar hasta gastar las 5 evaluaciones
 
@@ -191,7 +191,7 @@ Respuesta (resumen):
   0,8391, 15 posesiones frente a 17, spellF1@0,7 0,375 y acierto de equipo 0,899. Es la mejor de las cinco, pero
   su intervalo solapa con las anteriores.
 - **Cierre:** tabla completa en `resultados.csv` y en el formato de Molines. Se agotaron las 5 evaluaciones.
-  Commit: _pendiente_.
+  Commit: `6456aab` (v1.6), PR en la entrada 013.
 
 ## 013 · 2026-10-22 · commit, push y PR para Molines
 

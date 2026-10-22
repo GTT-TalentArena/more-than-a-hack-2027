@@ -28,6 +28,18 @@ python evaluation/validate_submission.py evaluation/results/a_opus.csv
   ningún frame. Es el log que se puede devolver al LLM según el acuerdo A7.
 - Cualquier parámetro de `config.py` se cambia sin tocar el código: `--set decode.lam_ha=6 --set ballfree.enabled=0`.
 
+Por la **vía común del equipo** (#12 y #24), con `configs/candidate_a.json` (`"model": "module"`). Hay que poner en
+`DATOS` la carpeta que contiene `tactical/`:
+
+```powershell
+docker compose run --rm modelo modelo --config configs/candidate_a.json --repetir
+```
+
+Sin Docker vale `python docker/pipeline.py modelo --config configs/candidate_a.json --repetir`, con
+`MTAH_DATA_DIR` apuntando a los datos: por contrato, el módulo solo recibe `--out`. La imagen fija las mismas
+versiones que `requirements.txt` (numpy 2.4.6 y pandas 3.0.6). Por esta vía sale el mismo CSV byte a byte que con la
+ejecución directa (comprobado en sintético).
+
 En **Windows (PowerShell)**, si `python` es el del sistema y no tiene numpy, crea un entorno con las versiones
 fijadas y llama a su intérprete por la ruta. Así no depende de activar el entorno, que la política de ejecución
 de scripts puede bloquear:
