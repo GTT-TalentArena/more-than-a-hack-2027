@@ -1,0 +1,37 @@
+# Ejecuciones (variante B + Claude)
+
+| # | Fecha | Commit | Comando | Resultado agregado | ¿Pública (A8)? |
+|---|---|---|---|---|---|
+| s1 | 2026-10-21 | (este commit) | `python -m unittest solution.b_gpt.test_synthetic solution.b_gpt.test_diagnostics` | 37 pruebas OK (34 de la v0 + 3 nuevas); la nueva prueba principal falla con la v0 | No (sintético) |
+| s2 | 2026-10-21 | (este commit) | `python -m solution.b_gpt --synthetic` ×2 | mismo SHA-256 en las dos; validador oficial OK (199.319 filas); ~4,6 s | No (sintético) |
+| 1 | 2026-10-21 | `02bda8f` | `python -m solution.b_gpt --out evaluation/results/b_gpt_claude.csv` (Edu, datos reales) | 347 posesiones · media 11,87 s · mediana 6,84 s · D 35,19 % · X 0 % (mitades puntuadas) · `out_of_play_gap_frames` 6.787 · validador OK · 8,55 s | No |
+| 2 | 2026-10-21 | `02bda8f` | igual, con `--out …/b_gpt_claude_r2.csv` | mismo SHA-256 que la #1 (`68f2ed57…`) · 8,46 s | No |
+| 3 | 2026-10-21 | `02bda8f` | evaluación pública con Docker (`docker/pipeline.py evaluar`, bootstrap 1000) sobre `b_gpt_claude.csv` | spellF1 **0.3895** · macroF1 0.6620 · 21 posesiones · 13,6 s — **idéntico a la v0** en la ventana pública | **Sí, #2 del candidato B** |
+| 4 | 2026-10-21 | `fedc89e` | igual que la #1, con diagnósticos `dead_time_diagnostics` (Edu, datos reales) | mismo SHA-256 (`68f2ed57…`): los diagnósticos no cambian etiquetas · huecos sin balón: < 5 s 0,17 min; 5–10 s 53 tramos / 6,23 min (3,41 vivos); 10–30 s 60 / 17,84 (5,99 vivos); > 30 s 19 / 18,88 (3,21 vivos) · fases lentas < 1 / 1,5 / 2 m/s: 18,4 / 37,7 / 42,3 min (0,5 / 8,5 / 12,0 vivos) | No |
+| s3 | 2026-10-21 | (este commit) | tests sintéticos y `--synthetic` ×2 (v2) | 39 pruebas OK; la nueva de huecos largos falla con la v1; mismo SHA-256 en las dos ejecuciones; validador OK | No (sintético) |
+| 5 | 2026-10-21 | `6b83b32` | v2 con datos reales ×2 (Edu) | 345 posesiones · media 9,62 s · mediana 5,8 s · D 47,76 % · X 0 % · huecos ≥ 10 s etiquetados vivos 9,2 → 0,6 min · mismo SHA-256 en las dos (`c818b572…`) | No |
+| 6 | 2026-10-21 | `6b83b32` | evaluación pública con Docker (bootstrap 1000) sobre la v2 | spellF1 **0.3122** [0.185, 0.449] · macroF1 0.6652 · 24 posesiones · 10,8 s · código 5 (por debajo de smooth50) · D precisión 0,589 / recall 0,406 (v1: 0,997 / 0,257) | **Sí, #3 del candidato B** |
+| s4 | 2026-10-21 | (este commit) | tests sintéticos y `--synthetic` ×2 (v3) | 42 pruebas OK; la del balón tapado por un jugador falla con la v2; mismo SHA-256 en las dos; validador OK | No (sintético) |
+| 7 | 2026-10-21 | `13ffe9b` | v3 con datos reales ×2 (Edu) | 340 posesiones · media 11,02 s · mediana 6,58 s · D 41,05 % · X 0 % · huecos vivos: 5–10 s 2,62 · 10–30 s 4,07 · > 30 s 0,62 min · mismo SHA-256 en las dos (`a5372e72…`) | No |
+| 8 | 2026-10-21 | `13ffe9b` | evaluación pública con Docker (bootstrap 1000) sobre la v3 | spellF1 **0.3895** · macroF1 **0.6901** [0.470, 0.822] · 21 posesiones · 13,4 s · código 0 · D precisión 0,998 / recall 0,317 | **Sí, #4 del candidato B** |
+| s5 | 2026-10-21 | (este commit) | tests sintéticos y `--synthetic` (v3 + diagnósticos v4) | 43 pruebas OK; mismo SHA-256 sintético que la v3 (`9ec36b1a…`): los diagnósticos no cambian etiquetas | No (sintético) |
+| 9 | 2026-10-21 | `620823d` | v3 + diagnósticos v4 con datos reales (Edu) | mismo SHA-256 que la v3 (`a5372e72…`) · duelos 0,54 min, 18/241 cambios junto a duelo · balón quieto vivo fuera del área 0,73 min · huecos por línea reaparecidos rápido 9,92 min (32) · 70 idas y vueltas < 3 s (2,1 min) · 100 tramos D (mediana 15,6 s) | No |
+| s6 | 2026-10-21 | (este commit) | tests sintéticos y `--synthetic` ×2 (v4) | 46 pruebas OK; la nueva prueba principal falla con la v3; mismo SHA-256 en las dos; validador OK; 38 idas y vueltas fusionadas en el partido sintético | No (sintético) |
+| 10 | 2026-10-21 | `8ae2aa5` | v4 con datos reales ×2 (Edu) | 220 posesiones · media 17,03 s · mediana 11,62 s · D 41,05 % (idéntico a la v3) · X 0 % · 60 idas y vueltas fusionadas · cambios H↔A 241 → 121 · idas y vueltas < 3 s 0 · posesiones < 2 s 57 → 13 · 100 tramos D sin cambios · mismo SHA-256 en las dos (`f7d8f604…`) | No |
+| 11 | 2026-10-21 | `8ae2aa5` | evaluación pública con Docker (bootstrap 1000) sobre la v4 (Edu) | spellF1 **0.4000** [0.213, 0.587] · macroF1 **0.6983** [0.472, 0.836] · 13 posesiones · 21,6 s · código 0 · acierto de equipo 0,873 · F1 de D 0,481 | **Sí, #5 del candidato B** |
+
+Comparación con la v0 (registro de b-gpt): 354 → 347 posesiones, D 33,41 % → 35,19 %, media 11,95 → 11,87 s. Sin GT: no indica si acierta más.
+
+Cupo público compartido con el candidato B (decisión de Alejandro, 21:45): **5 de 5 usadas** en total (#1 la v0, #2 la v1, #3 la v2, #4 la v3, #5 la v4). No quedan evaluaciones públicas.
+
+Lectura fijada antes de evaluar: diferencias < ~0,06 de spellF1 son una posesión en esta ventana. Resultado: la v1 **no se distingue** de la v0 en la ventana pública (el cambio no actúa en esos 5 min); su posible efecto está en el resto del partido y solo lo puede valorar la revisión ciega.
+
+Lectura de la #3 con el criterio fijado antes: resultado **mixto** (spellF1 baja > 0,06 pero macroF1 no baja). La hipótesis acierta en parte (falta mucha D) pero no todos los huecos largos son paradas.
+
+Lectura de la #4 con el criterio fijado antes («mejora clara: spellF1 ≥ 0,3895 sin bajar macroF1»): **se cumple**; la v3 pasa a ser la versión de la variante.
+
+Comprobación de la v4 antes de la evaluación #5 (expectativas fijadas en analisis-v4.md §6): D idéntico (41,05 %), posesiones 340 → 220 y cambios H↔A 241 → 121 dentro de lo esperado, 0 idas y vueltas < 3 s, determinista. **Se cumplen todas**: la v4 puede gastar la evaluación pública #5.
+
+**Evaluación pública #5 aplazada (2026-10-21, ~22:45).** Es la última del candidato B y se reserva para la versión que se congele. Se espera al corte de entradas comunes del protocolo (A6: `main` del 22-O) por si los estudios de los compañeros publicados en `main` justifican una v5. Nada de la rama del candidato A se consulta (A10). Si no hay estudios comunes relevantes, se evalúa la v4 tal cual, con el criterio ya fijado.
+
+**Evaluación #5 (v4).** Edu decidió lanzarla el mismo 21-O, sin esperar al corte de entradas comunes del 22-O que se había propuesto. El protocolo lo permite: era la quinta de las 5. Criterio fijado (spellF1 ≥ 0,3895 y macroF1 ≥ 0,6901): **se cumple**, y la v4 es la versión final de la variante. Las mejoras sobre la v3 están dentro del ruido de la ventana, y la v4 da menos posesiones que el GT (13 frente a 17); ver iteraciones.md. Cualquier cambio posterior ya no puede comprobarse con la ventana pública y, tras la congelación del 29-O, cuenta como una ronda nueva.

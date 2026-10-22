@@ -18,6 +18,7 @@ possession_by_frame.pkl
 # Any file in results/ is a set of labels for the whole match. A perfect one is a copy of the
 # ground truth, so the folder ships empty and stays that way.
 evaluation/results/*.csv
+evaluation/results/*.summary.json
 
 # ...with one deliberate exception. The baselines are computed from the ATD alone -- the same ATD
 # every enrolled participant has -- and never read a ground truth of any kind, so they carry no
@@ -54,6 +55,9 @@ data/*
 organizers/
 
 # -- editors and build artifacts ---------------------------------------------------------------
+# Full-match predictions and isolated environments for local candidates.
+solution/*/output/
+solution/*/.venv/
 .idea/
 .vscode/
 __pycache__/
