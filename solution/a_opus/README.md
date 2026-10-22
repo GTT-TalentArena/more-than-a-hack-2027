@@ -517,6 +517,19 @@ El log añade una línea con los candidatos de la P2 por tipo, sin frames. `pyth
   fecha esos reinicios con `setpiece`, `static`, `kick` y `restart`, y el reinicio de la P2 cae unos frames antes
   del golpeo.
 
-**Decisión:** la integración queda disponible y desactivada. No se adopta sin una ejecución real con el log sin
-etiquetas, que diga cuántas preparaciones encuentra la P2 en el ATD real. La regla del movimiento inmediato se
-comenta en #14.
+**Ejecución real, solo con log** (`with_p2 --log`, sin puntuar la ventana pública). Confirma lo del sintético:
+
+| | v1.6 (sin la P2) | con la P2 |
+|---|---|---|
+| candidatos de la P2 | — | 0 `tagged_preparation`, 2 `initial_kickoff_context` (1 con reinicio), 64 `observed_exit` (peso 0) |
+| evidencia `p2` (nats) | — | +137 / −5 |
+| posesiones (mediana) | 219 (10,4 s) | 216 (9,9 s) |
+| paradas (frames puntuados en `D`) | 113 (49,3 %) | 111 (49,9 %) |
+| cambios H↔A | 106 | 105 |
+
+En el ATD real, la regla tampoco encuentra ninguna preparación de saque. Solo actúa el contexto previo al saque
+inicial: 2 paradas menos y +0,6 puntos de `D`. Sin etiquetas no se puede saber si eso acierta.
+
+**Decisión:** la integración queda disponible y desactivada. Para que la P2 aporte en A, la regla de preparación
+tendría que admitir el balón suavizado (por ejemplo, movimiento sostenido dentro de 1 s tras el balón quieto,
+fechado donde empieza). Es un cambio en `dead_ball.py`, con sus umbrales fijados de antemano: se propone en #14.
