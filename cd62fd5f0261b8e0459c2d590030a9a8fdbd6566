@@ -1,0 +1,5 @@
+English translation (original message in Spanish above):
+
+feat: implement the P0 pipeline and tests (#31)
+- P0 issue
+- fix(ci): enable explicit quality checks and P0 tests
