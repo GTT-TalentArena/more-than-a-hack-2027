@@ -1,0 +1,84 @@
+name: Candidate tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: candidate-tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  candidates:
+    name: candidate-${{ matrix.candidate }}-${{ matrix.environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        candidate: [a, b]
+        environment: [declared, common]
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUTF8: "1"
+      PYTHONUNBUFFERED: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      # Never resolve the real match bundle in CI. Fixtures create their own temp dirs.
+      MTAH_DATA_DIR: /tmp/gtt-no-real-match-data
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python for declared dependencies
+        if: matrix.environment == 'declared'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install candidate A declared dependencies
+        if: matrix.environment == 'declared' && matrix.candidate == 'a'
+        run: python -m pip install -r solution/a_opus/requirements.txt
+
+      - name: Install candidate B declared dependencies
+        if: matrix.environment == 'declared' && matrix.candidate == 'b'
+        run: python -m pip install -r solution/b_gpt/requirements.txt
+
+      - name: Candidate A full synthetic suite (declared environment)
+        if: matrix.environment == 'declared' && matrix.candidate == 'a'
+        run: python -m solution.a_opus.tests --full
+
+      - name: Candidate B synthetic and diagnostic suites (declared environment)
+        if: matrix.environment == 'declared' && matrix.candidate == 'b'
+        run: >
+          python -m unittest -v
+          solution.b_gpt.test_synthetic solution.b_gpt.test_diagnostics
+
+      - name: Build shared Docker environment
+        if: matrix.environment == 'common'
+        run: docker compose build
+
+      - name: Candidate A full synthetic suite (shared Docker)
+        if: matrix.environment == 'common' && matrix.candidate == 'a'
+        run: >
+          docker compose run --rm --user "$(id -u):$(id -g)"
+          -e MTAH_DATA_DIR=/tmp/gtt-no-real-match-data
+          --entrypoint python evaluar -m solution.a_opus.tests --full
+
+      - name: Candidate B synthetic and diagnostic suites (shared Docker)
+        if: matrix.environment == 'common' && matrix.candidate == 'b'
+        run: >
+          docker compose run --rm --user "$(id -u):$(id -g)"
+          -e MTAH_DATA_DIR=/tmp/gtt-no-real-match-data
+          --entrypoint python evaluar -m unittest -v
+          solution.b_gpt.test_synthetic solution.b_gpt.test_diagnostics
