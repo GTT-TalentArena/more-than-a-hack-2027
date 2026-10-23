@@ -50,12 +50,12 @@ jobs:
             const match = raw.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
             if (!match) {
               throw new Error(
-                'La descripción del PR debe empezar por el front matter entre ---'
+                'The PR description must start with the front matter between ---'
               );
             }
 
-            // Quita comentarios de la plantilla: líneas completas con # y
-            // comentarios al final de type/outcome. Quita también las claves vacías.
+            // Strip the template's comments: whole lines starting with # and
+            // comments at the end of type/outcome. Also strip empty keys.
             const lines = match[1]
               .split('\n')
               .filter(l => !/^\s*#/.test(l))
@@ -77,28 +77,28 @@ jobs:
             const date = get('date') || defaultDate;
 
             if (!title) {
-              throw new Error('Falta title en el front matter');
+              throw new Error('title is missing from the front matter');
             }
             if (!TYPES.includes(type)) {
               throw new Error(
-                `type inválido o ausente: "${type}". Valores: ${TYPES.join(', ')}`
+                `invalid or missing type: "${type}". Values: ${TYPES.join(', ')}`
               );
             }
             if (NEEDS_OUTCOME.includes(type) && !OUTCOMES.includes(outcome)) {
               throw new Error(
-                `outcome es obligatorio en "${type}". Valores: ${OUTCOMES.join(', ')}`
+                `outcome is required for "${type}". Values: ${OUTCOMES.join(', ')}`
               );
             }
             if (outcome && !OUTCOMES.includes(outcome)) {
               throw new Error(
-                `outcome inválido: "${outcome}". Valores: ${OUTCOMES.join(', ')}`
+                `invalid outcome: "${outcome}". Values: ${OUTCOMES.join(', ')}`
               );
             }
             if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-              throw new Error(`date inválida: "${date}". Formato AAAA-MM-DD`);
+              throw new Error(`invalid date: "${date}". Format YYYY-MM-DD`);
             }
 
-            // Completa title/date/authors si faltan; el resto se copia tal cual
+            // Fill in title/date/authors if missing; the rest is copied as is
             const out = [...lines];
             if (!lines.some(l => l.startsWith('date:'))) {
               const i = out.findIndex(l => l.startsWith('title:'));
@@ -163,7 +163,7 @@ jobs:
             --base main \
             --head "$BRANCH" \
             --title "docs(log): add entry for PR #${PR_NUMBER}" \
-            --body "Entrada automática del log para PR #${PR_NUMBER}."
+            --body "Automatic log entry for PR #${PR_NUMBER}."
 
           gh pr merge "$BRANCH" \
             --repo GTT-TalentArena/gtt-talentarena.github.io \

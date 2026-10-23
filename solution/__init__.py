@@ -1,1 +1,1 @@
-"""Adaptadores de modelos del equipo; no contiene datos del partido."""
+"""The team's model adapters; contains no match data."""

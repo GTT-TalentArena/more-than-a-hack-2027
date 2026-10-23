@@ -1,5 +1,7 @@
 # Contrato de datos · P0 v1
 
+> 🇬🇧 **English version:** [CONTRATO_DATOS.en.md](CONTRATO_DATOS.en.md). This document was written in Spanish; the translation is kept in sync.
+
 > Decisión de diseño de integración del equipo, 22 de octubre de 2026.
 >
 > Estado: contrato v1 de integración. P0 incluye validadores de frames, posiciones y máscaras en `solution/contract.py`, generación configurable y un adaptador de comandos. Las señales de Nico/Jimy/Pablo son interfaces objetivo: su producción y conformidad aún deben comprobarse. Las definiciones oficiales del reto prevalecen sobre este documento.

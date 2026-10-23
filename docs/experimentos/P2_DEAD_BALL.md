@@ -1,5 +1,7 @@
 # P2 · Interrupciones y reinicios (#14)
 
+> 🇬🇧 **English version:** [P2_DEAD_BALL.en.md](P2_DEAD_BALL.en.md). This document was written in Spanish; the translation is kept in sync.
+
 Hipótesis previa a la ejecución: combinar salidas observadas del campo con preparación y movimiento dentro del contexto de reinicio puede recuperar interrupciones reales sin convertir las oclusiones en D. No se presupone una mejora de spellF1.
 
 ## Interfaz y alcance

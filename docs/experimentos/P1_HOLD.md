@@ -1,5 +1,7 @@
 # P1 · Conservar temporalmente el estado cuando falta el balón
 
+> 🇬🇧 **English version:** [P1_HOLD.en.md](P1_HOLD.en.md). This document was written in Spanish; the translation is kept in sync.
+
 > Issue [#13](https://github.com/GTT-TalentArena/more-than-a-hack-2027/issues/13). Autor de implementación: Alejandro Molines. Contrato v1 sin cambios; código nuevo en inglés.
 >
 > Estado: implementación, pruebas y primera comparación pública con tracking real verificadas. Resultado: mejora pequeña de macroF1, sin mejora de spellF1 o fragmentación; revisión de compañeros y CI de P1 pendientes de confirmar. No es un resultado oficial del partido completo ni modifica los candidatos A/B.

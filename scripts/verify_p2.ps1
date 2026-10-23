@@ -15,7 +15,7 @@ function Invoke-Checked {
 }
 if ($Docker) {
     $env:DATOS = (Resolve-Path -LiteralPath $DataDir).Path.Replace('\', '/')
-    # Usar la imagen preparada según docs/DOCKER.md. No compilar el backend.
+    # Use the image prepared as in docs/DOCKER.md. Don't build the backend.
     Invoke-Checked @('image','inspect','gtt-mtah:local','--format','{{.Id}}')
     Invoke-Checked @('compose','config','--quiet')
     Invoke-Checked @('compose','run','--rm','--pull','never','--entrypoint','python','evaluar','-m','unittest','discover','-s','tests','-v')

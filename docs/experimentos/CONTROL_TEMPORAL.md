@@ -1,5 +1,7 @@
 # Control y continuidad temporal · experimento independiente
 
+> 🇬🇧 **English version:** [CONTROL_TEMPORAL.en.md](CONTROL_TEMPORAL.en.md). This document was written in Spanish; the translation is kept in sync.
+
 Hipótesis fijada antes de ejecutar sobre el partido: exigir proximidad inequívoca y movimiento compatible con control, y penalizar los cambios de estado, reducirá la fragmentación del consumidor nearest-player de P2. No se garantiza superar smooth50 ni se modifican los candidatos A/B.
 
 ## Reglas y parámetros iniciales

@@ -1,5 +1,7 @@
 # Ejecutar P0 · Generar, validar, evaluar y registrar
 
+> 🇬🇧 **English version:** [EJECUCION.en.md](EJECUCION.en.md). This document was written in Spanish; the translation is kept in sync.
+
 > Issue [#12](https://github.com/GTT-TalentArena/more-than-a-hack-2027/issues/12). Contrato: [CONTRATO_DATOS.md](CONTRATO_DATOS.md). Verificación y cierre: [P0.md](P0.md).
 
 ## 1. Desde dónde ejecutar

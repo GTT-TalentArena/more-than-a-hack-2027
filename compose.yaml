@@ -1,11 +1,11 @@
-# Entorno común de GTT (guía: docs/DOCKER.md)
+# GTT common environment (guide: docs/DOCKER.md)
 #
 #   docker compose build
-#   docker compose run --rm evaluar                      # CSV públicos, sin datos del partido
+#   docker compose run --rm evaluar                      # public CSVs, no match data
 #   DATOS=/ruta/a/los/datos docker compose run --rm baseline baseline --repetir
 #
-# El repo se monta en solo lectura (el código no está en la imagen), los datos en solo lectura y
-# todo lo que se genera va a ./salidas, con tu usuario (GTT_UID/GTT_GID, 1000 por defecto).
+# The repo is mounted read-only (the code is not in the image), the data read-only, and
+# everything generated goes to ./salidas, owned by your user (GTT_UID/GTT_GID, 1000 by default).
 
 x-comun: &comun
   build: .
@@ -26,12 +26,12 @@ services:
     <<: *comun
     environment:
       GTT_SALIDAS: /salidas
-      # games.py busca aquí los datos; fuera del contenedor, por defecto en ./data
+      # games.py looks for the data here; outside the container, ./data by default
       MTAH_DATA_DIR: /datos
     volumes:
       - .:/app:ro
       - ./salidas:/salidas
-      # Carpeta con tactical/ (y broadcast/ si se usa). Sin DATOS, se usa ./data del repo
+      # Folder with tactical/ (and broadcast/ if used). Without DATOS, the repo's ./data is used
       - ${DATOS:-./data}:/datos:ro
     command: ["baseline"]
 

@@ -1,5 +1,7 @@
 # Estudio: el modelo de posesión
 
+> 🇬🇧 **English version:** [ESTUDIO_POSESION.en.md](ESTUDIO_POSESION.en.md). This document was written in Spanish; the translation is kept in sync.
+
 > **More than a Hack 2027 · fase 1** · estudio previo a programar · 20 de octubre de 2026
 >
 > **Fuentes:** la documentación y el código público del reto (`CHALLENGE.md`, `EVALUATION.md`, `DATA.md`,

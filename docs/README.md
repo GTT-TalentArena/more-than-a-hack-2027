@@ -49,7 +49,9 @@ changelog of the website.
 
 How we work:
 
-1. **Study first, in Spanish**, in a Markdown file under [`docs/`](.) of this repository.
+1. **Study first**, in a Markdown file under [`docs/`](.) of this repository. Everything is written in English
+   (see [CONTRIBUTING.md](../CONTRIBUTING.md)); the earlier studies were written in Spanish and have an English
+   version next to them.
 2. When it is clear, and **before writing any code**, publish what we found and the proposed improvements as a log
    entry in English, linking that file.
 3. Then code and test here, and log every experiment and iteration with its result — including the failures —
@@ -70,11 +72,17 @@ TBD
 
 TBD — the upstream layout is described in the [root README](../README.md#what-is-in-this-repository).
 
-### P0 · Integración y evaluación
+### P0 · Integration and evaluation
 
-[Estado y verificación](P0.md) · [Contrato de datos](CONTRATO_DATOS.md) · [Guía de ejecución](EJECUCION.md) · [Entorno Docker](DOCKER.md).
+[Status and verification](P0.en.md) · [Data contract](CONTRATO_DATOS.en.md) · [Run guide](EJECUCION.en.md) · [Docker environment](DOCKER.en.md).
 
-P2: [detector experimental de interrupciones y reinicios](experimentos/P2_DEAD_BALL.md), señales, pruebas y comparación controlada.
+P2: [experimental stoppage and restart detector](experimentos/P2_DEAD_BALL.en.md): signals, tests and a controlled comparison.
+
+Studies and experiments: [possession model study](ESTUDIO_POSESION.en.md) · [P1 hold](experimentos/P1_HOLD.en.md) · [temporal control](experimentos/CONTROL_TEMPORAL.en.md) · [candidate face-off protocol](experimentos/confrontacion-candidatos.en.md).
+
+The original Spanish versions sit next to each English file (same name without `.en`).
+
+> 🇬🇧 The P0 and P2 lines above were originally in Spanish: «P0 · Integración y evaluación — Estado y verificación · Contrato de datos · Guía de ejecución · Entorno Docker. P2: detector experimental de interrupciones y reinicios, señales, pruebas y comparación controlada.»
 
 ## Development principles
 
@@ -95,7 +103,7 @@ This repository is **public**, as the rules require for the submission repositor
 More than a Hack 2027 brings together football analytics, technology and real match data at Talent Arena.
 
 - [Official challenge website](https://landing.mobileworldcapital.com/more-than-a-hack-2027)
-- [Project guide (ES)](GUIA_PROYECTO.md)
+- [Project guide](GUIA_PROYECTO.en.md) ([Spanish original](GUIA_PROYECTO.md))
 - [GTT organisation on GitHub](https://github.com/GTT-TalentArena)
 - [GTT website](https://gtt-talentarena.github.io)
 
