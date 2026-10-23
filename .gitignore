@@ -67,6 +67,9 @@ venv/
 env/
 .DS_Store
 
+# Optional local viewer browser-test dependencies; never runtime data.
+tools/match_viewer/node_modules/
+
 # -- Docker / pipeline (docker/pipeline.py) ------------------------------------------------------
 # CSV, informes y runs.jsonl de cada ejecución. Pueden contener predicciones del partido entero.
 salidas/*

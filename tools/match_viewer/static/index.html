@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GTT · Match viewer</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/viewer.js"></script>
+</head>
+<body>
+  <header class="masthead">
+    <a class="brand" href="/" aria-label="GTT match viewer home">GTT<span> / MATCH VIEWER</span></a>
+    <span class="local"><span class="dot"></span> LOCAL SESSION</span>
+  </header>
+  <main>
+    <div class="workspace-heading">
+      <div><p class="eyebrow" id="source">INITIALISING SOURCE</p><h1>The match, frame by frame.</h1></div>
+      <p class="source-note" id="source-note">Reading local session…</p>
+    </div>
+    <section class="workspace" aria-label="Tracking workspace">
+      <div class="pitch-column">
+        <div class="pitch-heading"><span id="teams">HOME <span class="muted">vs</span> AWAY</span><span id="period">—</span></div>
+        <div class="pitch-wrap"><canvas id="pitch" width="1260" height="850" aria-label="Top-down pitch with observed players and ball"></canvas>
+          <div id="loading" class="loading" role="status">Preparing the pitch…</div>
+        </div>
+        <div class="pitch-footer"><span><i class="key home"></i><span id="home-name">Home</span></span><span><i class="key away"></i><span id="away-name">Away</span></span><span><i class="key ball"></i>Ball</span><span class="pitch-scale" id="dimensions">—</span></div>
+      </div>
+      <aside aria-label="Current frame details">
+        <p class="eyebrow">MODEL OUTPUT</p>
+        <div id="possession" class="possession" data-label="none"><span id="label">—</span><p id="label-description">No prediction loaded</p></div>
+        <p class="inspector-note">The loaded model's label, unchanged.</p>
+        <dl>
+          <div><dt>Frame</dt><dd id="frame">—</dd></div>
+          <div><dt>Video time</dt><dd id="time">00:00.00</dd></div>
+          <div><dt>Observed tracks</dt><dd id="observed">—</dd></div>
+          <div><dt>Ball</dt><dd id="ball-status">—</dd></div>
+        </dl>
+        <p class="fidelity">Observations only.<br>Gaps stay visible. No interpolation.<br>Track slots are not player identities.</p>
+      </aside>
+    </section>
+    <section class="transport" aria-label="Playback controls">
+      <div class="timeline-heading"><span id="timeline-time">00:00.00</span><span id="duration">—</span></div>
+      <label class="sr-only" for="timeline">Video frame timeline</label><input id="timeline" type="range" min="0" max="1499" value="0" disabled>
+      <div class="transport-row">
+        <div class="play-controls"><button id="previous" title="Previous frame (left arrow)" aria-label="Previous frame" disabled>←</button><button id="play" class="primary" disabled>Play</button><button id="next" title="Next frame (right arrow)" aria-label="Next frame" disabled>→</button></div>
+        <div class="speed-controls"><label for="speed">Speed</label><select id="speed" disabled><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></div>
+        <form id="jump-form"><label for="jump">Go to frame</label><input id="jump" type="number" min="0" value="0" required disabled><button type="submit" id="jump-button" disabled>Go ↗</button></form>
+      </div>
+    </section>
+    <footer class="session-footer"><p id="message" role="status" aria-live="polite">Loading source…</p><span>SPACE TO PLAY / PAUSE · ← → TO STEP</span></footer>
+  </main>
+</body>
+</html>

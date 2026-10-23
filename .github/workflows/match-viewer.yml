@@ -1,0 +1,41 @@
+name: Local match viewer
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      MTAH_DATA_DIR: /tmp/gtt-no-match-data
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install shared Python dependencies
+        run: python -m pip install -r docker/requirements.lock
+      - name: Install optional browser-test dependencies
+        working-directory: tools/match_viewer
+        run: npm ci
+      - name: Install Chromium for synthetic UI checks
+        working-directory: tools/match_viewer
+        run: npx playwright install --with-deps chromium
+      - name: Check elapsed-time playback
+        run: node --test tests/match_viewer_playback.test.mjs
+      - name: Check synthetic UI and external requests
+        run: node tests/match_viewer_browser.cjs

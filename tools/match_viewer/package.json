@@ -1,0 +1,13 @@
+{
+  "name": "gtt-local-match-viewer-checks",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Optional browser checks; the viewer itself has no Node runtime dependency.",
+  "scripts": {
+    "test": "node --test ../../tests/match_viewer_playback.test.mjs",
+    "test:browser": "node ../../tests/match_viewer_browser.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}
