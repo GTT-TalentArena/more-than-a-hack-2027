@@ -44,8 +44,8 @@ algorithm's output frame by frame, and hand-labelling against a leaked ground tr
 same thing as far as this rule is concerned: the file did not come from a system, so there is no
 system to evaluate and nothing that would work on the next match.
 
-Small amounts of hand-labelled data used to *train or validate* a model are fine and normal. The
-distinction is whether the submitted labels come out of a model or out of a person.
+Hand-labelled data from **other matches** used to train or validate a model is fine, in any amount; 
+hand labels on the competition match itself are not.
 
 ### 2. Use the private ground truth
 

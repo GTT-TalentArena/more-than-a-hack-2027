@@ -229,8 +229,8 @@ replacing the provided tracking with your own is explicitly welcome.
 **Not permitted:**
 
 - **Annotating the data by hand.** The labels must be produced by an algorithm, whether or not any
-  answer key was involved. Hand-labelled data used to train or validate a model is fine; a
-  hand-labelled submission is not.
+  answer key was involved. Hand-labelled data from **other matches** used to train or validate a
+  model is fine, in any amount; hand labels on the competition match itself are not.
 - **Using the private ground truth**, or anything derived from it, beyond the published 5 minutes.
 - **Submitting a file the team's repository cannot regenerate.**
 
