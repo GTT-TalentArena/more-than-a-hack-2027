@@ -1,5 +1,5 @@
-# Avisa en el Discord de GTT (#ci-tests) cuando termina un workflow de este repo; el deploy de la web avisa desde su propio repo.
-# Las URLs de los webhooks viven en los secrets DISCORD_WEBHOOK_DEPLOYS y DISCORD_WEBHOOK_CI; sin secret, no hace nada.
+# Notifies the GTT Discord (#ci-tests) when a workflow in this repo finishes; the website deploy notifies from its own repo.
+# The webhook URLs live in the secrets DISCORD_WEBHOOK_DEPLOYS and DISCORD_WEBHOOK_CI; without a secret, it does nothing.
 name: Discord notifications
 
 on:
@@ -11,7 +11,7 @@ permissions: {}
 
 jobs:
   notify:
-    # Un run saltado no es noticia, y las PRs desde forks ajenos no escriben en nuestro Discord
+    # A skipped run isn't news, and PRs from other people's forks don't write to our Discord
     if: >-
       github.event.workflow_run.conclusion != 'skipped' &&
       github.event.workflow_run.head_repository.full_name == github.repository
@@ -28,7 +28,7 @@ jobs:
         run: |
           name=$(jq -r .name <<<"$RUN")
           if [ "$name" = "$DEPLOY_WORKFLOWS" ]; then hook=$HOOK_DEPLOYS; else hook=$HOOK_CI; SITE_URL=""; fi
-          if [ -z "$hook" ]; then echo "Secret del webhook sin configurar: no se avisa."; exit 0; fi
+          if [ -z "$hook" ]; then echo "Webhook secret not configured: no notification sent."; exit 0; fi
 
           conclusion=$(jq -r .conclusion <<<"$RUN")
           case "$conclusion" in

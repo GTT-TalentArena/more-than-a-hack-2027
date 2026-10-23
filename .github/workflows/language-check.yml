@@ -1,0 +1,62 @@
+# Warns when a pull request title, description or commit message looks Spanish (see CONTRIBUTING.md).
+# It only adds warnings to the run summary; it never fails, so it never blocks a merge.
+name: Language check
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  language:
+    name: language
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Check for Spanish text
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+          BODY: ${{ github.event.pull_request.body }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python3 - <<'PY'
+          import os, re, subprocess
+          # Spanish signals: common Spanish words and accented words, weighed against common English words.
+          ES = set(("el la los las del que y en una un por para con es se su al lo como pero sus este esta entre "
+                    "cuando muy sin sobre hasta hay donde desde nos ni eso esto antes otro otra estos nada cual "
+                    "algo falta añade añadir arreglar quitar avisar avisos integrar implementar registrar pruebas "
+                    "equipo ejecuciones lanzadas validacion validación decodificación posesión balón partido "
+                    "candidato protocolo estudio modelo reinicios resultados limitaciones entorno común salida "
+                    "código debajo").split())
+          EN = set("the and of to in is that for it with as on be by this are from or an at not which have was "
+                   "but if can no".split())
+          def spanish(text):
+              # Ignore code spans, code blocks, URLs and the collapsed originals of translated texts.
+              text = re.sub(r"```.*?```|`[^`]*`|https?://\S+|<details>.*?</details>", " ", text or "", flags=re.S)
+              words = re.findall(r"[a-záéíóúñü]+", text.lower())
+              es = sum(w in ES or bool(re.search(r"[áéíóúñ]", w)) for w in words)
+              en = sum(w in EN for w in words)
+              return es >= 2 and es > en
+          found = []
+          if spanish(os.environ["TITLE"]):
+              found.append("the pull request title")
+          if spanish(os.environ["BODY"]):
+              found.append("the pull request description")
+          log = subprocess.run(["git", "log", "--format=%h%x00%B%x1e", f"{os.environ['BASE']}..{os.environ['HEAD']}"],
+                               capture_output=True, text=True).stdout
+          for entry in filter(None, (e.strip() for e in log.split("\x1e"))):
+              sha, msg = entry.split("\x00", 1)
+              subject, _, body = msg.partition("\n")
+              if spanish(subject) or spanish(body):
+                  found.append(f"commit {sha}")
+          for what in found:
+              print(f"::warning title=Language check::{what} looks like it's in Spanish. "
+                    "Please write it in English (see CONTRIBUTING.md).")
+          if not found:
+              print("Everything looks English.")
+          PY

@@ -1,5 +1,7 @@
 # Docker: ejecutar, validar y comparar de forma reproducible
 
+> 🇬🇧 **English version:** [DOCKER.en.md](DOCKER.en.md). This document was written in Spanish; the translation is kept in sync.
+
 Entorno común del equipo (issue [#24](https://github.com/GTT-TalentArena/more-than-a-hack-2027/issues/24)). Con un solo comando:
 
 1. **valida** cada CSV con el validador oficial,

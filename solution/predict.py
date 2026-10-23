@@ -1,4 +1,4 @@
-"""Generación configurable; nunca lee ground truth."""
+"""Configurable generation; never reads ground truth."""
 import argparse
 import json
 from pathlib import Path
@@ -72,7 +72,7 @@ def generate(config, data_dir, output):
     model = config["model"]
     parameters = config["parameters"]
     if model == "module":
-        # Contrato de #26: no se añaden flags que los candidatos no aceptan.
+        # Contract from #26: no flags are added that the candidates don't accept.
         subprocess.run([sys.executable, "-m", parameters["module"], "--out", str(output)],
                        cwd=Path(__file__).resolve().parents[1], check=True)
     else:

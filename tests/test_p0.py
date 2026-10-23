@@ -1,4 +1,4 @@
-"""Solo fixtures sintéticos y CSV públicos, nunca datos restringidos."""
+"""Only synthetic fixtures and public CSVs, never restricted data."""
 import contextlib
 import io
 import json

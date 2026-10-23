@@ -1,7 +1,7 @@
 ---
 title: ""
 type: experiment # study | code | experiment | iteration | data | decision
-outcome: # success | failure | mixed | open (obligatorio en experiment e iteration)
+outcome: # success | failure | mixed | open (required for experiment and iteration)
 authors: []
 summary: ""
 metrics:
@@ -20,3 +20,5 @@ links: []
 ## Result
 
 ## Next
+
+<!-- Write the title, this description and your commits in English (see CONTRIBUTING.md). -->

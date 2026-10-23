@@ -1,9 +1,9 @@
-# Entorno común de GTT: Python + dependencias fijadas. La imagen NO lleva código ni datos:
-# compose.yaml monta el repo en solo lectura, los datos del partido en solo lectura y ./salidas.
-# Guía: docs/DOCKER.md
+# GTT common environment: Python + pinned dependencies. The image carries NO code or data:
+# compose.yaml mounts the repo read-only, the match data read-only, and ./salidas.
+# Guide: docs/DOCKER.md
 FROM python:3.11.17-slim@sha256:cce12316475d7d56d605f76e1d811d0dc4e7227f2d4afd29951521264f504ff8
 
-# Sin .pyc en el repo montado y un solo hilo en BLAS: mismos números en cualquier máquina
+# No .pyc in the mounted repo and a single BLAS thread: the same numbers on any machine
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
@@ -13,7 +13,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     MKL_NUM_THREADS=1 \
     HOME=/tmp
 
-# git solo para registrar el commit y si hay cambios sin commitear en cada ejecución
+# git only to record the commit, and whether there are uncommitted changes, on each run
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git \
     && rm -rf /var/lib/apt/lists/* \

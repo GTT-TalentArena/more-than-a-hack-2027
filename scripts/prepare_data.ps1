@@ -13,7 +13,7 @@ foreach ($archive in Get-ChildItem -LiteralPath $sourceRoot -Filter '*.zip') {
     $zip = [IO.Compression.ZipFile]::OpenRead($archive.FullName)
     try {
         foreach ($entry in $zip.Entries) {
-            # El bundle descargado también puede incluir su README, que no es un asset.
+            # The downloaded bundle may also include its README, which is not an asset.
             if ($entry.FullName -eq 'More Than A Hack 2027 - Initial Challenge - Dataset/README.md') { continue }
             if ($entry.FullName -notmatch '(?:^|/)(tactical|broadcast)/(BAR-ATH_(?:tactical|broadcast)_(?:atd\.(?:xml|txt)|homography\.csv|smart_tagging\.xml))$') {
                 throw 'Entrada ZIP inesperada; no se extrae automáticamente.'
@@ -47,7 +47,7 @@ foreach ($sourceName in 'tactical','broadcast') {
     if ($videos.Count -ne 1) { throw "Se esperaba exactamente un vídeo $sourceName." }
     $target = Join-Path (Join-Path $destinationRoot $sourceName) "BAR-ATH_${sourceName}.mp4"
     if (-not (Test-Path -LiteralPath $target)) {
-        # Misma unidad: otro nombre para el archivo, sin duplicar decenas de GB.
+        # Same drive: another name for the file, without duplicating tens of GB.
         New-Item -ItemType HardLink -Path $target -Target $videos[0].FullName | Out-Null
         $created++
     } elseif ((Get-Item -LiteralPath $target).Length -ne $videos[0].Length) {

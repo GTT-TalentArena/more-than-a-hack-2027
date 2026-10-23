@@ -22,7 +22,7 @@ jobs:
             const hasLog = pr.labels.some(l => l.name === 'log');
 
             if (!hasLog) {
-              core.info('El PR no tiene la etiqueta log: no se valida el front matter.');
+              core.info('The PR has no log label: the front matter is not validated.');
               return;
             }
 
@@ -35,7 +35,7 @@ jobs:
             const match = raw.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
 
             if (!match) {
-              core.setFailed('La descripción debe empezar por un front matter entre ---.');
+              core.setFailed('The description must start with a front matter between ---.');
               return;
             }
 
@@ -59,29 +59,29 @@ jobs:
 
             if (!title) errors.push('Falta title.');
             if (!TYPES.includes(type)) {
-              errors.push(`type inválido o ausente: "${type}". Valores: ${TYPES.join(', ')}.`);
+              errors.push(`invalid or missing type: "${type}". Values: ${TYPES.join(', ')}.`);
             }
             if (NEEDS_OUTCOME.includes(type) && !OUTCOMES.includes(outcome)) {
-              errors.push(`outcome es obligatorio en "${type}". Valores: ${OUTCOMES.join(', ')}.`);
+              errors.push(`outcome is required for "${type}". Values: ${OUTCOMES.join(', ')}.`);
             }
             if (outcome && !OUTCOMES.includes(outcome)) {
-              errors.push(`outcome inválido: "${outcome}".`);
+              errors.push(`invalid outcome: "${outcome}".`);
             }
             if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-              errors.push(`date inválida: "${date}". Formato AAAA-MM-DD.`);
+              errors.push(`invalid date: "${date}". Format YYYY-MM-DD.`);
             }
             if (lines.some(l => /^\s*(value|before):\s*$/.test(l))) {
-              errors.push('Hay valores de métricas sin rellenar (value o before).');
+              errors.push('Some metric values are not filled in (value or before).');
             }
             if (/<[a-z]+>/i.test(raw)) {
-              errors.push('Quedan placeholders como <estudio> en la descripción.');
+              errors.push('There are placeholders like <study> left in the description.');
             }
             if (body.trim() === '') {
-              errors.push('El contenido después del front matter está vacío.');
+              errors.push('The content after the front matter is empty.');
             }
 
             if (errors.length) {
-              core.setFailed(`Front matter inválido:\n- ${errors.join('\n- ')}`);
+              core.setFailed(`Invalid front matter:\n- ${errors.join('\n- ')}`);
             } else {
-              core.info('Front matter válido.');
+              core.info('Valid front matter.');
             }

@@ -1,7 +1,7 @@
-# Construye el entorno común y comprueba el pipeline sin datos del partido (docs/DOCKER.md):
-# la evaluación pública reproduce los baselines, un CSV inválido falla con 2 y uno peor que
-# baseline_smooth50 con 5 solo si se solicita el control explícito.
-# El baseline con datos reales se ejecuta solo en local.
+# Builds the common environment and checks the pipeline without match data (docs/DOCKER.md):
+# the public evaluation reproduces the baselines, an invalid CSV fails with 2, and one worse than
+# baseline_smooth50 fails with 5 only if the explicit check is requested.
+# The baseline with real data only runs locally.
 name: Docker
 
 on:
@@ -24,18 +24,18 @@ jobs:
       - name: Construir la imagen
         run: docker compose build
 
-      - name: La imagen no lleva código ni datos
+      - name: The image carries no code or data
         run: docker run --rm --entrypoint sh gtt-mtah:local -c 'test -z "$(ls -A /app)"'
 
-      - name: Evaluar los CSV públicos
+      - name: Evaluate the public CSVs
         run: docker compose run --rm --user "$(id -u):$(id -g)" evaluar
 
-      - name: Pruebas P0 (contrato, referencias públicas, generación y errores)
+      - name: P0 tests (contract, public references, generation and errors)
         run: >
           docker compose run --rm --user "$(id -u):$(id -g)"
           --entrypoint python evaluar -m unittest discover -s tests -v
 
-      - name: Un CSV inválido termina con código 2
+      - name: An invalid CSV exits with code 2
         run: |
           mkdir -p salidas/invalido
           printf 'frame,label\n0,H\n' > salidas/invalido/corto.csv
@@ -43,10 +43,10 @@ jobs:
           docker compose run --rm --user "$(id -u):$(id -g)" evaluar evaluar --resultados /salidas/invalido
           code=$?
           set -e
-          echo "código de salida: $code"
+          echo "exit code: $code"
           test "$code" -eq 2
 
-      - name: Un CSV válido por debajo de smooth50 termina con código 5
+      - name: A valid CSV below smooth50 exits with code 5
         run: |
           mkdir -p salidas/peor
           cp evaluation/results/baseline_raw.csv salidas/peor/candidato.csv
@@ -54,9 +54,9 @@ jobs:
           docker compose run --rm --user "$(id -u):$(id -g)" evaluar evaluar --resultados /salidas/peor --exigir-referencia
           code=$?
           set -e
-          echo "código de salida: $code"
+          echo "exit code: $code"
           test "$code" -eq 5
 
-      - name: Comparación con baseline_smooth50
+      - name: Comparison with baseline_smooth50
         if: always()
         run: cat salidas/*-evaluar/comparacion.md >> "$GITHUB_STEP_SUMMARY" || true

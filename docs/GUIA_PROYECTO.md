@@ -1,5 +1,7 @@
 # More than a Hack 2027
 
+> 🇬🇧 **English version:** [GUIA_PROYECTO.en.md](GUIA_PROYECTO.en.md). This document was written in Spanish; the translation is kept in sync.
+
 ## Guia del proyecto - Phase 1: Ball Possession
 
 > **Equipo:** [GTT-TalentArena](https://github.com/GTT-TalentArena)  

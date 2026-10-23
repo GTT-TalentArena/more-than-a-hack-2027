@@ -1,19 +1,21 @@
-"""Punto de entrada del contenedor de GTT: valida, evalúa, compara con baseline_smooth50 y registra.
+"""GTT container entry point: validates, evaluates, compares with baseline_smooth50 and records.
 
-    evaluar  [--resultados DIR] [--bootstrap N]   puntúa los CSV de DIR (por defecto, los baselines públicos)
-    baseline [--repetir] [--bootstrap N]          regenera los baselines desde los datos locales, comprueba
-                                                  que coinciden con los publicados y los evalúa
-    modelo --config JSON [--data-dir DIR]       genera, valida, evalúa y registra un modelo
+    evaluar  [--resultados DIR] [--bootstrap N]   scores the CSVs in DIR (by default, the public baselines)
+    baseline [--repetir] [--bootstrap N]          regenerates the baselines from local data, checks that
+                                                  they match the published ones and evaluates them
+    modelo --config JSON [--data-dir DIR]       generates, validates, evaluates and records a model
 
-Usa los scripts oficiales (evaluation/validate_submission.py y evaluation/run_evaluation.py): no
-reimplementa ninguna métrica. Cada ejecución escribe en <salidas>/<id>/ y añade una línea a
-<salidas>/runs.jsonl con el commit, la configuración, el hash de cada CSV y las métricas agregadas.
+Uses the official scripts (evaluation/validate_submission.py and evaluation/run_evaluation.py): it
+reimplements no metric. Each run writes to <salidas>/<id>/ and appends a line to
+<salidas>/runs.jsonl with the commit, the configuration, the hash of each CSV and the aggregate metrics.
 
-Códigos de salida: 0 bien · 1 error inesperado · 2 CSV inválido o ausente · 3 faltan los datos del
-partido · 4 reproducción distinta · 5 calidad baja solo con --exigir-referencia.
-Por defecto una puntuación baja se registra como advertencia, no como error técnico.
+Exit codes: 0 ok · 1 unexpected error · 2 invalid or missing CSV · 3 match data missing ·
+4 reproduction differs · 5 low quality, only with --exigir-referencia.
+By default a low score is recorded as a warning, not as a technical error.
 
-Guía: docs/DOCKER.md
+(The subcommands, flags and output names stay in Spanish: they are part of the interface.)
+
+Guide: docs/DOCKER.md
 """
 
 import argparse
@@ -33,19 +35,19 @@ from uuid import uuid4
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
-import games  # noqa: E402  (constantes y rutas oficiales del reto)
+import games  # noqa: E402  (official challenge constants and paths)
 from solution.predict import load_config, nonnegative_integer  # noqa: E402
 
 PUBLIC_RESULTS = os.path.join(ROOT, "evaluation", "results")
 REFERENCE = "baseline_smooth50"
-# En la ventana pública (5 min) el GT tiene 17 posesiones de 14,2 s de media (evaluation/gt/*_meta.json)
+# In the public window (5 min) the GT has 17 possessions of 14.2 s on average (evaluation/gt/*_meta.json)
 SPLIT = "public-5min"
 
 OK, ERROR, INVALID, NO_DATA, NOT_REPRODUCIBLE, LOW_QUALITY = 0, 1, 2, 3, 4, 5
 
 
 class Stop(Exception):
-    """Fallo esperado con su código de salida y un mensaje legible."""
+    """Expected failure with its exit code and a readable message."""
 
     def __init__(self, code, message):
         super().__init__(message)
@@ -53,7 +55,7 @@ class Stop(Exception):
 
 
 def outputs_dir():
-    # En Docker, compose monta ./salidas en /salidas y fija GTT_SALIDAS; fuera, ./salidas del repo
+    # In Docker, compose mounts ./salidas at /salidas and sets GTT_SALIDAS; outside it, the repo's ./salidas
     return os.environ.get("GTT_SALIDAS") or os.path.join(ROOT, "salidas")
 
 
@@ -87,7 +89,7 @@ def environment():
 
 
 def run(cmd, log_path, env=None):
-    """Ejecuta un script oficial mostrando su salida y guardándola en log_path. Devuelve el código."""
+    """Runs an official script, showing its output and saving it to log_path. Returns the exit code."""
     child_env = dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8")
     if env:
         child_env.update(env)
@@ -101,12 +103,12 @@ def run(cmd, log_path, env=None):
 
 
 def validate(path):
-    """(válido, motivo) según el validador oficial: mismas comprobaciones que el scorer."""
+    """(valid, reason) according to the official validator: the same checks as the scorer."""
     script = os.path.join(ROOT, "evaluation", "validate_submission.py")
     done = subprocess.run([sys.executable, script, path], cwd=ROOT, capture_output=True, text=True,
                           encoding="utf-8", env=dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8"))
     lines = [line.strip() for line in (done.stdout + done.stderr).splitlines() if line.strip()]
-    # El validador imprime «FAIL  <fichero>» y en la línea siguiente el motivo concreto
+    # The validator prints "FAIL  <file>" and the specific reason on the next line
     fail = next((i for i, line in enumerate(lines) if line.startswith("FAIL")), None)
     if fail is not None and fail + 1 < len(lines):
         return False, lines[fail + 1]
@@ -129,7 +131,7 @@ def metrics(report_path):
 
 
 def below_reference(entries):
-    """CSV propios bajo la referencia; solo los hashes publicados identifican referencias."""
+    """Our own CSVs below the reference; only the published hashes identify references."""
     reference = next((e["metricas"]["spellF1"] for e in entries if e["nombre"] == REFERENCE and e.get("metricas")), None)
     if reference is None:
         return []
@@ -138,7 +140,7 @@ def below_reference(entries):
 
 
 def comparison(entries):
-    """Tabla Markdown contra baseline_smooth50, en el mismo split."""
+    """Markdown table against baseline_smooth50, on the same split."""
     reference = next((e["metricas"] for e in entries if e["nombre"] == REFERENCE and e.get("metricas")), None)
     gt = next((e["metricas"] for e in entries if e.get("metricas")), None)
     rows = [
@@ -171,12 +173,12 @@ def comparison(entries):
 
 
 def evaluate(source_dir, out, bootstrap, require_reference=False):
-    """Valida y puntúa todos los CSV de source_dir (más la referencia) en out/. Devuelve (entradas, código)."""
+    """Validates and scores every CSV in source_dir (plus the reference) into out/. Returns (entries, code)."""
     csvs = sorted(glob.glob(os.path.join(source_dir, "*.csv")))
     if not csvs:
         raise Stop(INVALID, "No hay ningún .csv en {}".format(source_dir))
 
-    # Se puntúa una copia: el registro describe exactamente los ficheros evaluados
+    # A copy is scored: the record describes exactly the files evaluated
     results = os.path.join(out, "results")
     os.makedirs(results, exist_ok=True)
     for path in csvs:
@@ -278,7 +280,7 @@ def cmd_baseline(args, out, record):
 
 
 def input_manifest(data_dir, required):
-    """Identifica archivos usados sin leer GT ni publicar datos; queda en registro local."""
+    """Identifies the files used without reading GT or publishing data; it stays in the local record."""
     if not required:
         return []
     paths = games.require(required, data_dir=data_dir)
@@ -305,8 +307,8 @@ def cmd_modelo(args, out, record):
             ("solution/temporal_control.py", "solution/dead_ball.py", "solution/hold.py",
              "solution/predict.py", "solution/contract.py", "starter/load_smart_tagging.py", "games.py")}
     if config["model"] == "module":
-        # No es posible deducir qué fuentes usa un candidato externo; identificar el bundle
-        # disponible y dejar explícito que su consumo concreto depende de su implementación.
+        # It isn't possible to deduce which sources an external candidate uses; identify the available
+        # bundle and make explicit that what it actually reads depends on its implementation.
         required = [name for name, path in games.asset_paths(data_dir=args.data_dir).items()
                     if os.path.isfile(path)]
         record["inputs_scope"] = "available-bundle; candidate must document consumed assets"
@@ -353,7 +355,7 @@ def atomic_json(path, value):
 
 @contextmanager
 def index_lock(directory):
-    """Bloqueo entre procesos; run.json sigue siendo la fuente de verdad."""
+    """Inter-process lock; run.json remains the source of truth."""
     with open(os.path.join(directory, ".runs.lock"), "a+b") as handle:
         handle.seek(0, os.SEEK_END)
         if handle.tell() == 0:
@@ -378,16 +380,16 @@ def index_lock(directory):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0], formatter_class=argparse.RawDescriptionHelpFormatter,
-                                     epilog="Códigos: 0 bien · 1 error · 2 CSV inválido · 3 faltan datos · 4 no reproducible · 5 control opcional de calidad")
+                                     epilog="Codes: 0 ok · 1 error · 2 invalid CSV · 3 missing data · 4 not reproducible · 5 optional quality check")
     sub = parser.add_subparsers(dest="modo", required=True)
-    evaluar = sub.add_parser("evaluar", help="valida y puntúa CSV contra el GT público")
-    evaluar.add_argument("--resultados", help="carpeta con los CSV (por defecto, evaluation/results)")
-    evaluar.add_argument("--bootstrap", type=int, default=0, help="remuestreos bootstrap por bloques (0 = sin intervalo)")
-    evaluar.add_argument("--exigir-referencia", action="store_true", help="fallar con 5 si empeora el público; no selecciona modelos")
-    baseline = sub.add_parser("baseline", help="regenera los baselines desde los datos locales y los evalúa")
-    baseline.add_argument("--repetir", action="store_true", help="lo ejecuta dos veces y comprueba que da el mismo CSV")
-    baseline.add_argument("--bootstrap", type=int, default=0, help="remuestreos bootstrap por bloques (0 = sin intervalo)")
-    modelo = sub.add_parser("modelo", help="genera desde configuración, valida, evalúa y registra")
+    evaluar = sub.add_parser("evaluar", help="validates and scores CSVs against the public GT")
+    evaluar.add_argument("--resultados", help="folder with the CSVs (by default, evaluation/results)")
+    evaluar.add_argument("--bootstrap", type=int, default=0, help="block bootstrap resamples (0 = no interval)")
+    evaluar.add_argument("--exigir-referencia", action="store_true", help="fail with 5 if the public score gets worse; it doesn't select models")
+    baseline = sub.add_parser("baseline", help="regenerates the baselines from local data and evaluates them")
+    baseline.add_argument("--repetir", action="store_true", help="runs it twice and checks that it gives the same CSV")
+    baseline.add_argument("--bootstrap", type=int, default=0, help="block bootstrap resamples (0 = no interval)")
+    modelo = sub.add_parser("modelo", help="generates from a configuration, validates, evaluates and records")
     modelo.add_argument("--config", required=True)
     modelo.add_argument("--data-dir", default=games.DATA_DIR)
     modelo.add_argument("--repetir", action="store_true")

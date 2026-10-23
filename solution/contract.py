@@ -1,11 +1,11 @@
-"""Validaciones reutilizables del contrato de datos v1."""
+"""Reusable validations for data contract v1."""
 import numpy as np
 
 VERSION = "1.0"
 
 
 def check_tracking_frames(path, n_frames):
-    """Chequeo estricto en streaming: evita que el baseline oculte filas perdidas."""
+    """Strict streaming check: stops the baseline from hiding lost rows."""
     count = 0
     with open(path, encoding="utf-8-sig") as handle:
         for count, line in enumerate(handle, start=1):
