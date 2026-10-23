@@ -1,0 +1,10 @@
+English translation (original message in Spanish above):
+
+feat(docker): a common environment to validate, evaluate and compare reproducibly (#29)
+
+- Image with only the environment (Python 3.11.17 pinned by digest, numpy and pandas at exact versions, git); code and data are mounted read-only and the build context only includes the lock file.
+- docker/pipeline.py: validates and scores with the official scripts, compares against baseline_smooth50 and records commit, hashes and metrics in salidas/runs.jsonl. Baseline mode: regenerates the baselines, compares them with the published ones and checks determinism (--repetir). Distinct exit codes for an invalid CSV, missing data and a non-reproducible result.
+- CI: builds the image, evaluates the public CSVs and requires an invalid CSV to fail.
+- Guide in docs/DOCKER.md.
+
+Refs #24
