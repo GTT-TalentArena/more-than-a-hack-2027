@@ -1,0 +1,7 @@
+English translation (original message in Spanish above):
+
+feat(docker): exit code 5 when a CSV falls below smooth50 (#30)
+
+Tells a low-quality result apart from an error or an invalid CSV: our own valid CSVs with a lower spellF1 than baseline_smooth50 are flagged ⚠️ in the table, recorded in runs.jsonl, and the process exits with 5. The baseline_* files don't count (they are the reference). CI checks this.
+
+Refs #24
