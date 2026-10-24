@@ -43,7 +43,8 @@ class SyntheticTracking:
                     x = x + 5 * math.sin(phase * .35 + index)
                     if not home:
                         x, y = length - x, width - y
-                    players.append(None if slot == 4 and 350 <= frame < 400 else [x, y])
+                    missing = (slot == 4 and 350 <= frame < 400) or (slot == 5 and 420 <= frame < 500)
+                    players.append(None if missing else [x, y])
                 ball = [length * (.5 + .30 * math.sin(phase * .42)),
                         width * (.5 + .30 * math.sin(phase * .63))]
                 if 100 <= frame < 150:

@@ -2,14 +2,19 @@ import { Playback, videoTime } from '/playback.mjs';
 
 const $ = id => document.getElementById(id);
 const canvas = $('pitch'), ctx = canvas.getContext('2d');
-const colours = {H: '#e9ad64', A: '#86b9c9'};
-const descriptions = {H: 'Home possession', A: 'Away possession', D: 'Dead ball', X: 'Model abstention'};
+const theme = getComputedStyle(document.documentElement);
+const colours = {H: theme.getPropertyValue('--home').trim(), A: theme.getPropertyValue('--away').trim(),
+  D: theme.getPropertyValue('--dead').trim(), X: theme.getPropertyValue('--muted').trim()};
+const ballColour = theme.getPropertyValue('--ball').trim();
+const descriptions = {H: 'Home in possession', A: 'Away in possession', D: 'Dead ball', X: 'Model abstention'};
 const BLOCK = 125, MAX_CACHE = 4;
 const cache = new Map(), pending = new Map();
 let meta, clock, displayed = 0, epoch = 0, busy = false;
+let contextController;
+let currentRow;
 
-async function api(path) {
-  const response = await fetch(path, {cache: 'no-store', credentials: 'omit'});
+async function api(path, options = {}) {
+  const response = await fetch(path, {cache: 'no-store', credentials: 'omit', ...options});
   const value = await response.json();
   if (!response.ok) throw new Error(value.message || 'Local source is unavailable.');
   return value;
@@ -48,48 +53,64 @@ function periodAt(frame) {
 }
 
 function draw(row) {
+  currentRow = row;
   const [length, width] = meta.pitch;
-  const padding = 66, scale = Math.min((canvas.width - 2 * padding) / length, (canvas.height - 2 * padding) / width);
+  const padding = 34, scale = Math.min((canvas.width - 2 * padding) / length, (canvas.height - 2 * padding) / width);
   const left = (canvas.width - length * scale) / 2, top = (canvas.height - width * scale) / 2;
   const point = ([x, y]) => [left + x * scale, top + y * scale];
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#203b2f'; ctx.fillRect(left, top, length * scale, width * scale);
-  ctx.fillStyle = '#ffffff03';
-  for (let i = 0; i < 10; i += 2) ctx.fillRect(left + i * length * scale / 10, top, length * scale / 10, width * scale);
-  ctx.strokeStyle = '#b4c5a76b'; ctx.lineWidth = 1.5;
+  ctx.fillStyle = 'rgba(243,238,230,.025)';
+  for (let i = 0; i < 14; i += 2) ctx.fillRect(left + i * length * scale / 14, top, length * scale / 14, width * scale);
+  ctx.strokeStyle = 'rgba(243,238,230,.26)'; ctx.lineWidth = Math.max(1,scale*.16);
   function rect(x,y,w,h) { const [px,py] = point([x,y]); ctx.strokeRect(px,py,w*scale,h*scale); }
-  function circle(x,y,r) { const [px,py] = point([x,y]); ctx.beginPath(); ctx.arc(px,py,r*scale,0,Math.PI*2); ctx.stroke(); }
+  function circle(x,y,r,a0=0,a1=Math.PI*2) { const [px,py] = point([x,y]); ctx.beginPath(); ctx.arc(px,py,r*scale,a0,a1); ctx.stroke(); }
+  function spot(x,y) { const [px,py] = point([x,y]); ctx.beginPath(); ctx.arc(px,py,.35*scale,0,Math.PI*2); ctx.fillStyle='rgba(243,238,230,.26)'; ctx.fill(); }
   rect(0,0,length,width); rect(length/2,0,0,width); circle(length/2,width/2,9.15);
   for (const side of [0,1]) {
     rect(side ? length-16.5 : 0,(width-40.32)/2,16.5,40.32);
     rect(side ? length-5.5 : 0,(width-18.32)/2,5.5,18.32);
     rect(side ? length : -2,(width-7.32)/2,2,7.32);
-    circle(side ? length-11 : 11,width/2,.12);
+    spot(side ? length-11 : 11,width/2);
+    const arc = Math.acos(5.5/9.15);
+    circle(side ? length-11 : 11,width/2,9.15,side ? Math.PI-arc : -arc,side ? Math.PI+arc : arc);
   }
-  circle(length/2,width/2,.12);
+  spot(length/2,width/2);
+  let estimated = 0;
+  if ($('estimate-players').checked) {
+    (row.player_estimates ?? []).forEach((xy, index) => {
+      if (!xy || row.players[index]) return;
+      estimated++;
+      const [x,y] = point(xy);
+      ctx.save(); ctx.strokeStyle = colours[meta.slot_teams[index]];
+      ctx.lineWidth = scale*.22; ctx.globalAlpha = .7*(row.player_estimate_fade?.[index] ?? 1); ctx.setLineDash([scale*.35,scale*.23]);
+      ctx.beginPath(); ctx.arc(x,y,.95*scale,0,Math.PI*2); ctx.stroke(); ctx.restore();
+    });
+  }
   let out = 0;
   row.players.forEach((xy, index) => {
     if (!xy) return;
     const [x,y] = point(xy);
     const outside = xy[0]<0 || xy[0]>length || xy[1]<0 || xy[1]>width;
     if (outside) out++;
-    ctx.beginPath(); ctx.arc(x,y,8.5,0,Math.PI*2); ctx.fillStyle = colours[meta.slot_teams[index]]; ctx.fill();
-    ctx.strokeStyle = '#101b16'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.beginPath(); ctx.arc(x,y,.95*scale,0,Math.PI*2); ctx.fillStyle = colours[meta.slot_teams[index]]; ctx.fill();
   });
   if (row.ball) {
     const [x,y] = point(row.ball);
     if (row.ball[0]<0 || row.ball[0]>length || row.ball[1]<0 || row.ball[1]>width) out++;
-    ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2); ctx.fillStyle = '#fff9e8'; ctx.fill();
-    ctx.strokeStyle = '#101b16'; ctx.lineWidth = 2; ctx.stroke();
-    ctx.beginPath(); ctx.arc(x,y,12,0,Math.PI*2); ctx.strokeStyle = '#fff9e866'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.shadowColor = ballColour; ctx.shadowBlur = scale*1.6;
+    ctx.beginPath(); ctx.arc(x,y,.62*scale,0,Math.PI*2); ctx.fillStyle = ballColour; ctx.fill();
+    ctx.shadowBlur = 0;
   }
   $('label').textContent = row.label ?? '—';
   $('label-description').textContent = descriptions[row.label] ?? 'No prediction loaded';
   $('possession').dataset.label = row.label ?? 'none';
   $('frame').textContent = row.frame.toLocaleString('en-US');
+  $('hud-frame').textContent = String(row.frame).padStart(6,'0');
   $('time').textContent = $('timeline-time').textContent = videoTime(row.frame, meta.fps);
   $('observed').textContent = `${row.players.filter(Boolean).length} / ${meta.slot_ids.length}`;
+  $('estimated').textContent = $('estimate-players').checked ? String(estimated) : 'Off';
   $('ball-status').textContent = row.ball ? 'Observed' : 'No observation';
+  $('ball-missing').hidden = Boolean(row.ball);
   $('period').textContent = periodAt(row.frame);
   $('timeline').value = row.frame; $('jump').value = row.frame;
   $('message').textContent = out ? `${out} observation(s) outside the pitch. Coordinates are preserved; distant points may be outside the viewport.` : meta.synthetic ? 'Synthetic demo · invented tracking and model labels.' : 'Local source · original observations and model labels.';
@@ -98,21 +119,65 @@ function draw(row) {
   $('next').disabled = displayed === meta.n_frames-1;
 }
 
+function drawContext(context) {
+  const strip = $('possession-strip'), stripCtx = strip.getContext('2d');
+  stripCtx.clearRect(0,0,strip.width,strip.height);
+  const maximum = meta.fps*40;
+  const offset = maximum-(context.end_frame-context.start_frame);
+  for (const spell of context.spells) {
+    const x = (offset+spell.start_frame-context.start_frame)/maximum*strip.width;
+    const width = (spell.end_frame-spell.start_frame)/maximum*strip.width;
+    stripCtx.fillStyle = colours[spell.label];
+    stripCtx.globalAlpha = spell.label==='X' ? .35 : 1;
+    stripCtx.fillRect(x,0,width,strip.height);
+  }
+  stripCtx.globalAlpha = 1;
+  $('window-duration').textContent = '−40 S';
+  const share = $('share-bar'), shareCtx = share.getContext('2d');
+  shareCtx.clearRect(0,0,share.width,share.height);
+  const home = context.home_percent;
+  $('home-percent').textContent = home===null ? '—' : `${home}%`;
+  $('away-percent').textContent = home===null ? '—' : `${100-home}%`;
+  if (home!==null) {
+    shareCtx.fillStyle = colours.A; shareCtx.fillRect(0,0,share.width,share.height);
+    shareCtx.fillStyle = colours.H; shareCtx.fillRect(0,0,share.width*home/100,share.height);
+  }
+  const list = $('recent-spells'); list.replaceChildren();
+  for (const spell of context.spells.slice(-3).reverse()) {
+    const item = document.createElement('li');
+    const key = document.createElement('i'); key.className='spell-key'; key.dataset.label=spell.label;
+    const label = document.createElement('span'); label.textContent=spell.label;
+    const range = document.createElement('span'); range.className='spell-range';
+    range.textContent=`${String(spell.start_frame).padStart(6,'0')}→${String(spell.end_frame-1).padStart(6,'0')}`;
+    const duration = document.createElement('span'); duration.className='spell-duration';
+    duration.textContent=`${((spell.end_frame-spell.start_frame)/meta.fps).toFixed(1)}s`;
+    item.append(key,label,range,duration); list.append(item);
+  }
+  if (!context.spells.length) {
+    const empty = document.createElement('li'); empty.className='empty-spells';
+    empty.textContent='No prediction loaded'; list.append(empty);
+  }
+}
+
 function setPlaying(value) {
   clock.seek(displayed, performance.now());
   if (value) clock.play(performance.now()); else clock.pause(performance.now());
   $('loading').hidden = true;
   $('play').textContent = clock.playing ? 'Pause' : 'Play';
+  $('play').setAttribute('aria-label',clock.playing ? 'Pause' : 'Play');
+  $('play').title = `${clock.playing ? 'Pause' : 'Play'} (Space)`;
 }
 
 async function show(frame, generation) {
   const start = Math.floor(frame/BLOCK)*BLOCK;
   const waiting = !cache.has(start);
   if (waiting) { $('loading').textContent = 'Loading frame window…'; $('loading').hidden = false; }
+  contextController?.abort();
+  const controller = new AbortController(); contextController = controller;
   try {
-    const rows = await blockAt(frame);
+    const [rows, context] = await Promise.all([blockAt(frame),api(`/api/context?frame=${frame}`,{signal:controller.signal})]);
     if (generation !== epoch) return;
-    draw(rows[frame-start]); $('loading').hidden = true;
+    draw(rows[frame-start]); drawContext(context); $('loading').hidden = true;
     if (waiting) clock.seek(frame, performance.now());
     const next = start + BLOCK;
     if (next < meta.n_frames && pending.size < 2) blockAt(next).catch(() => {});
@@ -155,14 +220,20 @@ async function initialise() {
     }
     clock = new Playback(meta.n_frames, meta.fps);
     $('source').textContent = meta.synthetic ? 'SYNTHETIC DEMO / NO MATCH DATA' : 'TACTICAL TRACKING / LOCAL FILES';
-    $('source-note').textContent = meta.synthetic ? 'An invented match to explore the viewer. No real match data is included.' : 'Read-only session. Files stay on this computer. Restart the command to change inputs.';
+    $('source-note').textContent = meta.synthetic
+      ? 'An invented match to explore the viewer. No real match data is included.'
+      : `Positions: tactical ATD. ${meta.has_predictions ? 'Possession: loaded model CSV (startup snapshot).' : 'No prediction CSV loaded.'} Files stay local; restart to change inputs.`;
     $('teams').textContent = `${meta.teams[0]}  /  ${meta.teams[1]}`;
     $('home-name').textContent = meta.teams[0]; $('away-name').textContent = meta.teams[1];
     $('dimensions').textContent = `${meta.pitch[0]} × ${meta.pitch[1]} m · ${meta.fps} fps`;
+    $('hud-fps').textContent = ` · ${meta.fps} FPS`;
     $('timeline').max = $('jump').max = meta.n_frames-1;
     $('duration').textContent = `${videoTime(meta.n_frames-1,meta.fps)} · ${meta.n_frames.toLocaleString('en-US')} frames`;
-    for (const id of ['play','previous','next','timeline','jump','jump-button','speed']) $(id).disabled = false;
-    await show(0,epoch);
+    for (const id of ['play','previous','next','timeline','jump','jump-button','speed','estimate-players']) $(id).disabled = false;
+    $('estimate-players').addEventListener('change', () => {if (currentRow) draw(currentRow);});
+    const initialFrame = meta.initial_frame ?? 0;
+    clock.seek(initialFrame, performance.now());
+    await show(initialFrame,epoch);
     $('play').addEventListener('click', () => {
       epoch++;
       if (displayed === meta.n_frames-1) { seek(0); return; }

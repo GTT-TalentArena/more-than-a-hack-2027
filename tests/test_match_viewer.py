@@ -98,6 +98,34 @@ class TrackingTests(unittest.TestCase):
         np.testing.assert_allclose(row["players"][0], [105.3 * .75, 68 * .25])
         np.testing.assert_allclose(row["ball"], [105.3 * .8, 68 * .2])
 
+    def test_local_verification_reports_aggregates_only(self):
+        from tools.match_viewer.verify import verify
+        result = verify(self.meta, self.raw, n_frames=30)
+        self.assertEqual(result['status'], 'passed')
+        self.assertEqual(result['frames_checked'], 30)
+        self.assertEqual(result['slots'], 4)
+        self.assertEqual(result['observed_ball_frames'], 25)
+        self.assertTrue(result['all_frame_indices_aligned'])
+        self.assertFalse(result['prediction_csv_validated'])
+        self.assertFalse(result['public_gt_evaluated'])
+        self.assertTrue(result['ball_matches_reference_reader'])
+        self.assertTrue(result['observations_unchanged_by_estimation'])
+        self.assertNotIn('players', result)
+        self.assertNotIn('labels', result)
+
+    def test_ball_reference_disagreement_is_detected_without_coordinates(self):
+        from tools.match_viewer.verify import verify
+
+        def corrupt_reference(*args):
+            players, ball, report = read_raw(*args)
+            ball[:, [0, 1]] = ball[:, [1, 0]]
+            return players, ball, report
+
+        with patch('tools.match_viewer.verify.read_raw', side_effect=corrupt_reference):
+            with self.assertRaisesRegex(ViewerError, 'Ball position disagrees') as error:
+                verify(self.meta, self.raw, n_frames=30)
+        self.assertNotIn(str(self.raw), str(error.exception))
+
 
 class PredictionTests(unittest.TestCase):
     def test_optional_and_official_validation(self):
@@ -116,12 +144,32 @@ class PredictionTests(unittest.TestCase):
 
 
 class SessionTests(unittest.TestCase):
+    def test_label_context_is_bounded_and_keeps_x_separate_from_d(self):
+        session = Session()
+        session.load()
+        context = session.label_context(550)
+        self.assertEqual(context['start_frame'], 0)
+        self.assertEqual(context['end_frame'], 551)
+        self.assertEqual([spell['label'] for spell in context['spells']], list('HAD'))
+        self.assertEqual(context['home_percent'], 50)
+        self.assertEqual(context['spells'][-1]['end_frame'], 551)
+        halftime = session.label_context(700)
+        self.assertEqual(halftime['start_frame'], 700)
+        self.assertEqual(halftime['spells'][0]['label'], 'X')
+        self.assertIsNone(halftime['home_percent'])
+        second = session.label_context(1000)
+        self.assertEqual(second['start_frame'], 850)
+        session.labels = None
+        self.assertEqual(session.label_context(1000)['spells'], [])
+        self.assertIsNone(session.label_context(1000)['home_percent'])
+
     def test_demo_does_not_resolve_real_paths_and_shows_gaps(self):
         with patch("games.asset_paths", side_effect=AssertionError("No match access")):
             session = Session()
             session.load()
         self.assertEqual(session.metadata()["status"], "ready")
         self.assertTrue(session.metadata()["synthetic"])
+        self.assertEqual(session.metadata()["initial_frame"], 0)
         self.assertEqual(set(session.labels), set("HADX"))
         source = session.source
         self.assertIsNone(source.window(100, 1)[0]["ball"])
@@ -139,6 +187,16 @@ class SessionTests(unittest.TestCase):
         session.load(meta="missing-private-path.xml", raw="missing-private-path.txt")
         self.assertEqual(session.metadata()["status"], "error")
         self.assertNotIn("private-path", session.metadata()["message"])
+
+    def test_real_source_starts_at_first_half_without_trimming_the_video(self):
+        session = Session()
+        session.source = SyntheticTracking()
+        session.source.synthetic = False
+        session.source.n_frames = 199319
+        session.source.blocks = [(1, 11185, 90651), (2, 110808, 190197)]
+        session.ready.set()
+        self.assertEqual(session.metadata()["initial_frame"], 11185)
+        self.assertEqual(session.metadata()["n_frames"], 199319)
 
 
 class HTTPTests(unittest.TestCase):
@@ -165,6 +223,10 @@ class HTTPTests(unittest.TestCase):
             self.assertIn("default-src 'self'", response.headers['Content-Security-Policy'])
             self.assertEqual(response.headers['Cache-Control'], 'no-store')
             self.assertIsNone(response.headers.get('Access-Control-Allow-Origin'))
+        with self.get('/fonts/geist-latin.woff2') as response:
+            self.assertEqual(response.read(4), b'wOF2')
+        with self.get('/api/context?frame=550') as response:
+            self.assertEqual(json.load(response)['home_percent'], 50)
         for start in [0, 249, 500, 700, 850, 1499]:
             with self.get('/api/frames?start={}&count=2'.format(start)) as response:
                 rows = json.load(response)["frames"]
@@ -179,6 +241,12 @@ class HTTPTests(unittest.TestCase):
             with self.assertRaises(HTTPError) as error:
                 self.get(path)
             self.assertIn(error.exception.code, [400, 404])
+        for path in ['/api/context?frame=-1','/api/context?frame=1500',
+                     '/api/context?frame=0&frame=1','/api/context?frame=0&path=secret',
+                     '/fonts/geist-OFL.txt','/fonts/../server.py']:
+            with self.assertRaises(HTTPError) as error:
+                self.get(path)
+            self.assertIn(error.exception.code, [400,404])
 
     def test_cross_origin_and_rebinding_are_blocked(self):
         for headers in [{'Host': 'attacker.invalid'}, {'Origin': 'https://attacker.invalid'},
@@ -186,6 +254,10 @@ class HTTPTests(unittest.TestCase):
             with self.assertRaises(HTTPError) as error:
                 self.get('/api/meta', headers)
             self.assertEqual(error.exception.code, 403)
+
+    def test_an_existing_viewer_port_cannot_be_shared(self):
+        with self.assertRaises(OSError):
+            make_server(self.session, self.server.server_port)
 
 
 if __name__ == '__main__':
