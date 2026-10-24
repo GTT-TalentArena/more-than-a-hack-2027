@@ -15,7 +15,7 @@ jobs:
     if: >-
       github.event.workflow_run.conclusion != 'skipped' &&
       github.event.workflow_run.head_repository.full_name == github.repository
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Enviar a Discord
         env:

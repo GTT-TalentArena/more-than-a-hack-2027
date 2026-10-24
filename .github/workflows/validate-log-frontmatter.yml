@@ -12,7 +12,7 @@ permissions:
 jobs:
   validate:
     name: validate-log-frontmatter
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Validate front matter
         uses: actions/github-script@v7

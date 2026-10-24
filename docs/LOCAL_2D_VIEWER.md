@@ -102,13 +102,15 @@ The server deliberately binds only to loopback. Run the UI directly on the host;
 
 ![Animated synthetic example: two teams, ball and H/A/D/X states](assets/match-viewer-synthetic.svg)
 
-**Every position and label above is invented.** This looping illustration shows original observations with estimation disabled. It is a sampled synthetic demonstration, not a recording of the real match or a performance benchmark. Missing observations disappear. Regenerate it with:
+**Every position and label above is invented.** This looping illustration uses the current viewer's midnight palette, locally embedded typography, label window and transport layout. Dashed rings demonstrate the optional player estimates; the ball remains observation-only. It is a sampled synthetic demonstration, not a recording of the real match or a performance benchmark. Regenerate it with:
 
 ```powershell
 python -m tools.match_viewer.preview
 ```
 
 The illustration generator accepts no real data path. There is no real-match animation export in the UI.
+
+All GitHub Actions workflows in this repository pin their Linux runner to `ubuntu-24.04`, including the viewer browser checks. The version is explicit rather than following the moving `ubuntu-latest` alias.
 
 ## Reproduce checks
 
