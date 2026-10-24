@@ -25,6 +25,18 @@ Contract v1 is kept: ATD `frame_id - 1`; events `round(seconds * fps)`; half-ope
 
 ## Experimental integration
 
+### Smoothed-track correction · 23 October 2026
+
+The general preparation rule now searches for sustained motion within a bounded delay after stillness,
+instead of requiring an immediate jump from <= 0.5 to >= 2 m/s. `restart_search_s=1.0` is the default;
+zero restores the previous rule. The search cannot bridge missing or implausible speed evidence, an event
+boundary or a half boundary. The restart is dated at the first confirmed moving frame, not the end of
+stillness or the final confirmation frame. All other physical thresholds are unchanged.
+
+Both `baseline_dead_ball` configurations include the new required parameter. The initial kick-off rule
+is separate and unchanged. Candidate A remains P2-disabled by default. Regression tests, smoothed synthetic
+comparisons and local aggregate validation are documented in [P2_SMOOTHED_RESTARTS.md](P2_SMOOTHED_RESTARTS.md).
+
 Internal model `baseline_dead_ball`: the same nearest-team and hold from P1 in both variants; only `enabled` changes. D integration threshold = 0.75; confirmed restarts cut the D holding. It is a provisional consumer of the signals, not the Viterbi implementation of #16. The final integration requires review by Jimy/Alejandro and doesn't alter the frozen A/B candidates.
 
 ## Planned validation

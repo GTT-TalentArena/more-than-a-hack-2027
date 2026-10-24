@@ -14,7 +14,8 @@ from starter.load_smart_tagging import load as load_events
 DEFAULTS = dict(outside_margin_m=0.5, outside_frames=3, stationary_speed_m_s=0.5,
                 stationary_frames=5, moving_speed_m_s=2.0, moving_frames=3,
                 max_speed_m_s=45.0, max_dead_s=90.0, kickoff_radius_m=3.0,
-                quiet_speed_m_s=1.5, min_players=6, dead_threshold=0.75)
+                quiet_speed_m_s=1.5, min_players=6, dead_threshold=0.75,
+                restart_search_s=1.0)
 TYPES = {"throw-in", "corner kick", "goal kick", "free kick",
          "kick off (after goal)", "kick off (start)"}
 
@@ -29,8 +30,9 @@ def validate_parameters(parameters):
             raise ValueError(key + " must be a valid integer")
     for key in DEFAULTS:
         value = parameters[key]
-        if isinstance(value, bool) or not isinstance(value, (int, float)) or not np.isfinite(value) or value <= 0:
-            raise ValueError(key + " must be finite and positive")
+        if (isinstance(value, bool) or not isinstance(value, (int, float)) or not np.isfinite(value)
+                or value < 0 or (value == 0 and key != "restart_search_s")):
+            raise ValueError(key + " must be finite and positive (restart_search_s may be zero)")
     if not 0 < parameters["dead_threshold"] <= 1:
         raise ValueError("dead_threshold must be in (0, 1]")
     if not parameters["stationary_speed_m_s"] < parameters["moving_speed_m_s"] < parameters["max_speed_m_s"]:
@@ -194,9 +196,17 @@ def detect(ball_xy_m, ball_observed, period_id, events, fps, pitch,
                 s, t = a + int(s), a + int(t)
                 if t - s < p["stationary_frames"]:
                     continue
-                # Consecutive motion immediately after preparation; no derivative across a gap.
-                r = t
-                if r + p["moving_frames"] > b or not np.all(moving[r:r + p["moving_frames"]]):
+                # Smoothed tracks accelerate gradually. Bound the motion START, keep
+                # confirmation inside the event, and never search across unknown speed.
+                last_start = min(b - p["moving_frames"], t + int(round(p["restart_search_s"] * fps)))
+                r = None
+                for candidate in range(t, last_start + 1):
+                    if not np.isfinite(speed[candidate]):
+                        break
+                    if np.all(moving[candidate:candidate + p["moving_frames"]]):
+                        r = candidate
+                        break
+                if r is None:
                     continue
                 begin = first if kind == "kick off (start)" else s
                 quiet = (collective_speed is not None and player_count is not None
@@ -208,7 +218,8 @@ def detect(ball_xy_m, ball_observed, period_id, events, fps, pitch,
                 restarts.append((r, 0.9, "tagged_restart"))
                 candidates.append(dict(start_frame=begin, end_frame=r, restart_frame=r,
                                        evidence="tagged_preparation", confidence=score,
-                                       kind=kind, team=event["team"], period=int(period)))
+                                       kind=kind, team=event["team"], period=int(period),
+                                       restart_wait_frames=r - t))
                 break
         for start, score, reason, tagged_restart in starts:
             # A movement before this start cannot release a later interruption.
@@ -237,6 +248,8 @@ def detect(ball_xy_m, ball_observed, period_id, events, fps, pitch,
                    dead_valid_frames=int(np.sum(signals["dead_valid"])),
                    restart_candidates=int(np.sum(restart >= p["dead_threshold"])),
                    interruption_candidates=len(candidates),
+                   tagged_preparation_candidates=sum(c["evidence"] == "tagged_preparation" for c in candidates),
+                   delayed_preparation_candidates=sum(c.get("restart_wait_frames", 0) > 0 for c in candidates),
                    conflicts=int(np.sum((dead >= p["dead_threshold"]) & (restart >= p["dead_threshold"]))),
                    note="Evidence only; no GT, whistle detection, stable player identity or quality guarantee")
     return signals, candidates, summary
