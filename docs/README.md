@@ -80,6 +80,8 @@ P2: [experimental stoppage and restart detector](experimentos/P2_DEAD_BALL.en.md
 
 Studies and experiments: [possession model study](ESTUDIO_POSESION.en.md) · [P1 hold](experimentos/P1_HOLD.en.md) · [temporal control](experimentos/CONTROL_TEMPORAL.en.md) · [candidate face-off protocol](experimentos/confrontacion-candidatos.en.md).
 
+Local tools: [2D match viewer](LOCAL_2D_VIEWER.md), with a fully synthetic animated example, loopback-only tracking playback and optional model labels (#34).
+
 The original Spanish versions sit next to each English file (same name without `.en`).
 
 > 🇬🇧 The P0 and P2 lines above were originally in Spanish: «P0 · Integración y evaluación — Estado y verificación · Contrato de datos · Guía de ejecución · Entorno Docker. P2: detector experimental de interrupciones y reinicios, señales, pruebas y comparación controlada.»

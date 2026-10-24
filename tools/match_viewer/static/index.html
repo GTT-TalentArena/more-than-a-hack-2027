@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GTT · Match viewer</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/viewer.js"></script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <a class="brand" href="/" aria-label="GTT match viewer home">gtt<span class="brand-dot" aria-hidden="true"></span></a>
+      <nav aria-label="Current workspace"><span class="nav-current">Match viewer</span><span class="nav-caption">TalentArena · 2027</span></nav>
+      <span class="local"><span class="dot"></span>LOCAL SESSION</span>
+    </div>
+  </header>
+  <main>
+    <div class="section-heading"><span class="eyebrow">01 <span class="section-rule"></span> LOCAL MATCH VIEWER</span><span id="source" class="source-badge">INITIALISING SOURCE</span></div>
+    <section class="workspace" aria-label="Tracking workspace">
+      <aside class="match-intro" aria-label="Current frame details">
+        <h1>Who has<br><em>the ball?</em></h1>
+        <p class="intro">Tracking, ball and model possession. The same match, the same frame.</p>
+        <p class="source-note" id="source-note">Reading local session…</p>
+        <ul class="state-legend" aria-label="Model labels">
+          <li><span class="swatch home">H</span>Home in possession</li>
+          <li><span class="swatch away">A</span>Away in possession</li>
+          <li><span class="swatch dead">D</span>Dead ball</li>
+          <li><span class="swatch unknown">X</span>No answer</li>
+        </ul>
+        <dl class="observation-details">
+          <div><dt>Frame</dt><dd id="frame">—</dd></div>
+          <div><dt>Video time</dt><dd id="time">00:00.00</dd></div>
+          <div><dt>Observed tracks</dt><dd id="observed">—</dd></div>
+          <div><dt>Estimated tracks</dt><dd id="estimated">—</dd></div>
+          <div><dt>Ball</dt><dd id="ball-status">—</dd></div>
+        </dl>
+        <label class="estimate-control"><input id="estimate-players" type="checkbox" checked disabled> Estimate short player gaps</label>
+        <p class="fidelity"><span class="estimate-key" aria-hidden="true"></span> Dashed rings: short gaps estimated up to 2 s.<br>Long losses: brief prediction, fading within 0.6 s.<br>Ball: original observations only.<br>Track slots are not player identities.</p>
+      </aside>
+      <div class="pitch-column">
+        <div class="pitch-heading">
+          <span class="frame-readout">FRAME <strong id="hud-frame">000000</strong><span class="fps-readout" id="hud-fps"> · 25 FPS</span></span>
+          <div class="pitch-actions"><div id="possession" class="possession" data-label="none"><i class="state-dot" aria-hidden="true"></i><span id="label">—</span><span aria-hidden="true"> — </span><span id="label-description">No prediction loaded</span></div><button id="play" class="play-toggle" aria-label="Play" title="Play (Space)" disabled>Play</button></div>
+        </div>
+        <div class="pitch-wrap">
+          <canvas id="pitch" width="1260" height="840" aria-label="Top-down pitch with observed players, optional estimated players and observed ball"></canvas>
+          <span id="ball-missing" class="ball-missing" hidden>BALL NOT TRACKED</span>
+          <div id="loading" class="loading" role="status">Preparing the pitch…</div>
+        </div>
+        <section class="possession-window" aria-label="Model label window">
+          <canvas id="possession-strip" width="1200" height="12" aria-label="Original model label runs over the preceding 40 seconds"></canvas>
+          <div class="strip-caption"><span id="window-duration">−40 S</span><span>MODEL LABEL WINDOW</span><span>NOW</span></div>
+          <div class="window-details">
+            <div><div class="window-share-heading"><span>HOME <strong id="home-percent">—</strong></span><span><strong id="away-percent">—</strong> AWAY</span></div><canvas id="share-bar" width="600" height="6" aria-label="Home and away share of H/A labels in this window"></canvas><p class="window-note">Window only · H/A labels, excluding D/X</p></div>
+            <ol id="recent-spells" aria-label="Recent original model label runs"><li class="empty-spells">No prediction loaded</li></ol>
+          </div>
+        </section>
+        <section class="transport" aria-label="Playback controls">
+          <div class="timeline-heading"><span id="timeline-time">00:00.00</span><span id="duration">—</span></div>
+          <label class="sr-only" for="timeline">Video frame timeline</label><input id="timeline" type="range" min="0" max="1499" value="0" disabled>
+          <div class="transport-row">
+            <div class="play-controls"><button id="previous" title="Previous frame (left arrow)" aria-label="Previous frame" disabled>←</button><button id="next" title="Next frame (right arrow)" aria-label="Next frame" disabled>→</button></div>
+            <div class="speed-controls"><label for="speed">Speed</label><select id="speed" disabled><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></div>
+            <form id="jump-form"><label for="jump">Frame</label><input id="jump" type="number" min="0" value="0" required disabled><button type="submit" id="jump-button" disabled>Go ↗</button></form>
+          </div>
+        </section>
+        <div class="pitch-footer"><span><i class="key home"></i><span id="home-name">Home</span></span><span><i class="key away"></i><span id="away-name">Away</span></span><span id="period">—</span><span class="pitch-scale" id="dimensions">—</span></div>
+        <span id="teams" class="sr-only">HOME / AWAY</span>
+      </div>
+    </section>
+    <footer class="session-footer"><p id="message" role="status" aria-live="polite">Loading source…</p><span>SPACE TO PLAY / PAUSE · ← → TO STEP</span></footer>
+  </main>
+</body>
+</html>
