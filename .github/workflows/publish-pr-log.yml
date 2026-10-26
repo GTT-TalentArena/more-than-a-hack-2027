@@ -18,12 +18,12 @@ jobs:
 
     steps:
       - name: Checkout source repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Checkout website repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: GTT-TalentArena/gtt-talentarena.github.io
           ref: main
@@ -31,7 +31,7 @@ jobs:
           token: ${{ secrets.LOG_REPO_TOKEN }}
 
       - name: Generate Markdown log
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           WEBSITE_DIR: website
         with:
