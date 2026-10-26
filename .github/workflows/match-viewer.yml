@@ -32,9 +32,19 @@ jobs:
       - name: Install optional browser-test dependencies
         working-directory: tools/match_viewer
         run: npm ci
+      # Playwright's own Chromium (pinned by the lockfile), cached between runs. No --with-deps:
+      # the ubuntu-24.04 image already has the libraries headless Chromium needs, and the extra
+      # system packages it would add (CJK fonts, xvfb) are only for headed browsers. Installing
+      # them through apt made this job depend on the Ubuntu mirror's speed and hit the timeout.
+      - name: Cache Playwright's Chromium
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('tools/match_viewer/package-lock.json') }}
       - name: Install Chromium for synthetic UI checks
         working-directory: tools/match_viewer
-        run: npx playwright install --with-deps chromium
+        timeout-minutes: 4
+        run: npx playwright install chromium
       - name: Check elapsed-time playback
         run: node --test tests/match_viewer_playback.test.mjs
       - name: Check synthetic UI and external requests
