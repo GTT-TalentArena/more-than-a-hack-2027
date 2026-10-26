@@ -45,3 +45,18 @@ services:
       - ./salidas:/salidas
       - ${DATOS:-./data}:/datos:ro
     command: ["modelo", "--config", "configs/baseline_smooth50.json"]
+
+  # Held-out evaluation on DFL open data (issue #47, heldout/). It never mounts the challenge data:
+  # the DFL files, arrays and bundles live under ./salidas/heldout.
+  heldout:
+    build:
+      context: .
+      dockerfile: docker/heldout.Dockerfile
+    image: gtt-mtah-heldout:local
+    user: "${GTT_UID:-1000}:${GTT_GID:-1000}"
+    environment:
+      GTT_SALIDAS: /salidas
+    volumes:
+      - .:/app:ro
+      - ./salidas:/salidas
+    command: ["--help"]

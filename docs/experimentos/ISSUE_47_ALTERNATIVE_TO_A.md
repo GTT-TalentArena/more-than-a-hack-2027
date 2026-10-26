@@ -110,6 +110,13 @@ If Metrica's sample data is cleared (§1), Sample Game 3 joins the held-out set;
   Docker image. The adapter feeds DFL frames to each model in the model's normal input form; it must not change either
   model's logic.
 
+**As implemented** ([`heldout/`](../../heldout/README.md)): the adapter writes each degraded match as a bundle in the
+challenge's file format (EPTS metadata and raw tracking, and an empty Smart Tagging file), and every model runs through
+P0 (`python -m solution.predict`) with its data folder pointed at that bundle, so no model is modified. Each DFL half is
+placed at the start of the matching challenge half; the rest of the block has no tracking and is never scored. The
+image is `docker/heldout.Dockerfile`: the main image's pinned base and the same numpy and pandas versions, plus kloppy
+to read the DFL files.
+
 ### 3.2 Metrics, per held-out match and condition
 
 1. **spellF1** (primary) and **macroF1** (tie-break), from the official code.
