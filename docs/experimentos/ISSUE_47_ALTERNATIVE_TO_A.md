@@ -33,22 +33,57 @@ Not considered: event-only sources (StatsBomb, Wyscout) because they have no tra
 | `ball_state` active, `ball_owning_team` = away | `A` |
 | missing or outside the two halves | `X` (not scored) |
 
+Load with `only_alive=False`: kloppy's default (`True`) drops every dead-ball frame, which would remove `D`
+from the evaluation.
+
 **This is not the same definition as our ground truth.** Ours comes from Metrica's corrected tracking, DFL's from TRACAB
 and the DFL's own possession rule. Absolute scores on DFL are therefore not comparable with the 0.2433 target or with
 other teams. The comparison is **paired**: A and the variant on exactly the same frames, labels and evaluator.
 
-### 1.2 Domain gap
+### 1.2 Domain gap and degradation profiles
 
 DFL tracking is corrected, keeps player identities and has the ball almost always. Our ATD is automatic, has
-46 anonymous slots and **no ball in 41% of graded frames** (DATA.md). Each held-out match is therefore evaluated in
-two conditions, both fixed now:
+46 anonymous slots and **no ball in 41% of graded frames** (DATA.md), disproportionately in the boxes and in aerial
+duels. No simulation reproduces that domain; the profiles below are a **documented proxy**, not proof that they
+represent it. All of them are fixed now, before any scoring:
 
-- **clean**: DFL tracking as loaded;
-- **degraded**: identities replaced by anonymous team slots, and ball positions removed in runs until 41% of each
-  half's frames have no ball (DATA.md's figure, the only statistic of the provided game used). Run lengths follow an
-  exponential distribution with a 2 s mean (an assumption, not estimated from the provided game). Seed `47`.
+| Profile | Ball | Players |
+|---|---|---|
+| `clean` | as loaded | as loaded (identities removed, team kept) |
+| `gaps-short` | gaps with exponential length, mean 0.5 s | `clean` |
+| `gaps-long` | gaps with exponential length, mean 4 s | `clean` |
+| `gaps-crowded` | mean 2 s; gap starts drawn with probability proportional to the number of players within 5 m of the ball, a proxy for DATA.md's "boxes and aerial duels" | `clean` |
+| `full` | as `gaps-crowded` | tracks cut into segments of exponential length (mean 60 s), each given a new anonymous slot of the same team; Gaussian position noise, σ = 0.10 m for players and 0.20 m for the ball |
 
-The degraded condition is the primary result: it is the closer of the two to the game we are scored on.
+How gaps are sampled, for every profile except `clean`:
+
+- per half, independently; frames whose ball is already missing in DFL stay missing and count towards the target;
+- draw a start frame and a length, truncate the gap at the end of the half and at 30 s, and mark it missing; repeat
+  until **41% of the half's frames** have no ball; the last gap is shortened so the half lands on 41% exactly;
+- alive and dead frames are equally eligible, because the challenge ATD loses the ball in both;
+- seeds `47`, `48`, `49` for every degraded profile.
+
+Each corrupted observation is generated **once** per match, profile and seed, hashed, and fed **identically** to A
+and to the variant. Results are reported for every profile and seed, `clean` included. A gain on one profile or seed
+is not enough on its own (§3.6).
+
+### 1.3 Inputs and targets
+
+`BallPossession` and `BallStatus` are **evaluation targets only**. The adapter passes the models positions, speeds and
+the team of each slot, nothing else: neither target field nor any feature derived from it enters either model. A test
+in the adapter checks this: removing or shuffling both target fields must leave the inference inputs byte-identical
+(same hash).
+
+The **scoring mask** comes from the ground truth and the period metadata: a frame is scored when it has a label and
+lies inside a half. It never depends on the degraded observation: hiding the ball does not remove a frame from
+evaluation.
+
+**Smart Tagging.** A uses the challenge match's automatic Smart Tagging; DFL has no equivalent. The main comparison
+gives **both models no tagging at all** (empty tag list). This is a handicap for A that the variant shares if it also
+uses tags; it is reported, not corrected. The DFL human-coded events are permitted external data, but turning them
+into restart or team signals would be a near-oracle input that the challenge match does not have. **They are not used
+in the main comparison.** If anyone proposes an event-assisted condition, it is reported separately and never decides
+adoption.
 
 ## 2. Data split, fixed before training or scoring
 
@@ -79,17 +114,28 @@ If Metrica's sample data is cleared (§1), Sample Game 3 joins the held-out set;
 
 1. **spellF1** (primary) and **macroF1** (tie-break), from the official code.
 2. **Boundaries and restarts**: transition F1 at 12 and 25 frames, mean absolute latency.
-3. **False short possessions**: predicted spells shorter than 1 s with no matching ground-truth spell.
+3. **False short possessions**: predicted H/A spells shorter than 25 frames (1 s) whose best temporal IoU with any
+   ground-truth spell **of the same team** is below 0.3 (the lowest official threshold), counted on scored frames
+   only. Reported as a **rate per 90 minutes of scored time**, so it is defined even when a model has none.
 4. **Possession structure**: number of spells and median duration, against the labels.
 5. **Runtime** and peak memory for the full provided game (limit: 30 min on CPU).
 
 ### 3.3 Uncertainty
 
-Two to three held-out matches are too few for a significance test. We report:
+The same construction as the official `bootstrap_spell_f1`, made **paired**:
 
-- every match separately, and the **paired difference** (variant − A) per match;
-- within each match, a **block bootstrap of the difference** over 5-minute blocks (1,000 draws, seed `0`), so that
-  frames are never treated as independent samples.
+- **Unit**: whole ground-truth possessions of one match, as the official evaluator resamples them. Possessions are
+  never split, so no possession crosses a resampling boundary and nothing is joined artificially.
+- **Pairing**: each draw picks the same possessions for A and for the variant; the statistic is
+  `spellF1(variant) − spellF1(A)` on that draw, computed as the official code does (matched flags per IoU threshold,
+  predicted spell count fixed).
+- **Draws and interval**: 1,000 draws, seed `0`, **90% percentile interval** (5th–95th), the official percentiles.
+- **Combining matches**: matches have **equal weight**. In each draw, every held-out match is resampled independently
+  and the statistic is the mean of the per-match differences.
+- **Point estimates** are the full-match spellF1 values from the official code, not the bootstrap mean.
+
+With two held-out matches this interval describes uncertainty **conditional on those two matches**. Even if it
+excludes zero, it is not evidence of generalisation to unseen matches. The report keeps the two claims apart.
 
 Wins measured only on synthetic fixtures are reported as provisional, not as evidence of generalisation.
 
@@ -107,17 +153,29 @@ Not used for this decision. Each output is checked with `validate_submission.py`
 
 ### 3.6 Decision rule, fixed now
 
+The thresholds below are **internal team acceptance criteria** proposed by Edu, not official challenge requirements.
+They are agreed in PR #48 before any held-out scoring, and do not change afterwards.
+
 Recommend **adopting the variant** only if all of these hold:
 
-1. **Eligible and reproducible**: Edu regenerates its CSV twice from a clean checkout, with identical SHA-256 and all
-   hashes recorded (§5).
-2. **Better on held-out games**: in the degraded condition, spellF1 is higher than A's on **every** held-out match,
-   and the bootstrap interval of the mean paired difference excludes zero.
-3. **No important regression**: macroF1 does not drop by more than 0.02 on any held-out match, and false short
-   possessions do not increase by more than 20%.
-4. **Runs in time**: under 30 minutes on CPU for the provided game.
+1. **Eligible and reproducible**: Edu regenerates its CSV for the provided game twice from a clean checkout, with
+   identical SHA-256 and all hashes recorded (§5).
+2. **Better on held-out matches, robustly**:
+   - averaged over the degraded profiles and seeds, the variant's spellF1 is higher than A's on **each** held-out
+     match;
+   - it is higher on **at least 3 of the 4** degraded profiles (each profile averaged over its three seeds);
+   - for the `full` profile, the 90% interval of the mean paired difference (§3.3) excludes zero for every seed.
+3. **No important regression**, per held-out match on the degraded profiles averaged as in 2:
+   - macroF1 drops by no more than **0.02**;
+   - the false-short-possession rate is at most **1.2 × A's rate + 1 per 90 min** (the additive term keeps the rule
+     defined when A's rate is zero).
+4. **Runs in time**: under **30 minutes** for the provided game on the reference hardware: AMD Ryzen 5 3600
+   (6 cores, 12 threads), 31 GB RAM, inside the project's Docker image. Recorded together with the GitHub runner time.
 
 Otherwise **keep A**. "Keep A, no demonstrated improvement" is a valid outcome of #47.
+
+The share-of-`D` and possession-count flags of §3.4 stay **advisory**: agreeing with A's aggregates is not an
+accuracy target. Results on `clean` are reported but do not decide.
 
 ## 4. Results
 
