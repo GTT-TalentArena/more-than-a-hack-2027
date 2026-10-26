@@ -12,7 +12,7 @@ import numpy as np
 
 import games
 from evaluation import possession_metrics as pm
-from . import bundle, degrade, score
+from . import bundle, degrade, identity, report, run, score
 from .run import observation_hash
 
 PER_HALF = 3000
@@ -155,6 +155,104 @@ class Scoring(unittest.TestCase):
         self.assertAlmostEqual(rate - clean_rate, 90.0 / minutes)
         metrics = score.metrics(self.gt, pred)
         self.assertLess(metrics["spell_f1"], 1.0)
+
+
+class Report(unittest.TestCase):
+    """The decision rule refuses to recommend on partial, stale, mixed or altered evidence."""
+
+    MODELS = {"a": ("a", "configs/candidate_a.json"), "v": ("v", "configs/candidate_b.json")}
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.old = os.environ.get("GTT_SALIDAS")
+        os.environ["GTT_SALIDAS"] = self.tmp.name
+        match = synthetic_match()
+        self.gt = bundle.ground_truth(match["label"], match["period"])
+        os.makedirs(os.path.join(run.work_dir(), "gt"))
+        bundle.write_ground_truth(os.path.join(run.work_dir(), "gt", "M1.csv"), self.gt)
+        noisy = self.gt.copy()
+        live = np.flatnonzero(np.isin(noisy, (0, 1)))
+        noisy[live[::40]] = 1 - noisy[live[::40]]
+        self.preds = {"a": noisy, "v": self.gt}
+        self.ids = {name: identity.model_identity(cfg) for name, cfg in self.MODELS.values()}
+        self.harness = identity.harness_identity()
+
+    def tearDown(self):
+        if self.old is None:
+            os.environ.pop("GTT_SALIDAS", None)
+        else:
+            os.environ["GTT_SALIDAS"] = self.old
+        self.tmp.cleanup()
+
+    def records(self, skip=()):
+        out = []
+        gt_sha = hashlib.sha256(self.gt.tobytes()).hexdigest()
+        for profile, seed in run.runs_of(list(degrade.PROFILES), list(degrade.SEEDS)):
+            for name in ("a", "v"):
+                if (profile, seed, name) in skip:
+                    continue
+                path = run.prediction_path("M1", profile, seed, name, self.ids[name])
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                bundle.write_ground_truth(path, self.preds[name])
+                out.append({"match": "M1", "profile": profile, "seed": seed, "model": name,
+                            "model_identity": self.ids[name], "harness_identity": self.harness,
+                            "observation_sha256": "obs-{}-{}".format(profile, seed), "gt_sha256": gt_sha,
+                            "prediction": os.path.relpath(path, run.work_dir()),
+                            "prediction_sha256": bundle.sha256(path), "valid": True,
+                            "metrics": score.metrics(self.gt, self.preds[name])})
+        return out
+
+    def decide(self, records):
+        return report.decide(self.MODELS, ["M1"], records=records)
+
+    def test_complete_evidence_gives_a_decision(self):
+        result = self.decide(self.records())
+        self.assertEqual(result["status"], "complete")
+        self.assertTrue(result["checks"]["2a_better_on_each_match"])
+
+    def test_missing_seeds_block_the_recommendation(self):
+        result = self.decide(self.records(skip={("gaps-short", 48, "v"), ("gaps-long", 49, "v"),
+                                                ("full", 48, "v")}))
+        self.assertEqual(result["status"], "incomplete")
+        self.assertEqual(result["recommendation"], report.INCOMPLETE)
+        self.assertEqual(len(result["problems"]), 3)
+        self.assertNotIn("checks", {k for k, v in result.items() if v})
+
+    def test_runs_of_another_identity_do_not_count(self):
+        stale = self.records()
+        for r in stale:
+            if r["model"] == "v":
+                r["model_identity"] = "0" * 64
+        result = self.decide(stale)
+        self.assertEqual(result["status"], "incomplete")
+        self.assertTrue(all(p.startswith("missing") and p.endswith(" v") for p in result["problems"]))
+
+    def test_altered_prediction_file_is_rejected(self):
+        records = self.records()
+        with open(os.path.join(run.work_dir(), records[0]["prediction"]), "a") as handle:
+            handle.write("\n")
+        self.assertEqual(self.decide(records)["status"], "incomplete")
+
+    def test_different_observations_for_the_two_models_are_rejected(self):
+        records = self.records()
+        records[1]["observation_sha256"] = "something else"
+        result = self.decide(records)
+        self.assertIn("different observations for the two models: M1 clean-0", result["problems"])
+
+    def test_ambiguous_duplicates_are_rejected(self):
+        records = self.records()
+        twin = dict(records[0], prediction_sha256="f" * 64)
+        result = self.decide(records + [twin])
+        self.assertEqual(result["status"], "incomplete")
+
+    def test_cache_key_includes_both_identities(self):
+        r = self.records()[0]
+        self.assertNotEqual(run.run_key(r), run.run_key(dict(r, model_identity="x")))
+        self.assertNotEqual(run.run_key(r), run.run_key(dict(r, harness_identity="x")))
+        self.assertNotEqual(identity.model_identity("configs/candidate_a.json"),
+                            identity.model_identity("configs/candidate_b.json"))
+        self.assertIn("solution/a_opus/ballfree.py", identity.model_files("configs/candidate_a.json"))
+        self.assertIn("solution/predict.py", identity.model_files("configs/candidate_a.json"))
 
 
 if __name__ == "__main__":

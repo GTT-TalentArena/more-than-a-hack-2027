@@ -35,6 +35,11 @@ jobs:
           docker compose run --rm --user "$(id -u):$(id -g)"
           --entrypoint python evaluar -m unittest discover -s tests -v
 
+      - name: Held-out harness tests (issue #47, synthetic only, no DFL download)
+        run: >
+          docker compose run --rm --user "$(id -u):$(id -g)"
+          --entrypoint python evaluar -m unittest heldout.tests -v
+
       - name: An invalid CSV exits with code 2
         run: |
           mkdir -p salidas/invalido
