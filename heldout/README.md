@@ -19,7 +19,15 @@ The challenge game never goes through here, and the `heldout` Docker service doe
 4. **report**: applies the decision rule (plan §3.6) to the recorded runs.
 
 Everything lands under `salidas/heldout/` (git-ignored): raw files, arrays, ground truth, predictions and
-`results.jsonl` with one line per run (hashes of the observation, the bundle files, the config and the CSV).
+`results.jsonl` with one line per run (hashes of the observation, the ground truth, the bundle files, the config
+and the CSV).
+
+**No stale results.** A run is reused only when its match, profile, seed and model name **and** two identities
+match (`heldout/identity.py`): the model's (its config, its source files, P0 and `games.py`) and the harness's
+(`heldout/`, the official metric code, Python/numpy/pandas versions). Change any of them and the run is redone and
+recorded separately. `report` only counts runs of the current identities, and refuses to recommend ("incomplete
+evaluation: no recommendation", exit code 3) unless every match × profile × seed of the protocol is there for both
+models, with the same observations and ground truth for both and prediction files that still match their hashes.
 
 ## Commands
 
@@ -35,7 +43,7 @@ docker compose run --rm heldout run --model a=configs/candidate_a.json --model v
 # Final comparison only (Thursday 29): the two reserved matches
 docker compose run --rm heldout run --heldout --matches J03WN1 J03WR9 \
     --model a=configs/candidate_a.json --model v=configs/<variant>.json
-docker compose run --rm heldout report --a a --variant v
+docker compose run --rm heldout report --a a=configs/candidate_a.json --variant v=configs/<variant>.json
 ```
 
 Tests inside the image: `docker compose run --rm --entrypoint python heldout -m unittest heldout.tests`.
