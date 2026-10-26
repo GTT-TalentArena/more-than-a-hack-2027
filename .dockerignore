@@ -2,3 +2,4 @@
 # fuera (datos del partido, vídeos, resultados, .git…). El código se monta al ejecutar.
 *
 !docker/requirements.lock
+!docker/heldout.lock
