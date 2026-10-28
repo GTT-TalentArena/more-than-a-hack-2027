@@ -263,10 +263,10 @@ and 11 candidate A synthetic checks passed. This is the starting point, not exec
 | [`tests/test_smoothed_restarts.py`](../../tests/test_smoothed_restarts.py) | Gradual acceleration, search limits, event/half boundaries, zones and smoothed trajectories | Separate physical restart error from confirmation timing; the general preparation fix does not resolve the separate initial-kick-off rule |
 | [`heldout/tests.py`](../../heldout/tests.py) | Target separation, deterministic degradation, common inputs and complete/current result identities | Keep external evaluation under Edu's frozen protocol; synthetic acceptance is not independent real-match validation |
 
-The next implementation step is `tests/test_issue47_football_scenarios.py`, reusing existing helpers where useful.
-No new executable fixtures, model changes or external evaluations are included in this specification step.
-Jimy reviews whether the evidence represents football control; Edu confirms evaluation separation and reporting.
-The first Pablo checklist item remains incomplete until executable cases and their results are linked.
+The executable cases are in [`tools/football_acceptance.py`](../../tools/football_acceptance.py), with assertions in
+[`tests/test_issue47_football_scenarios.py`](../../tests/test_issue47_football_scenarios.py). Section 3.8 records their
+initial execution. Jimy still reviews whether the evidence represents football control; Edu confirms evaluation
+separation and reporting. The fixtures and results support the first Pablo checklist item, pending team review.
 
 #### Development and reserved evaluation
 
@@ -282,6 +282,69 @@ behaviour, raw-label result, boundary observability/error, regression and interp
 reserved results; a continuation needs new unused evidence and an agreed protocol. Missing authorised video or
 reference labels must be recorded as a limitation of any proposed blind review. The challenge viewer supports
 qualitative understanding only: no human labels, correctness votes or frame-specific corrections on BAR-ATH.
+
+### 3.8 Synthetic implementation and starting results
+
+Pablo's local step 3, **28 October 2026**, on branch `codex/issue-47-football-validation`. The specification is
+committed as `b205cf4`; the new implementation and these results are working-tree changes. Candidate A, P2,
+temporal control, the official metrics and their configurations are unchanged. No improvement variant has been
+provided to this runner, so these results do not compare A with Jimy's future variant or decide adoption.
+
+The generator implements FA01-FA10 as **17 concrete worlds**, including three restart types, two smoothing
+conditions, three kick-off tag shifts and supported/unsupported starts. Each runs unchanged, with teams exchanged,
+with a 17-frame unscored offset and with same-team slots permuted: **68 geometry-to-output runs**. The shifted
+kick-off cases actually occur in period 2 after an invented first half and break. No reserved synthetic family
+or external match was used. Observation/bundle identity tests verify that changing reference labels does not
+change model inputs.
+
+Compact runs write EPTS XML/TXT and imperfect synthetic tags to a temporary input folder, then call A's normal
+pipeline with its default configuration and self-calibration. Only `games.source_frames`, the half blocks and the
+bundle length are replaced within the compact test scope. The resulting CSV is validated against that compact
+length; it is not presented as a competition submission. A separate full-length smoke run uses the unchanged
+`games.py` timeline: **199,319 valid rows**, repeated with identical SHA-256. It checks format/determinism, not
+whether the scenario's football targets hold in a full-length match. All temporary bundles and predictions are
+removed after checking them.
+
+Docker environment: Python 3.11.17, NumPy 2.4.6 and pandas 3.0.6, existing `gtt-mtah:local` image. The combined
+shared/heldout-harness regression suite passed **135 tests**; candidate A's original **11 synthetic checks** also
+passed. The new suite contains **20 tests** for fixture integrity, honest failure/abstention reporting, observable
+boundary brackets, contact versus control, P2, half isolation and deterministic geometry-to-CSV execution.
+Passing these software/component tests does not mean A passes every football acceptance target.
+
+| A geometry-to-output cases | Pass | Fail | Diagnostic only |
+|---|---:|---:|---:|
+| FA01: short recovery | 0 | 4 | 0 |
+| FA02-FA04: deflection, contest and same-team occlusion | 12 | 0 | 0 |
+| FA05: different team after a gap | 0 | 4 | 0 |
+| FA06: same-team stoppage/restart, three types | 0 | 12 | 0 |
+| FA07-FA10: gradual restart, kick-off shifts, reset and unsupported evidence | 0 | 0 | 36 |
+| Total | 12 | 20 | 36 |
+
+The full pipeline can emit D over live reference frames in these short, simplified worlds even though supplied
+team evidence passes the isolated decoder checks. The fixtures greatly simplify collective movement and offer
+little data for label-free calibration. Keep those unmet targets as findings; do not attribute them to a specific
+component or extrapolate them to real-match accuracy. Two team-swap mismatches occur in unsupported conditions
+(FA09 without second-half ball evidence and FA10 without tags/ball): these flag A's team tie/prior behaviour,
+not demonstrated cross-half state leakage. No slot-permutation or offset mismatch was observed.
+
+The report retains raw X counts, false D frames, topology and signed boundary errors. Restart diagnostics use
+one-to-one, same-team matching within **25 frames**, the one-second tolerance already reported in section 3.2;
+missed and spurious restarts remain explicit. Hidden-gap timing uses its observable bracket rather than an exact
+latent transition. Diagnostic cases are never counted as passes.
+
+Reproduce from the repository root with a **new** report path:
+
+```powershell
+docker compose run --rm --pull never --entrypoint python evaluar -m unittest discover -s tests -p test_issue47_football_scenarios.py -v
+docker compose run --rm --pull never --entrypoint python evaluar -m tools.football_acceptance --out /salidas/issue47-football/new-report.json --check --full-size-smoke
+```
+
+`--check` exits **1** when strict targets or symmetry checks fail, as in this baseline run; creating a report is
+not a model-quality pass. Without it, zero only confirms successful report generation. Existing report paths are
+rejected. Local evidence is `salidas/issue47-step3/report-delivery.json`, with commit/tree state, source/config/
+observation/CSV hashes and environment, plus the accompanying test/report logs. The source hash identifies the
+uncommitted implementation; it does not turn the preceding documentation commit into a code-reproduction commit.
+Jimy/Edu review, a named improvement variant and independent evaluation remain pending for the later steps.
 
 ## 4. Results
 
