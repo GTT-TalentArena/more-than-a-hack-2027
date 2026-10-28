@@ -24,6 +24,12 @@ this fork, which are one commit behind:
 
 Not considered: event-only sources (StatsBomb, Wyscout) because they have no tracking to run A on.
 
+Verification on 28 October: the organisers approved the declared IDSSE use in
+[official issue #16](https://github.com/metrica-sports/more-than-a-hack-2027/issues/16), answered and closed on
+26 October. Their conditions include attribution, access/reproducibility and choosing thresholds on other games.
+This supports the source choice; it does not certify this team's separate historical development process.
+Section 3.10 records the access, reader and split checks, plus the remaining confirmations for Edu.
+
 ### 1.1 How DFL labels map to ours
 
 | DFL frame | Our label |
@@ -35,6 +41,12 @@ Not considered: event-only sources (StatsBomb, Wyscout) because they have no tra
 
 Load with `only_alive=False`: kloppy's default (`True`) drops every dead-ball frame, which would remove `D`
 from the evaluation.
+
+The X row describes an unknown **exposed by the reader**, not a guarantee that kloppy preserves every unknown
+raw field. The installed 3.18.0 Sportec reader maps any possession value other than 1 to away, and any status
+value other than 1 to dead, including its missing-field defaults. Its raw-field assumptions must be checked on
+development files before accepting converted targets; section 3.10 distinguishes the synthetic adapter check
+from a real-file conversion audit.
 
 **This is not the same definition as our ground truth.** Ours comes from Metrica's corrected tracking, DFL's from TRACAB
 and the DFL's own possession rule. Absolute scores on DFL are therefore not comparable with the 0.2433 target or with
@@ -286,7 +298,8 @@ qualitative understanding only: no human labels, correctness votes or frame-spec
 ### 3.8 Synthetic implementation and starting results
 
 Pablo's local step 3, **28 October 2026**, on branch `codex/issue-47-football-validation`. The specification is
-committed as `b205cf4`; the new implementation and these results are working-tree changes. Candidate A, P2,
+committed as `b205cf4`; the implementation and initial results were evaluated as working-tree changes and later
+committed locally as `4c741b0`. Candidate A, P2,
 temporal control, the official metrics and their configurations are unchanged. No improvement variant has been
 provided to this runner, so these results do not compare A with Jimy's future variant or decide adoption.
 
@@ -346,14 +359,263 @@ observation/CSV hashes and environment, plus the accompanying test/report logs. 
 uncommitted implementation; it does not turn the preceding documentation commit into a code-reproduction commit.
 Jimy/Edu review, a named improvement variant and independent evaluation remain pending for the later steps.
 
+### 3.9 Football rule review
+
+Pablo's local step 4, 28 October 2026. The available checkout contains A and P2; no separately named #47 variant
+has been supplied for this review. These findings are a baseline handoff for Jimy, not his approval or a review of
+undelivered code. The following questions and synthetic probes are fixed before collecting the new diagnostics:
+
+1. Does A require motion compatible with control, or simply select the nearest player? Relate its distance kernel,
+   relative-speed gate, touch contribution and switching cost to FA01-FA05. Inspect actual control and team evidence
+   on the existing invented inputs rather than treating the decoder-only tests as complete control validation.
+2. Which live/dead evidence is present when the full pipeline emits D in a live synthetic case? Observe A's
+   individual dead-ball terms and its aggregate calibration diagnostics without changing any returned evidence,
+   configuration or labels. Verify that observing the terms preserves the normal CSV byte for byte.
+3. Can P2 refine the initial kick-off when supporting motion is inside the automatic window? Reuse FA08's three
+   tag shifts. Then use its middle shift for four additional development probes: window ends at the true motion
+   start, window includes only two moving frames, a five-frame missing-ball run covers the motion start, and a
+   longer missing-ball run hides it until the ball has left the three-metre centre zone. Keep the physical
+   trajectory/reference fixed; alter only the declared observation/window condition.
+4. Does the same general restart rule handle smoothed acceleration and an unobserved boundary? Keep separate the
+   first physical movement, first supported sustained movement and confirmation time. A missed or late boundary
+   remains a finding; no published challenge frame or post-result threshold is introduced.
+
+The initial trace found nonzero team evidence but zero dead-ball terms in FA01. A follow-up mathematical probe
+was then specified and replayed the already published decoder fixture with dead evidence 0 and -0.1 (the latter is the existing
+decoder-test value), to distinguish a scoring effect from missing control. This is supplied-evidence analysis,
+not a modified candidate, parameter search or proposed adoption.
+
+#### Control and live/dead findings
+
+| Review | Existing mechanism and observed evidence | Football interpretation and question for Jimy |
+|---|---|---|
+| Contact versus control | A's `control_scores` combines a distance kernel with relative ball-player velocity; `proximity_llr` compares teams and discounts interpolated/isolated observations. `touch_llr` adds a bounded contribution. The supplied-evidence decoder retains a 1.2 s recovery while rejecting a deflection and a neutral duel. | A does more than choose the nearest player, but these are control proxies, not proof of a deliberate reception/pass. Ask Jimy to show the same physical cases through his declared variant, including a controlled short recovery and a touch without control. |
+| The live/D decision can dominate otherwise usable control | On FA01, all 130 live-reference frames have nonzero team evidence and 126 have control strength at least 0.6. Every captured dead-ball term is zero, yet the full pipeline emits D throughout. The collective-speed fit and learned ball-free weight are off on this small world; they do not explain positive D evidence here. | Do not describe this result as missing control or a failed speed-model fit. Review how the variant distinguishes live play when dead-ball evidence is neutral. Closeness alone cannot settle this, because a player preparing a restart is also close to the ball. |
+| Neutral D has a structural scoring effect | The normal pipeline gives H/A scores `team/2`, `-team/2` and D score `dead + abs(team)/2`. At dead = 0, D equals the best live emission at each frame. In the supplied 130-frame recovery probe, all-D scores 26 versus 20 for `H50 A30 H50`, which pays two H/A changes. The existing test's dead = -0.1 yields the live sequence. | This explains a route to all-D in the toy world; it does not establish real-match frequency or justify a blanket negative D prior. Ask Jimy which independent, reliable live signals address this trade-off without turning preparation into live play. |
+| Missing observations versus available control | FA05 has 100 original ball observations but 150 frames of available control: A bridges its exactly two-second gap. Those 50 extra frames are imputed, not additional measurements. | Keep original coverage, interpolation and inferred ownership separate. A straight-line bridge may miss a real recovery; the transition inside this gap is not observable at an exact frame. Ask how the variant dates such changes and exposes uncertainty. |
+| Boundary dating and short possessions | A has a switching cost, not a universal minimum H/A duration. `date_team_changes` can backdate a change through supported control but stops at unsupported frames. D separately has a 50-frame minimum. | Do not equate rejecting flicker with deleting every short recovery. Check short true possessions and false team/D cuts separately, and review late control confirmation without assuming it dates the true first contact. |
+
+Source anchors: [`control_scores`, `proximity_llr`, `touch_llr`, `dead_components`](../../solution/a_opus/evidence.py),
+[`viterbi`, `date_team_changes`](../../solution/a_opus/decode.py),
+[`pipeline.run`](../../solution/a_opus/pipeline.py) and [default configuration](../../solution/a_opus/config.py).
+The review observer returns every original evidence array unchanged; all **17 observed prediction CSVs** match
+separate ordinary runs byte for byte. It reads evaluator-only references after inference to summarise the output.
+
+#### Initial kick-off and gradual restart findings
+
+P2's initial-kick-off branch searches for three consecutive observations of movement at at least 2 m/s, within
+the automatic event and with the motion start (or preceding observation) within 3 m of the pitch centre.
+It does not require prior stillness, and it resets for each half. The general stillness-to-motion search is a
+different branch; its one-second margin does not extend the initial-kick-off search beyond the event window.
+These are the existing rules in [`dead_ball.detect`](../../solution/dead_ball.py), unchanged by this review.
+
+| Invented condition | P2 result | Interpretation |
+|---|---|---|
+| FA08 event shifted -25, 0 or +25 frames, with enough central motion still visible inside the window | Confirms the period-2 restart at the invented physical onset in all three cases | Demonstrates these supported examples, not the unresolved real second-half boundary |
+| Window ends at the onset, or contains only the first two moving frames | No confirmed restart | The half-open window/three-frame support requirement prevents confirmation; pre-window D context is retained and the remaining interval can stay unknown |
+| Five missing frames cover the onset | Confirms five frames late, +0.20 s | No velocity is computed across the missing observations; later movement provides a later anchor, not a recovered observation of the hidden kick |
+| Ball reappears after leaving the three-metre central zone | No confirmed restart | The centre requirement and lost onset limit recall; do not invent the missing boundary or introduce a fixture-specific frame correction |
+| FA07 gradual acceleration, then its 25-frame smoothed version | General preparation confirms +4 and +6 frames after the invented first movement (+0.16 / +0.24 s) | Sustained threshold-level motion and the first physical movement are distinct; confirmation delay is not eliminated by recovering a preparation candidate |
+| FA10 tag without ball observations, or no tag/evidence | No confirmed restart | A contextual window alone is not an observed resumption; preserve unknown signal validity |
+
+P2 is **off by default in A**. Successful detector checks therefore do not demonstrate that A consumes those
+signals or that enabling them would improve A. Its separate native set-piece evidence remains sensitive to the
+tag window in these short worlds. Any proposed broader kick-off search or different live/dead rule needs a named
+variant, an advance hypothesis and the existing independent comparison; this review changes none of them.
+
+#### Reproduction and review handoff
+
+```powershell
+docker compose run --rm --pull never --entrypoint python evaluar -m unittest discover -s tests -p '*football*.py' -v
+docker compose run --rm --pull never --entrypoint python evaluar -m tools.football_rule_review --out /salidas/issue47-football/new-rule-review.json
+```
+
+Docker: **24 tests pass** (the 20 acceptance tests and four rule-review checks), Python 3.11.17 / NumPy 2.4.6 /
+pandas 3.0.6. [`football_rule_review.py`](../../tools/football_rule_review.py) accepts only a new output path and
+uses invented inputs; it records source/config/observation hashes and verifies that its observer preserves A's
+CSV. Local evidence: `salidas/issue47-step4/rule-review-final.json` and `salidas/issue47-step4-tests.log`.
+No model parameters were changed; no private/public challenge GT or external reserved match was used to choose a rule.
+
+For Jimy's handoff, provide the exact variant module, configuration and commit; review the five control rows and
+the unsupported/late kick-off cases above; and identify any proposed change with its expected benefit, failure
+mode and ablation. His confirmation and a variant-specific review remain pending. No message has been sent to
+him and no shared issue checkbox has been changed. The local technical review supports Pablo's second checklist
+item but does not certify team agreement or resolve the real-match kick-off boundary.
+
+### 3.10 External validation readiness and handoff to Edu
+
+Pablo's local step 5, **28 October 2026**. The existing DFL split and decision protocol remain fixed. The
+[official rules](https://github.com/metrica-sports/more-than-a-hack-2027/blob/main/RULES.md) and
+[FAQ](https://github.com/metrica-sports/more-than-a-hack-2027/blob/main/FAQ.md) were checked again, together with
+the positive IDSSE answer in official issue #16. Private team correspondence and Edu's acknowledgement have
+not been verified; the current GitHub API refresh of the team comments was rate-limited.
+
+#### Source, labels and access
+
+The [dataset paper](https://pmc.ncbi.nlm.nih.gov/articles/PMC11787359/) describes seven German 2022/23 games under
+CC BY 4.0. BallPossession identifies home/away control; BallStatus distinguishes active/inactive play, including
+referee interruptions. This supports the mapping in section 1.1, subject to provider-specific semantics.
+The package has **no video footage**. Its event timing and tracking are different representations; a provider
+event is not an exact visual contact boundary by default.
+
+From the common Docker image, a metadata request to the pinned Figshare article **28196177, version 1** confirmed
+21 files (metadata, events and positions for each of seven games), **2,627,505,889 bytes** in total and the
+CC BY 4.0 licence URL. An HTTP **HEAD** for the `J03WMX` development positions file returned 200, with a declared
+418,524,833-byte length. This confirms metadata/download-endpoint access from this machine, not completed
+downloads or input MD5 verification. No match contents were downloaded, converted, opened or scored.
+The metadata includes reserved match names; inspecting that public inventory does not inspect their observations.
+Local access evidence: `salidas/issue47-step5/source-access.json`.
+
+The held-out image was built from the existing Dockerfile and lock without changing dependencies. It imports
+**kloppy 3.18.0**, NumPy 2.4.6 and pandas 3.0.6. A six-frame invented dataset, with the source reader mocked,
+checked the repository adapter's D/H/A/X mapping, `only_alive=False`, Metrica coordinate conversion and retention
+of a dead reference when ball coordinates are absent. This verifies adapter branches, not parsing actual DFL XML.
+
+Inspection of the installed Sportec deserializer found the limitation noted in section 1.1: raw missing or
+unrecognised possession/status can be silently converted to A/D before `heldout.convert` sees a frame. We have
+not measured whether such raw values occur in the actual seven files. **Before freezing the conversion, Edu
+must verify raw-field completeness/allowed values on development data and record how unknowns are handled.**
+If a reader/adapter correction is needed, identify that change and its synthetic regression before evaluating
+reserved matches. The successful mocked-reader check must not be cited as evidence that this assumption holds
+in real files. The converter, reader and model code are unchanged in this step.
+
+#### Split and separation checks
+
+| Role | Fixed matches | Readiness |
+|---|---|---|
+| Development/training | `J03WMX`, `J03WPY`, `J03WOH`, `J03WQQ`, `J03WOY` | Code defaults match section 2; actual downloads/conversion and the raw-reader check remain for Edu |
+| Reserved evaluation | `J03WN1`, `J03WR9` | No observations or labels read; direct calls without `--heldout` reject both IDs before the loader is reached |
+
+The held-out Docker service mounts the repository read-only and local outputs; it has no challenge-data mount.
+The **17 synthetic harness tests pass in this image**, including target-independent observation generation,
+unchanged scoring masks when the ball is hidden, common-input hashes and rejection of incomplete/mixed results.
+The adapter/guard probe is recorded in `salidas/issue47-step5/adapter-and-split-check.json`; the tests are in
+`salidas/issue47-step5-adapter-and-harness.log`. No real-match comparison or accuracy claim follows from them.
+
+Only positions, derived speeds and slot teams enter a model bundle. BallPossession/BallStatus are evaluator
+targets, and DFL event labels are excluded from the main comparison, as fixed in section 1.3. Both models must
+receive the same degraded input. The opt-in guard is not an access-control system and cannot establish whether
+another team member has already inspected or used reserved data; Edu must confirm that history before the run.
+
+#### Blind review feasibility
+
+**No blind football comparison has been performed.** DFL provides quantitative reference labels and tracking,
+but its package contains no licensed video. A 2D replay alone cannot establish an airborne touch, whistle or
+every ambiguous control decision. No authorised independent video source has been verified in this step.
+
+If suitable video and labels become available, the proposed handoff is for Edu to fix the source/access terms,
+model/configuration commits, sample size/seed and stratification before review. Select disagreements by team,
+live/dead and boundaries, with an agreement control sample; anonymise model names and retain the key separately.
+Pablo records model 1/model 2/both/neither/ambiguous judgements on those **other games**, without tuning on the
+reserved review or editing either output. Aggregate the outcomes after locking the judgements, and keep that
+evidence separate from model development. This is a procedure awaiting agreement, not a completed or agreed run.
+The challenge game and its local viewer cannot substitute for that independent labelled review.
+
+#### Confirmation checklist for Edu
+
+- [ ] Confirm receipt of the public IDSSE approval and record the required dataset citation in the final technical deliverables.
+- [ ] Record the fetched article version, file hashes and successful real-file conversion; verify raw possession/status completeness and the reader's handling of unknowns on development files.
+- [ ] Confirm which development games were used and that `J03WN1`/`J03WR9` remain unused for training, tuning, debugging or prior candidate selection.
+- [ ] Identify the frozen A/variant commits and configurations, then execute the existing paired protocol once on the reserved games; report all profiles/seeds and incomplete evidence explicitly.
+- [ ] Either supply a permitted independent video/reference source and agree the blind procedure in advance, or retain the explicit limitation that no blind video comparison was possible.
+
+No confirmation has been sent on Edu's behalf and no shared checklist has been ticked. This step documents an
+accessible permitted source, the fixed split and the local technical checks; team acknowledgement, real-file
+conformance and any independent blind comparison remain explicit dependencies.
+
+Environment reproduction (these commands do not fetch or evaluate a match):
+
+```powershell
+docker compose build heldout
+docker compose run --rm --pull never --entrypoint python heldout -m unittest heldout.tests -v
+```
+
+The access probe uses `https://api.figshare.com/v2/articles/28196177/versions/1` and a development-file HEAD only.
+Avoid the unqualified `fetch`/`convert` examples during development: those CLIs default to **all seven matches**.
+If Edu performs preparation, specify development IDs explicitly; the inference guard alone does not reserve
+those earlier preparation stages. Data, arrays, labels and reports stay under ignored `salidas/heldout/`.
+
 ## 4. Results
 
-*To be completed on 29 October.*
+### 4.1 Pablo's local conclusions (29 October)
+
+The local football acceptance and rule review are ready for team review. **There is no A-versus-variant result
+or adoption recommendation yet.** No separately identified variant was supplied, no external game was scored
+in this work and no independent blind review was performed. Do not treat the software test results below as
+evidence that every football target passes or that the issue as a whole is complete.
+
+| Pablo's contribution | Delivered evidence | Remaining dependency |
+|---|---|---|
+| Invented football acceptance cases | FA01-FA10, 17 worlds, 68 geometry-to-output probes; fixture/reference separation and invariance checks | Run the same declared cases on the frozen variant; retain failures and diagnostic-only cases |
+| Control versus contact and restart review | Section 3.9 explains A's control proxies, neutral-D scoring, interpolation and supported/late/unknown P2 boundaries; observing all 17 A runs preserves their CSVs | Jimy's named variant, review and acknowledgement; the real second-half kick-off limitation remains unresolved |
+| Independent source and split | Section 3.10 records public IDSSE approval, endpoint access, the existing five/two split and synthetic adapter/guard checks | Edu's acknowledgement, usage history and real-file conformance audit, including raw unknown fields |
+| Blind football comparison | Feasibility limitation and conditional procedure recorded before any judgement | Permitted independent video/reference source and advance agreement; otherwise report that this review was not possible |
+| Football interpretation in this report | Short recoveries, neutral contact, missing observations, dead-ball preparation and uncertain restart timing are distinguished | Complete the paired quantitative results and review before deciding adoption |
+
+The recorded A baseline remains **12 passes, 20 failures and 36 diagnostic-only probes**, with two team-swap
+flags in unsupported conditions. The failures are retained findings on simplified development worlds; they are
+not real-match error rates. A's control proxy is richer than nearest-player contact, but usable team evidence
+alone does not guarantee live possession when neutral D emissions and switching costs favour an all-D path.
+Interpolation cannot observe a hidden recovery, and a late supported restart cannot recover the exact unseen
+kick. These are concrete questions for the variant rather than reasons to change a threshold after the result.
+
+The recommendation at this stage is to keep the existing candidate selection unchanged. Identify the variant,
+resolve the source/reader and split-history checks, then use the already fixed paired protocol. Retain any
+unresolved kick-off or blind-review limitation in the final team conclusion. No shared checklist, remote issue
+or adoption decision was changed by this local closeout.
+
+### 4.2 Paired external results
+
+**Pending team execution.** Add A/variant commits, complete profile/seed coverage, paired metrics and uncertainty,
+and the football interpretation here after the section 3.10 prerequisites are satisfied. There is currently no
+measured gain, degradation or tie to report.
 
 ## 5. Reproduction record
 
-*To be completed on 29 October: commits, configuration hashes, input hashes (DFL files as downloaded), dependency
-versions, commands, durations and hardware, and the two SHA-256 of each CSV.*
+### 5.1 Final local regression and evidence integrity (29 October)
+
+All final checks use the existing Docker images and local synthetic fixtures/public software references. The
+`evaluar` and `heldout` services do not mount challenge data. Model code, configurations, conversion code and
+official metrics are unchanged on this branch relative to its starting commit `fb7412f`.
+
+| Check | Result | Local log |
+|---|---|---|
+| Shared Python regression suite, including the 24 football tests | **122 tests passed**, 56.470 s | `salidas/issue47-step6-shared-tests.log` |
+| Held-out synthetic harness | **17 tests passed**, 19.625 s | `salidas/issue47-step6-heldout-tests.log` |
+| Candidate A's original full synthetic checks | **11 checks passed**, including synthetic end-to-end execution | `salidas/issue47-step6-candidate-tests.log` |
+| Earlier acceptance/review evidence versus current source | Source/configuration hashes match; all 17 observed CSV identities and all 68 recorded cases accounted for | `salidas/issue47-step6/evidence-audit.json` |
+
+Reproduction commands from the repository root:
+
+```powershell
+docker compose run --rm --pull never --entrypoint python evaluar -m unittest discover -s tests -v
+docker compose run --rm --pull never --entrypoint python heldout -m unittest heldout.tests -v
+docker compose run --rm --pull never --entrypoint python evaluar -m solution.a_opus.tests --full
+```
+
+Environment: Python **3.11.17**, NumPy **2.4.6**, pandas **3.0.6**; the held-out image additionally has
+kloppy **3.18.0**. The step 3 acceptance report was generated before implementation commit `4c741b0`, and the
+step 4 review before this closeout commit. Their recorded dirty-tree state is intentional, not a claim that the
+preceding HEAD contains every reviewed file. The final integrity check confirms these unchanged identities:
+
+| Identity | SHA-256 |
+|---|---|
+| Acceptance runner, A and its recorded dependencies | `af29536413ca5eb7958e2d36e80630966567973b3d210dd9e750ab526ff91d90` |
+| Default A configuration | `9ac8279c798b9a38349b4afefacf167fc01545d36dceb391217461ee3dad434f` |
+| Football rule-review runner | `7583da4cd436349775986a8e47390e819d2212eaab497997c90dd99b946d96a2` |
+| Existing P2 source | `fcb4884e563c60f5db10a8a68cdd35a10186f29dfcc83e5963be8972285b8552` |
+| Repeated 199,319-row synthetic full-size CSV | `c6a7751eaa7ab2a78f0854aaf217c21569a986bb897ecd7a515d3456e641857d` |
+
+The final regression does not repeat unchanged 68-probe/full-size evidence; it verifies its source identities
+and reruns the shared, harness and original A tests against the final code. Software checks pass while the
+baseline football acceptance gate remains failing as documented in section 3.8. Local JSON/log files under
+ignored `salidas/` are evidence, not committed match data. The public scripts reproduce invented inputs only.
+
+### 5.2 External comparison reproduction
+
+Pending: frozen model/configuration commits, original DFL file hashes, real conversion conformance, complete
+run commands, profile/seed coverage, durations, hardware and prediction hashes for both candidates. Populate
+this record with section 4.2; the local synthetic hashes above cannot substitute for it.
 
 ## Sources
 
