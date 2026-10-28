@@ -184,6 +184,105 @@ Otherwise **keep A**. "Keep A, no demonstrated improvement" is a valid outcome o
 The share-of-`D` and possession-count flags of §3.4 stay **advisory**: agreeing with A's aggregates is not an
 accuracy target. Results on `clean` are reported but do not decide.
 
+### 3.7 Football acceptance scenarios
+
+Owner: Pablo (@PabloCordoba3). Specification dated **28 October 2026**, before running these new scenarios.
+These are proposed synthetic acceptance checks for the football review in #47. They complement the external
+comparison in sections 1-3.6; they do not change its split, metrics or adoption rule. Review with Jimy and Edu is
+pending. The scenarios below are specifications, not new passing test results.
+
+#### Inputs and expected outputs
+
+All trajectories, contacts, events and reference labels must be invented independently of the challenge game.
+Use 25 fps, metres, explicit observation masks and half-open intervals, following the
+[data contract](../CONTRATO_DATOS.en.md). Read pitch dimensions and full-output alignment from `games.py`.
+Local fixture offsets below are relative to the beginning of an invented sequence, never match frame numbers.
+`H50` means 50 consecutive H frames; `gap50` means 50 missing ball observations, not 50 X reference labels.
+
+Every executable fixture must record its ID, observation arrays, team metadata, periods, optional automatic-style
+events, expected labels and boundary observability. Geometry must distinguish a controlled reception or pass from
+mere proximity. An aerial situation is represented by its observable 2D evidence and missingness; no ball height
+or referee decision is inferred from an unavailable input. References and latent synthetic event times go only to
+assertions or the evaluator, never to model inputs or event-window boundaries copied from those references.
+
+| ID | Invented situation and available evidence | Expected behaviour and failure criterion |
+|---|---|---|
+| FA01 | H controls for 50 frames, A makes a controlled reception and keeps the ball for 30 frames (1.2 s), then H controls for 50. Close ball-player motion supports each control period. | Preserve `H50 A30 H50`. Removing A because it is short, inventing D or adding another possession fails. |
+| FA02 | H controls, A deflects the ball with two nearby observations, then 12 loose-ball frames lead back to H. Contrast with FA01 using contact and subsequent motion, not duration alone. | One H possession throughout. The deflection is not controlled possession; an A spell or D cut fails. |
+| FA03 | After H control, both teams contest an aerial/loose ball for 40 frames, with ambiguous proximity and no subsequent A control; H then receives. | Retain H through the contest. A simple aerial touch cannot create an A spell or a stoppage. |
+| FA04 | H controls for 50 frames, the ball is hidden for 50 while players remain observed, then H control returns for 50. There is no exit or restart evidence. | One H possession, no D. Missing ball coordinates must remain unavailable rather than become zero positions or dead-ball evidence. |
+| FA05 | H controls for 50 frames, the ball is hidden for 50 with no discriminating team evidence, then A has 50 frames of clear control. | Exactly one H-to-A change and no D; A must be established by the first independently confirmed A control. The true change time inside the gap is unidentifiable: report its uncertainty instead of requiring an exact hidden frame. |
+| FA06 | H controls for 50 frames, a sustained observed exit supports a 75-frame stoppage before a throw-in/corner, then a contextual restart leads to 50 frames of H control. Use separate preparation/stoppage evidence for a free-kick variant. | `H50 D75 H50` on a clean fixture. The two H spells remain separate; merging them or extending D past the supported restart fails. Cover throw-in, free-kick and corner contexts separately. |
+| FA07 | A placed ball and an automatic-style restart window accompany preparation, gradual acceleration and subsequent clear H control. Include unsmoothed motion and a centred 25-frame smoothing variant. | One D-to-H boundary. Preparation is not live control merely because a player is nearest, and the entire tag window is not D. Report error against the invented physical restart separately from the detector's movement-confirmation time. |
+| FA08 | At the start of an invented second half, preparation near the centre precedes a supported kick-off. Repeat with tag edges shifted by -25, 0 and +25 frames and with unrelated earlier movement away from the centre. | With sufficient observable support, D precedes the restart and the first supported owner follows it. Record missed/early/late restarts for each shift; unrelated movement must not release D. No exception may depend on a published challenge kick-off frame. |
+| FA09 | End one half with H control, leave an unscored interval, then start another half with A control or with no observations/context. Change the preceding half while holding fitted parameters and second-half evidence fixed for this reset check. | No cross-half possession, derivative, confirmation or held state. Outside blocks is X. The second-half decoding is unchanged by the previous half's final state; the signal module leaves unsupported initial evidence invalid. Record any final-decoder prior or abstention policy separately. |
+| FA10 | An initial kick-off window exists but the ball is missing throughout it; alternatively, remove the window and all other stoppage/control evidence. | P2 may emit its documented pre-window context but cannot claim a confirmed restart or label the whole window D solely from that tag. With no supporting evidence its signals remain invalid. A complete model's inferred labels do not count as observed restart evidence. |
+
+Run every applicable scenario with H and A exchanged, updating team metadata and expected labels consistently.
+Also translate the local sequence within a half and permute same-team slots: expected football behaviour must not
+depend on a privileged team, an absolute offset or stable slot identity. Respect the half boundaries when translating.
+
+#### Assertions and interpretation
+
+Check two levels separately:
+
+1. **Signal and decoder checks:** controlled synthetic evidence verifies contact versus control, invalid masks,
+   tie handling, exact boundary dating and resets. These isolate a component; they do not establish that the
+   component can recover that evidence from noisy positions.
+2. **Geometry-to-output checks:** invented tracking and optional imperfect events pass through the normal model
+   path. Reference labels are kept separate. Compare A and the named variant on the same observations, recording
+   each model/configuration identity; do not alter A to satisfy a scenario.
+
+For clean, observable boundaries (FA01, FA02, FA03, FA04 and FA06), the target is the stated run sequence with
+**zero-frame boundary error**; continuous H cases must have no extra spell. This is a strict clean-fixture target,
+not an official accuracy requirement or an instruction to tune a model. A model failure is retained as a finding.
+For FA05, report the last observed H control, first confirmed A control, predicted transition and its position
+relative to that observable bracket. Do not score an arbitrary hidden transition as if it were observable.
+For FA07-FA08, report topology, missed/spurious restarts and signed/absolute boundary error in frames and seconds;
+use paired differences on the same fixture, without introducing a pass threshold after seeing the outputs.
+FA09-FA10 have the explicit reset/validity assertions in their rows rather than an invented exact restart target.
+FA09 tests state isolation with calibration fixed. A's documented self-calibration and cross-half ball-free fitting
+can legitimately change second-half emissions when first-half observations change; report that separately rather
+than treating every such change as state leakage.
+
+Keep raw H/A/D/X output and abstention counts. Report filled temporal metrics separately according to the official
+evaluator; forward-filling X must not hide abstentions in a scenario result. Record the short true possession
+retained/missed, false team spells and false D cuts as separate outcomes. A higher aggregate score cannot conceal
+a failed scenario. These checks inform the football review; only section 3.6 governs the adoption recommendation.
+
+#### Existing evidence and remaining work
+
+The baseline review at `fb7412f` ran in Docker on 28 October 2026: 60 existing P2/restart/temporal/harness tests
+and 11 candidate A synthetic checks passed. This is the starting point, not execution of FA01-FA10.
+
+| Existing source | Reusable coverage | Remaining acceptance work |
+|---|---|---|
+| [`solution/a_opus/tests.py`](../../solution/a_opus/tests.py): `test_p3_control_cases`, `test_p3_p4_scenarios`, `test_p4_first_frames_of_a_half` | Fast pass versus reception, deflection, duel, short recovery, evidence-level gap transition and initial D | Shared fixtures, team mirrors and a distinction between supplied evidence and evidence recovered from tracking |
+| [`tests/test_temporal_control.py`](../../tests/test_temporal_control.py) | Missing ball without forced D, control confirmation, short possession, same-team stoppage and half reset | Apply the shared cases to each declared model; preserve uncertainty about transitions hidden in gaps |
+| [`tests/test_dead_ball.py`](../../tests/test_dead_ball.py) | Exit/re-entry, initial context, unknown restart, centre requirement and no speed across gaps/halves | Combined shifted-window kick-off cases and supported versus unsupported restart outcomes |
+| [`tests/test_smoothed_restarts.py`](../../tests/test_smoothed_restarts.py) | Gradual acceleration, search limits, event/half boundaries, zones and smoothed trajectories | Separate physical restart error from confirmation timing; the general preparation fix does not resolve the separate initial-kick-off rule |
+| [`heldout/tests.py`](../../heldout/tests.py) | Target separation, deterministic degradation, common inputs and complete/current result identities | Keep external evaluation under Edu's frozen protocol; synthetic acceptance is not independent real-match validation |
+
+The next implementation step is `tests/test_issue47_football_scenarios.py`, reusing existing helpers where useful.
+No new executable fixtures, model changes or external evaluations are included in this specification step.
+Jimy reviews whether the evidence represents football control; Edu confirms evaluation separation and reporting.
+The first Pablo checklist item remains incomplete until executable cases and their results are linked.
+
+#### Development and reserved evaluation
+
+FA01-FA10 and all concrete examples published here are **development scenarios**. Their descriptions and reference
+outcomes are available to the implementer; they cannot provide an independent held-out claim. Edu must agree and
+record any reserved synthetic families, parameters, seeds and sampling procedure before the variant is frozen,
+keep their generated cases/results out of model development, and run the frozen pair once under that procedure.
+A different seed of the same published generator alone does not establish independence. No reserved synthetic
+set has been agreed or evaluated in this step, and the DFL split in section 2 remains unchanged.
+
+Record an outcome per scenario and symmetry/offset/noise condition: model identity, fixture version, expected
+behaviour, raw-label result, boundary observability/error, regression and interpretation. Do not retune against
+reserved results; a continuation needs new unused evidence and an agreed protocol. Missing authorised video or
+reference labels must be recorded as a limitation of any proposed blind review. The challenge viewer supports
+qualitative understanding only: no human labels, correctness votes or frame-specific corrections on BAR-ATH.
+
 ## 4. Results
 
 *To be completed on 29 October.*
