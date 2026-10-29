@@ -8,6 +8,20 @@ DFL possession labels, and applied unchanged: nothing is fitted on the match bei
 Why, the hypotheses, the training data, the weight rule and the evaluation plan, all written before any run:
 [`docs/experimentos/A_DFL_BALLFREE.md`](../../docs/experimentos/A_DFL_BALLFREE.md).
 
+## Results on the development matches
+
+Leave-one-match-out on the five DFL development matches, degraded profiles × seeds (details, tables and the
+post-hoc analysis in the plan document, sections 7–9):
+
+- **Gate passed.** Mean spellF1 0.4382 against A's 0.4247, above A on 3 of 5 matches, macroF1 +0.008. The ball-free
+  model agrees with the DFL labels more often than A's on the frames where it is used (no ball: 84.6% → 86.2%).
+- **But the gain comes from A's own model missing in a half** (too few proximity-confident frames on DFL). Where A
+  has its model in both halves, which is BAR–ATH's case, the variant **ties** with A (−0.0016 over 39 runs).
+- **Against A with the ball-free model off**, what A becomes if self-training on the provided match is ruled out,
+  the variant is higher on all five matches (+0.040 to +0.084).
+
+The reserved comparison (`J03WN1`, `J03WR9`) is Edu's and has not been run.
+
 ## Running
 
 Exactly as candidate A, with the module name changed (same requirements: `solution/a_opus/requirements.txt`):
