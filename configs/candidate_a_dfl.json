@@ -1,0 +1,7 @@
+{
+  "contract_version": "1.0",
+  "model": "module",
+  "parameters": {"module": "solution.a_dfl"},
+  "seed": 0,
+  "evaluation": {"split": "public-5min", "bootstrap": 0}
+}

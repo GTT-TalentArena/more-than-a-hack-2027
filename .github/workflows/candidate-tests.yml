@@ -58,6 +58,10 @@ jobs:
         if: matrix.environment == 'declared' && matrix.candidate == 'a'
         run: python -m solution.a_opus.tests --full
 
+      - name: Candidate A DFL ball-free variant, synthetic suite (declared environment)
+        if: matrix.environment == 'declared' && matrix.candidate == 'a'
+        run: python -m solution.a_dfl.tests --full
+
       - name: Candidate B synthetic and diagnostic suites (declared environment)
         if: matrix.environment == 'declared' && matrix.candidate == 'b'
         run: >
@@ -74,6 +78,13 @@ jobs:
           docker compose run --rm --user "$(id -u):$(id -g)"
           -e MTAH_DATA_DIR=/tmp/gtt-no-real-match-data
           --entrypoint python evaluar -m solution.a_opus.tests --full
+
+      - name: Candidate A DFL ball-free variant, synthetic suite (shared Docker)
+        if: matrix.environment == 'common' && matrix.candidate == 'a'
+        run: >
+          docker compose run --rm --user "$(id -u):$(id -g)"
+          -e MTAH_DATA_DIR=/tmp/gtt-no-real-match-data
+          --entrypoint python evaluar -m solution.a_dfl.tests --full
 
       - name: Candidate B synthetic and diagnostic suites (shared Docker)
         if: matrix.environment == 'common' && matrix.candidate == 'b'
