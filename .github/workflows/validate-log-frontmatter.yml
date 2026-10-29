@@ -21,11 +21,6 @@ jobs:
             const pr = context.payload.pull_request;
             const hasLog = pr.labels.some(l => l.name === 'log');
 
-            if (!hasLog) {
-              core.info('The PR has no log label: the front matter is not validated.');
-              return;
-            }
-
             const TYPES = ['study', 'code', 'experiment', 'iteration', 'data', 'decision'];
             const OUTCOMES = ['success', 'failure', 'mixed', 'open'];
             const NEEDS_OUTCOME = ['experiment', 'iteration'];
@@ -33,6 +28,24 @@ jobs:
 
             const raw = (pr.body || '').replace(/\r\n/g, '\n').trim();
             const match = raw.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+
+            // Only a merged PR with the log label is published. A filled-in title
+            // without the label usually means it was forgotten (#29, #30, #48–#52):
+            // say so on the PR instead of dropping the entry silently.
+            if (!hasLog) {
+              const titled = match && /^title:\s*"?[^"\s]/m.test(match[1]);
+              if (titled) {
+                const msg =
+                  'This PR has a log front matter but no `log` label: it will not ' +
+                  'reach the website log. Add the label to publish it, or ignore ' +
+                  'this if the change does not belong on /log.';
+                core.warning(msg);
+                await core.summary.addRaw(`⚠️ ${msg}`).write();
+              } else {
+                core.info('The PR has no log label: the front matter is not validated.');
+              }
+              return;
+            }
 
             if (!match) {
               core.setFailed('The description must start with a front matter between ---.');
