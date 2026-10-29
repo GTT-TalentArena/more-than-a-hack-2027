@@ -22,3 +22,6 @@ links: []
 ## Next
 
 <!-- Write the title, this description and your commits in English (see CONTRIBUTING.md). -->
+<!-- The front matter above only reaches the website log (/log) if the PR has the `log` label when it is merged. -->
+<!-- Changes that do not belong on /log (CI, tooling): leave the label off. -->
+
