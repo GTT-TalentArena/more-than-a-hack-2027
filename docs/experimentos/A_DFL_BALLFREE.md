@@ -226,8 +226,12 @@ python -m solution.a_dfl.develop --summary
   `heldout run --heldout --matches J03WN1 J03WR9 --model a=configs/candidate_a.json --model v=configs/candidate_a_dfl.json`
   and `heldout report --a a=configs/candidate_a.json --variant v=configs/candidate_a_dfl.json`. Please add the
   coverage of A's ball-free model per run (section 8).
-- **Jimy: the plausibility check on BAR–ATH** (plan §3.4), run locally. Only the aggregate log comes back: number and
-  median length of possessions, share of `D`, and the variant's agreement line.
+- **Done (30 Oct): the plausibility check on BAR–ATH** (plan §3.4), run by Jimy locally; only the aggregate log came
+  back. Variant against A v1.6: 216 possessions against 219 (−1.4%), median 10.9 s against 10.4 s, 113 stoppages and
+  49.3% `D` in both, 103 direct H↔A changes against 106. No plausibility flag (`D` within 40–55%, possessions within
+  30%). The fixed model agrees with ball proximity on 88.5% / 86.9% of the confident frames of each half, as high as
+  A's self-trained model on this match (82–88%): label-free evidence that it transfers. As expected from section 8,
+  the output is very close to A's.
 - **Alejandro: the organisers' answer** on self-training (it decides between A and the variant), and whether the Smart
   Tagging calibration, which also uses proximity-confident frames, needs the same question.
 - A possible next iteration, which would need a new pre-registration: calibrate the scale of the variant's logits on
