@@ -236,3 +236,17 @@ python -m solution.a_dfl.develop --summary
   Tagging calibration, which also uses proximity-confident frames, needs the same question.
 - A possible next iteration, which would need a new pre-registration: calibrate the scale of the variant's logits on
   the development matches (section 8).
+
+## 12. Pablo's invented scenarios (#55), 1 November
+
+The frozen variant was run through `tools/football_acceptance.py` (68 rows: 17 invented scenarios × 4 transforms),
+with A unchanged next to it. **A: 12 pass, 20 fail, 36 diagnostic, 2 invariance failures. Variant: 9 / 23 / 36, 3.**
+57 of the 68 predictions are byte-identical. All the difference is one scenario, `FA03` (contested ball): the variant
+decodes 140 frames as a false stoppage in three transforms and breaks mirror equivariance in the fourth.
+
+Cause: these worlds last ~15 s, too short to tell which goal each team attacks (A's log: attack direction margin
+0.0 m). A then has too few targets and switches its ball-free model off by itself (weight 0); the variant applies its
+fixed weight with an arbitrary orientation. On BAR–ATH (direction clear in both halves, A's log) and on DFL (margins
+around 50 m) this does not happen, so none of the results above change. It is still a robustness gap of the variant:
+**the ball-free evidence should be off when the attack direction is undetermined**. That guard was not in the frozen
+variant and is not added after the fact; it is proposed for a next version.
