@@ -263,8 +263,8 @@ It changes nothing that was measured, only the edge case:
   Every CSV is byte-identical to version 1's, so sections 7–8 stand as they are.
 - **Pablo's scenarios:** the variant now gives the same output as A on **68 of 68** rows (12 pass, 20 fail, 36
   diagnostic, 2 invariance failures, as A).
-- **BAR–ATH:** unchanged as long as both margins in A's log line `attack direction margins` are at least 10 m. To
-  confirm from the aggregate log.
+- **BAR–ATH:** unchanged. The aggregate log gives attack direction margins of 66.9 / 61.6 m, far above 10 m, so the
+  guard never acts there and the plausibility check in section 11 holds for version 2.
 
 This is a deviation from section 6: the variant sent to the reserved comparison is version 2 (commit in #56), not
 `496893b`. Its outputs on everything measured before are identical.
