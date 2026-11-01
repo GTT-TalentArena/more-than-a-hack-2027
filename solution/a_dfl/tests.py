@@ -100,6 +100,22 @@ def test_guards():
     train.check_development(list(DEVELOPMENT))
 
 
+def test_undetermined_direction():
+    """No ball-free logit for a half whose attacking direction A could not decide (#55, FA03)."""
+    rng = np.random.RandomState(4)
+    model = dfl.fit(rng.normal(0, 1, (300, 42)), np.arange(300) % 2 == 0, 1.0)
+    halves = []
+    for margin in (0.0, 45.0):
+        ctx = fake_half(rng)
+        n = len(ctx["shape"][HOME]["n"])
+        ctx.update({"attack_margin": margin, "confident": np.zeros(n, dtype=bool),
+                    "dead_hint": np.zeros(n, dtype=bool), "c_home": np.zeros(n), "c_away": np.zeros(n),
+                    "n": n})
+        halves.append(ctx)
+    logits = dfl.cross_fit(halves, {}, PITCH, model)[0]
+    assert not np.any(logits[0]) and np.any(logits[1])
+
+
 def test_weights_round_trip():
     model = dfl.fit(np.random.RandomState(3).normal(0, 1, (500, 42)), np.arange(500) % 3 == 0, 1.0)
     model.update({"weight": 0.7, "training": {"matches": ["X1"], "frames": 500}})
@@ -170,7 +186,8 @@ def test_end_to_end():
 
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
-    tests = [test_feature_parity, test_fit_has_no_side, test_guards, test_weights_round_trip,
+    tests = [test_feature_parity, test_fit_has_no_side, test_guards, test_undetermined_direction,
+             test_weights_round_trip,
              test_shipped_model]
     if "--full" in argv:
         tests.append(test_end_to_end)

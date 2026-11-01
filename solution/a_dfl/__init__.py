@@ -4,4 +4,4 @@ Entry point: python -m solution.a_dfl --out <csv>, the same flags as candidate A
 evaluation plan: docs/experimentos/A_DFL_BALLFREE.md.
 """
 
-__version__ = "1.6.0+dfl.1"
+__version__ = "1.6.0+dfl.2"

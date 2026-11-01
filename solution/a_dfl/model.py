@@ -31,6 +31,11 @@ A_DIR = os.path.join(os.path.dirname(HERE), "a_opus")
 # them changes, the coefficients no longer describe what the pipeline computes: retrain.
 FEATURE_SOURCES = ("atd.py", "config.py", "ballfree.py", "features.py", "pipeline.py")
 SYMMETRIC = ("relative_position", "relative_velocity")
+# The features are oriented by the home side's attacking direction, which A decides per half from
+# where each team's deepest player stands (features.attack_sign). Below this margin (metres) the
+# direction is a guess and the oriented features mean nothing: the model says nothing for that
+# half. Real halves sit far above it (~50 m on DFL); a few seconds of play can sit at 0 (#55).
+MIN_ATTACK_MARGIN = 10.0
 ODD = np.array([name not in SYMMETRIC for name in ballfree.FEATURE_NAMES])
 
 
@@ -91,11 +96,14 @@ def cross_fit(halves, cfg, pitch, model):
 
     The agreement it returns is the fixed model's agreement with the side on the ball where
     proximity alone names it, on the frames A would have trained on. A sets its weight from it;
-    the variant only prints it (its weight is fixed).
+    the variant only prints it (its weight is fixed). A half whose attacking direction is
+    undetermined (MIN_ATTACK_MARGIN) gets no logit.
     """
     prepared, logits, accuracies, counts = [], [], [], []
     for ctx in halves:
         X, valid = ballfree.features(ctx, pitch)
+        if ctx["attack_margin"] < MIN_ATTACK_MARGIN:
+            valid = np.zeros_like(valid)
         target = ctx["confident"] & valid & ~ctx["dead_hint"]
         truth = ctx["c_home"] > ctx["c_away"]
         prepared.append((X, valid, target, truth))

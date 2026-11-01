@@ -248,5 +248,23 @@ Cause: these worlds last ~15 s, too short to tell which goal each team attacks (
 0.0 m). A then has too few targets and switches its ball-free model off by itself (weight 0); the variant applies its
 fixed weight with an arbitrary orientation. On BAR–ATH (direction clear in both halves, A's log) and on DFL (margins
 around 50 m) this does not happen, so none of the results above change. It is still a robustness gap of the variant:
-**the ball-free evidence should be off when the attack direction is undetermined**. That guard was not in the frozen
-variant and is not added after the fact; it is proposed for a next version.
+**the ball-free evidence should be off when the attack direction is undetermined**.
+
+### 12.1 Version 1.6.0+dfl.2: the guard
+
+Added on 1 November, after the development results and before any reserved run, at Jimy's request. A half whose
+attack direction margin is under **10 m** (A's own `attack_margin`) gets no ball-free logit from the variant. The
+threshold is set a priori: real halves sit far above it (~50 m on DFL), and the invented worlds sit at 0. The trained
+coefficients and the weight do not change.
+
+It changes nothing that was measured, only the edge case:
+
+- **DFL development:** all 195 runs repeated with the new version (65 observations × A, A without ball-free, variant).
+  Every CSV is byte-identical to version 1's, so sections 7–8 stand as they are.
+- **Pablo's scenarios:** the variant now gives the same output as A on **68 of 68** rows (12 pass, 20 fail, 36
+  diagnostic, 2 invariance failures, as A).
+- **BAR–ATH:** unchanged as long as both margins in A's log line `attack direction margins` are at least 10 m. To
+  confirm from the aggregate log.
+
+This is a deviation from section 6: the variant sent to the reserved comparison is version 2 (commit in #56), not
+`496893b`. Its outputs on everything measured before are identical.
