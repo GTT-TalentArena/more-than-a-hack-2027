@@ -590,9 +590,82 @@ or adoption decision was changed by this local closeout.
 
 ### 4.2 Paired external results
 
-**Pending team execution.** Add A/variant commits, complete profile/seed coverage, paired metrics and uncertainty,
-and the football interpretation here after the section 3.10 prerequisites are satisfied. There is currently no
-measured gain, degradation or tie to report.
+Edu, 3 November 2026. Candidate A v1.6 against the variant `candidate_a_dfl` version 2, both at commit `14902d8`,
+on the two reserved matches: 13 runs per match and model, 52 of 52, all valid. Neither model was scored on the public
+window. The amendment under section 3.6 was fixed before these runs and published before their results were read.
+
+**Recommendation: replace A with the variant, as the eligible model. No improvement over A has been shown.**
+Alejandro decides, as #47 sets out.
+
+| Reserved match | Profile | Seeds | spellF1 A | spellF1 variant | macroF1 A | macroF1 variant | False short /90 A | False short /90 variant |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| `J03WN1` | `clean` | 1 | 0.4478 | 0.4437 | 0.8625 | 0.8632 | 0.0 | 0.0 |
+| `J03WN1` | `gaps-short` | 3 | 0.3671 | 0.3757 | 0.8254 | 0.8266 | 0.6 | 0.3 |
+| `J03WN1` | `gaps-long` | 3 | 0.3421 | 0.3642 | 0.8065 | 0.8190 | 1.0 | 1.0 |
+| `J03WN1` | `gaps-crowded` | 3 | 0.3187 | 0.3451 | 0.8045 | 0.8169 | 0.3 | 0.0 |
+| `J03WN1` | `full` | 3 | 0.3078 | 0.3490 | 0.8081 | 0.8243 | 0.6 | 0.0 |
+| `J03WR9` | `clean` | 1 | 0.5159 | 0.5206 | 0.8971 | 0.8983 | 0.0 | 0.0 |
+| `J03WR9` | `gaps-short` | 3 | 0.4366 | 0.4395 | 0.8479 | 0.8501 | 0.0 | 0.0 |
+| `J03WR9` | `gaps-long` | 3 | 0.4347 | 0.4350 | 0.8291 | 0.8309 | 0.3 | 0.3 |
+| `J03WR9` | `gaps-crowded` | 3 | 0.4076 | 0.4143 | 0.8431 | 0.8457 | 0.6 | 0.6 |
+| `J03WR9` | `full` | 3 | 0.4350 | 0.4287 | 0.8450 | 0.8454 | 0.0 | 0.0 |
+
+Averages over the degraded profiles and seeds:
+
+| Reserved match | spellF1 A | spellF1 variant | macroF1 A | macroF1 variant | Transition F1 at 25 frames, A | Transition F1 at 25 frames, variant |
+|---|---:|---:|---:|---:|---:|---:|
+| `J03WN1` | 0.3339 | 0.3585 | 0.8111 | 0.8217 | 0.3876 | 0.4108 |
+| `J03WR9` | 0.4285 | 0.4294 | 0.8413 | 0.8431 | 0.4228 | 0.4369 |
+
+90% interval of the mean paired spellF1 difference on the `full` profile, conditional on these two matches:
+
+| Seed | Interval | Excludes zero |
+|---:|---|---|
+| 47 | [+0.0026, +0.0317] | yes |
+| 48 | [+0.0134, +0.0426] | yes |
+| 49 | [-0.0058, +0.0211] | **no** |
+
+**The decision rule, as printed by `heldout report`: "keep A".**
+
+| Condition (section 3.6) | Result |
+|---|---|
+| 1. Reproducible on the provided game | **Holds** (section 5.2) |
+| 2a. Higher spellF1 on each reserved match | Holds, but by only +0.0009 on `J03WR9` |
+| 2b. Higher on at least 3 of the 4 degraded profiles | Holds |
+| 2c. `full` interval excludes zero for every seed | **Fails** on seed 49 |
+| 3a. macroF1 drops by at most 0.02 | Holds: macroF1 rises on both matches |
+| 3b. False short possessions within the limit | Holds |
+| 4. Under 30 minutes on the provided game | **Holds**: 27 s and 14 s (section 5.2) |
+
+Under the amendment, conditions 1 and 4 make the variant the recommended replacement and condition 3 raises no
+regression for Alejandro to decide. Condition 2c fails, so this report does not call the variant better than A.
+
+**Where the difference comes from (post-hoc, requested by Jimy before the runs).** A's log was recovered per run:
+
+| Degraded runs | A's self-trained model | Runs | Mean spellF1 difference, variant − A | Variant higher / lower |
+|---|---|---:|---:|---|
+| `J03WN1` | Missing in the first half (weight 0 / 1) | 12 | +0.0246 | 12 / 0 |
+| `J03WR9` | Present in both halves (weight 1 / 1) | 12 | +0.0009 | 6 / 6 |
+
+The gain comes entirely from the runs where A has no model in one half. Where A has both, the two tie, and on the
+`full` profile of `J03WR9` the variant is slightly lower on all three seeds (−0.0005 to −0.0107). This matches the
+development result (`docs/experimentos/A_DFL_BALLFREE.md`, section 8). A's logs on BAR–ATH show its model in both
+halves, so **the variant should be expected to tie with A on the provided game, not to beat it**.
+
+**On the provided game (no ground truth, plausibility only).** Scored frames: variant 216 possessions, median 10.9 s,
+49.3% `D`, 0% `X`; A 219 possessions, median 10.4 s, 49.3% `D`, 0% `X`. No flag from section 3.4.
+
+**Limits of this evidence.**
+
+- Two matches. The intervals describe uncertainty on these two matches, not generalisation to unseen ones.
+- DFL labels are not the challenge's ground truth, and the degradation is a proxy for the ATD. These scores say
+  nothing about the challenge score and are only meaningful as paired differences.
+- Neither model had Smart Tagging here (section 1.3), so A's tag calibration was not exercised.
+- The reserved matches are now used. Any later version of the model needs a new validation plan.
+- The other per-match calibrations the variant inherits from A are not covered by this comparison.
+- The variant was fixed on 1 November, not on Wednesday 28 October as section 3.1 planned. It was still fixed before
+  any reserved run.
+- The football interpretation of these results is pending from Pablo.
 
 ## 5. Reproduction record
 
@@ -637,9 +710,41 @@ ignored `salidas/` are evidence, not committed match data. The public scripts re
 
 ### 5.2 External comparison reproduction
 
-Pending: frozen model/configuration commits, original DFL file hashes, real conversion conformance, complete
-run commands, profile/seed coverage, durations, hardware and prediction hashes for both candidates. Populate
-this record with section 4.2; the local synthetic hashes above cannot substitute for it.
+Edu, 3 November 2026, on the reference hardware: AMD Ryzen 5 3600, 31 GB RAM, Python 3.11.17, NumPy 2.4.6,
+pandas 3.0.6.
+
+**Held-out runs.** Commit `14902d8`, clean tree on all 52 records, image rebuilt first, 17 harness tests and the
+`a_dfl` suite passing beforehand. Each run took 8.5–8.9 s of model time.
+
+```bash
+docker compose run --rm heldout run --heldout --matches J03WN1 J03WR9 --model a=configs/candidate_a.json --model v=configs/candidate_a_dfl.json
+docker compose run --rm heldout report --a a=configs/candidate_a.json --variant v=configs/candidate_a_dfl.json
+```
+
+| Item | Value |
+|---|---|
+| Identity of A | `5497f240477f` |
+| Identity of the variant | `a1721017d1ef` |
+| Harness identity | `6cddec032234` |
+| Coverage | 2 matches × (`clean` + 4 profiles × 3 seeds) × 2 models = 52 runs |
+| SHA-256 of the sorted list of prediction hashes | `5dbc22cc988c045837a71ee0f66d5d6a206ce7aeafaccd44008f80e135466401` |
+| DFL input files | MD5-checked against figshare by `heldout fetch` |
+
+To recover A's log, which the harness discards, each A run was repeated on the same observation with the log captured:
+**26 of 26 CSVs match the recorded hash byte for byte**. Reserved scores were not used to change anything.
+
+**Provided game.** A clean clone of `14902d8`, image built with `--no-cache`, run by Edu locally. The command is
+`solution.predict` directly, because `docker/pipeline.py modelo` also scores the public window, which section 3.5 rules
+out for this comparison.
+
+| Output | SHA-256 | Time |
+|---|---|---:|
+| Variant, run 1 | `a090254caabcbbbc67a9569b9a5a9439aa3d643e5a41988af61e737dcc97fd97` | 27 s |
+| Variant, run 2 | `a090254caabcbbbc67a9569b9a5a9439aa3d643e5a41988af61e737dcc97fd97` | 14 s |
+| A | `ab640ee8694f259697393d822b0a6665a017878b5b29d12715f59ec8a4dbc6d5` | 13 s |
+
+Both variant runs are identical, and A's hash matches the one recorded in #17. `validate_submission.py` accepts the
+variant and A: 199,319 rows, frames 0..199318. The model code keeps no cache between runs.
 
 ## Sources
 
