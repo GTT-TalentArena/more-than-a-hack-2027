@@ -196,6 +196,30 @@ Otherwise **keep A**. "Keep A, no demonstrated improvement" is a valid outcome o
 The share-of-`D` and possession-count flags of §3.4 stay **advisory**: agreeing with A's aggregates is not an
 accuracy target. Results on `clean` are reported but do not decide.
 
+#### Amendment, 3 November 2026, written before any reserved run
+
+**Why.** The organisers' clarification to all participants (email, 3 November 2026) takes precedence over the
+documentation and earlier answers, and says: "If you need to train (or retrain), you MUST use only external data."
+Candidate A v1.6 trains its ball-free team model on the provided game, so "keep A" is no longer an available outcome.
+
+**What does not change.** The reserved matches, profiles, seeds, metrics, thresholds, uncertainty method and harness.
+A still runs unchanged as the paired reference, and `heldout report` still applies conditions 1 to 4 as written. Its
+output is recorded as printed, including a "keep A" recommendation if that is what it prints.
+
+**What changes.** The consequence of that output:
+
+- Conditions 2 and 3 no longer decide between A and the variant. They measure what moving away from self-training
+  gains or costs against A, and both are reported in full.
+- The variant is recommended if conditions 1 and 4 hold, whether or not it beats A. If it fails condition 3 on a
+  reserved match, the regression goes to Alejandro for an explicit decision instead of being accepted automatically.
+- A claim that the variant is **better** than A still needs conditions 2 and 3. Without them, the report says that
+  it is the eligible replacement and that no improvement was shown.
+
+**Limits.** A with the ball-free model off is compared only on the development matches
+(`docs/experimentos/A_DFL_BALLFREE.md`), because its driver refuses the reserved ones and the harness stays unchanged.
+This amendment covers the ball-free model only; it says nothing about the other per-match calibrations the variant
+inherits from A.
+
 ### 3.7 Football acceptance scenarios
 
 Owner: Pablo (@PabloCordoba3). Specification dated **28 October 2026**, before running these new scenarios.
