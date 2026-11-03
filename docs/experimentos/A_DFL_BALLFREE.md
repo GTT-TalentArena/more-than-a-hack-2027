@@ -268,3 +268,25 @@ It changes nothing that was measured, only the edge case:
 
 This is a deviation from section 6: the variant sent to the reserved comparison is version 2 (commit in #56), not
 `496893b`. Its outputs on everything measured before are identical.
+
+## 13. Corrections, 3 November 2026
+
+The sections above stay as written, because they are the pre-registration and its record. Read them with these
+corrections, from Edu's review of #56:
+
+- **Section 3, "On BAR–ATH nothing is fitted, tuned or selected".** This holds for the ball-free model only. The variant
+  still runs A's other per-match estimates on the match it labels: ball lag, control radius, touch scale and threshold,
+  still-ball threshold, speed model, Smart Tagging calibration and absence model. They use no labels, ground truth or
+  video. The log line "nothing is fitted on this match" (`solution/a_dfl/__main__.py`) has the same limit. It is left
+  as it is because changing that file changes the model identity.
+- **Sections 3 and 10, retraining "gives the same file".** This holds on the same platform. Retraining at `14902d8` in
+  Docker on Linux changes all 30 coefficients by at most 9.8e-13 against the file trained on Windows, and every other
+  value matches except the one below. On 4 reserved DFL runs, the retrained model's CSVs were identical to the recorded
+  ones. The delivered CSV uses the committed coefficients.
+- **`weights.py`.** Its `version` field says `1.6.0+dfl.1`, while `__version__` is `1.6.0+dfl.2`. The coefficients are
+  the same in both versions, so this is cosmetic.
+- **Sections 9 and 11, the organisers' answer.** It arrived on 3 November: training must use external data only, so
+  "with self-training allowed, keep A" no longer applies.
+- **Section 11, the reserved comparison.** Done on 3 November: see
+  [`ISSUE_47_ALTERNATIVE_TO_A.md`](ISSUE_47_ALTERNATIVE_TO_A.md), sections 4.2 and 5.2. It confirms the tie where A has its
+  model in both halves.
