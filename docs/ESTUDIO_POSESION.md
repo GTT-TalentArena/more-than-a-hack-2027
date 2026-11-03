@@ -259,7 +259,8 @@ Además, choca en parte con "un toque sin control no cuenta": habrá que ver en 
   la duración media, `alive_dead_f1` (solo vivo/muerto), `team_acc_both_alive` (solo equipo, cuando los dos dicen
   vivo), la precisión y el recall de transiciones a ±12 y ±25 frames (un recall de ~1 con precisión ~0 es
   parpadeo) y `evaluation/reports/<nombre>_transitions.csv`, que lista cada cambio como `matched`, `missed` o
-  `spurious` con su frame, para ir a verlo en el vídeo.
+  `spurious` con su frame, para ir a verlo en el vídeo. (Nota del 3 de noviembre de 2026: la organización prohíbe ahora
+  comprobar la salida de un modelo contra el vídeo, así que no se debe hacer con sus predicciones).
 
 ---
 
