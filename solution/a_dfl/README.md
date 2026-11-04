@@ -3,7 +3,8 @@
 Candidate A v1.6 (`solution/a_opus`, unchanged) with one part replaced: its **ball-free team model**, the logistic
 regression on team shape that says which side has the ball where the ball cannot be seen. A trains it on the match
 it labels, with ball proximity as the targets. Here it is trained once on the **DFL development matches**, with the
-DFL possession labels, and applied unchanged: nothing is fitted on the match being labelled.
+DFL possession labels, and applied unchanged: this model is not fitted on the match being labelled. A's other per-match
+estimates, which use no labels, still run ([section 13 of the plan](../../docs/experimentos/A_DFL_BALLFREE.md)).
 
 Why, the hypotheses, the training data, the weight rule and the evaluation plan, all written before any run:
 [`docs/experimentos/A_DFL_BALLFREE.md`](../../docs/experimentos/A_DFL_BALLFREE.md).
@@ -20,7 +21,8 @@ post-hoc analysis in the plan document, sections 7–9):
 - **Against A with the ball-free model off**, what A becomes if self-training on the provided match is ruled out,
   the variant is higher on all five matches (+0.040 to +0.084).
 
-The reserved comparison (`J03WN1`, `J03WR9`) is Edu's and has not been run.
+The reserved comparison (`J03WN1`, `J03WR9`) was run on 3 November: see sections 4.2 and 5.2 of
+[`ISSUE_47_ALTERNATIVE_TO_A.md`](../../docs/experimentos/ISSUE_47_ALTERNATIVE_TO_A.md).
 
 ## Running
 
