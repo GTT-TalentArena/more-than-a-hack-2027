@@ -9,8 +9,10 @@ match numbers used are aggregates already recorded in `ejecuciones.md`.
 ## 0. Starting point: where v3 fails
 
 Aggregates of public evaluation #4 (5-min window; GT: H 3,454 · A 2,577 · D 1,469 frames,
-17 possessions, 21 segments, i.e. 4 `D` stretches). They are used to **understand** the failures, not
-to tune anything:
+17 possessions, 21 segments, i.e. 4 `D` stretches). They are used to **understand** the failures of this
+iteration; no numeric parameter was tuned on them in this analysis. Public evaluations did influence earlier
+development and selection decisions, as the prompts and iterations record, and they are not independent
+validation:
 
 - **Missed `D`.** `D` precision 0.998 and recall 0.317: what v3 calls `D` almost always is,
   but it misses ≈ 1,000 frames (≈ 40 s) of the 1,469 `D` frames. It detects 2 `D` stretches
