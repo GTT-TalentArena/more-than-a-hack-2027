@@ -96,10 +96,15 @@ cumulative sum, so the recursion is O(1) per frame and a half is decoded in unde
 - **Touches (v1.3; detector by velocity change from v1.4).** A peak in the ball's net velocity change, with one
   player clearly the nearest, gives 1.5 nats to their team. A touch alone doesn't change possession, but it dates
   the change at the right frame when control follows.
-- **Smart Tagging as a weak prior.** Phases with a team (`BUILD UP`, `PROGRESSION`, `DEFENDING IN …`) add a small
-  nudge: at most 0.03 nats per frame, less than a tenth of a frame of control. It only weighs when there is no ball.
+- **Smart Tagging as a weak prior.** Phases with a team (`BUILD UP`, `PROGRESSION`, `DEFENDING IN …`) add up to
+  0.03 nats per frame per distinct supporting interval. The total is clipped to ±0.06 nats per frame. It is added
+  on every covered frame, including frames with observed ball/control; there is no missing-ball gate for this term.
   The tagger emits phases in pairs over the same interval (one team's `BUILD UP` and the other's `DEFENDING IN
-  ATTACKING THIRD`, etc.), so each interval counts only once.
+  ATTACKING THIRD`, etc.); intervals with identical boundaries and implied possession side count once at emission
+  time, using the most reliable code. Calibration separately counts confident frame/event occurrences, so repeated
+  same-code events can inflate its sample count. The [issue #20 audit](../../docs/experimentos/ISSUE_20_SMART_TAGGING.md)
+  records that limitation and the distinction between the phase switch and set-piece evidence. These automatic
+  phases are supporting evidence, not reference labels or complete possessions.
 - **Ball-free model.** It's a logistic regression on the shape and movement of the teams: relative position, width,
   speed towards the opponent's goal and block, oriented by each half's direction of attack. It only acts where there
   is no ball (41% of the scored frames).
