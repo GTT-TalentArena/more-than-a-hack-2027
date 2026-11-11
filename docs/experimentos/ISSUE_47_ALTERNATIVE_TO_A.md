@@ -665,7 +665,21 @@ halves, so **the variant should be expected to tie with A on the provided game, 
 - The other per-match calibrations the variant inherits from A are not covered by this comparison.
 - The variant was fixed on 1 November, not on Wednesday 28 October as section 3.1 planned. It was still fixed before
   any reserved run.
-- The football interpretation of these results is pending from Pablo.
+- Pablo's football interpretation is recorded in section 4.3; team acknowledgement remains pending.
+
+### 4.3 Football interpretation for the final freeze (11 November)
+
+The [issue #62 football closeout](ISSUE_62_FOOTBALL_CLOSEOUT.md) interprets the published reserved results
+and reproduces PR #55's development findings in Docker. On the same 68 invented observations, unchanged A
+and the shipped DFL candidate produce byte-identical CSVs: 12 passes, 20 failures, 36 diagnostic cases and
+two team-swap flags in unsupported conditions. This is a limited development comparison, not independent
+validation or a claim of real-match equivalence.
+
+Retain the eligibility-based replacement recommendation in section 4.2 without claiming superior BAR–ATH
+accuracy. The variant changes the ball-free team model, not live/dead scoring or missing restart observations.
+Keep P2 disabled and document the missed/late second-half kick-off as an unresolved limitation of #14.
+The closeout provides text for the technical document and reproducible evidence; team acknowledgement,
+the inherited calibration declaration and clean final-release reproduction remain with their owners in #62.
 
 ## 5. Reproduction record
 
