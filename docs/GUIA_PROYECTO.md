@@ -202,8 +202,16 @@ Nuestro objetivo inicial es superar ese resultado.
 - Entregar un archivo que el repositorio no pueda regenerar exactamente.
 - Depender de un modelo privado o dataset inaccesible para los organizadores.
 - Publicar los datos del partido o derivados reconstruibles.
+- Crear etiquetas a mano o cualquier otro dato manual sobre el partido del reto, para cualquier fin, incluida la validación.
+- Comprobar la salida del modelo contra el video.
+- Entrenar, ajustar o calibrar con la ground truth de posesion o con el video del partido.
 
-Se permite etiquetar manualmente una pequeña cantidad de datos para entrenar o validar un modelo, pero las etiquetas finales deben salir del algoritmo.
+Las etiquetas a mano solo se permiten en otros partidos. El entrenamiento y el ajuste de parametros deben usar solo datos externos.
+
+> **Actualizacion, 3 de noviembre de 2026.** La aclaracion de la organizacion a todos los participantes prevalece sobre
+> esta guia, la documentacion oficial y las respuestas anteriores. Esta seccion permitia etiquetar a mano una pequeña
+> cantidad de datos sin limitarlo a otros partidos. Lo que sigue permitido sobre el partido del reto: comprobaciones
+> automaticas que usen solo los datos proporcionados, e inspeccionar los datos y el video para entender que es posesion.
 
 ### Restriccion sobre LLMs
 

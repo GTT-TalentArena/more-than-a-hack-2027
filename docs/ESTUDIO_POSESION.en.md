@@ -260,7 +260,8 @@ possessions are.
   duration, `alive_dead_f1` (alive/dead only), `team_acc_both_alive` (team only, when both say alive), the precision
   and recall of transitions at ±12 and ±25 frames (a recall of ~1 with a precision of ~0 is flicker) and
   `evaluation/reports/<name>_transitions.csv`, which lists each change as `matched`, `missed` or `spurious` with its
-  frame, so you can go and look at it on the video.
+  frame, so you can go and look at it on the video. (Note of 3 November 2026: the organisers now forbid checking a
+  model's output against the video, so do not do this with a model's predictions.)
 
 ---
 
