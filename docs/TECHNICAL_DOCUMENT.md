@@ -1,9 +1,5 @@
 # GTT: possession labelling for BAR–ATH (Phase 1 technical document)
 
-> **Draft of 16 November 2026. Remove this block before submitting.** The candidate is decided (#62). Still open:
-> - Edu's declaration in section 9;
-> - a copy named after the team, as `SUBMISSION.md` asks.
-
 **Submitted version.** Model `candidate_a_dfl` (`solution.a_dfl`, version `1.6.0+dfl.2`): candidate A v1.6
 (`solution/a_opus`, unchanged) with its ball-free team model replaced by one trained on external DFL matches. Tag
 `final-a-dfl-rc1`, commit `bf4f994c9711a56c1432fbe71d1a554040af600c`, configuration `configs/candidate_a_dfl.json`
