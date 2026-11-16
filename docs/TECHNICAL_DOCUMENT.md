@@ -262,3 +262,9 @@ The submission form asks for the team name, one possession CSV, a public code-re
 ### Team confirmations still required
 
 Before submission, the team must confirm that both statements are accurate for all members: (1) nobody compared model outputs or labels with the challenge video; and (2) nobody provided challenge-match data or derived match data to an LLM. Until those confirmations are obtained, these are not asserted as established facts. If any member cannot confirm either statement, update the submission record and seek organiser guidance.
+
+
+### Individual report on video and LLM use (16 November)
+
+Pablo reports that the match data was processed locally. He shared aggregate metrics, hashes and diagnostics with an LLM; he found no evidence that raw tracking, a complete match CSV, video or real match screenshots were sent. He also watched the broadcast alongside the local 2D viewer to understand what data it displayed. He reports that he did not use this to compare predicted possession labels with the video, create annotations or tune the model. This is Pablo's individual account, not a team-wide audit. Do not make the blanket claim that no challenge-derived information was shared with an LLM: the reported aggregates and diagnostics were derived from the match. Confirm the remaining members' actions separately before making any team-wide statement.
+This update supersedes the blanket LLM wording immediately above: record each member's actions and the specific categories of information shared instead of asserting that no challenge-derived information was provided.
