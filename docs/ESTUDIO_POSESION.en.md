@@ -248,6 +248,7 @@ checked locally with the public GT ([L2](#7-local-experiments-for-the-team)). If
 the design**: minimum durations of several seconds can't be imposed, and boundary precision weighs a lot. It also
 partly clashes with "a touch without control doesn't count": we'll have to see on video what those short
 possessions are.
+(Note of 10 November 2026: this is not done. See the note in section 7.)
 
 ### 2.6 Noise, the public window and diagnostics
 
@@ -260,7 +261,8 @@ possessions are.
   duration, `alive_dead_f1` (alive/dead only), `team_acc_both_alive` (team only, when both say alive), the precision
   and recall of transitions at ±12 and ±25 frames (a recall of ~1 with a precision of ~0 is flicker) and
   `evaluation/reports/<name>_transitions.csv`, which lists each change as `matched`, `missed` or `spurious` with its
-  frame, so you can go and look at it on the video.
+  frame, so you can go and look at it on the video. (Note of 3 November 2026: the organisers now forbid checking a
+  model's output against the video, so do not do this with a model's predictions.)
 
 ---
 
@@ -611,6 +613,14 @@ passing data or extracts to any cloud LLM. The aggregate results can be noted in
 
 In L2, L3 and L5, remember that the public window has 17 possessions. They're for **understanding** the problem,
 not for setting thresholds; thresholds are set on DFL (6.2).
+
+> **Note of 10 November 2026.** After the organisers' clarification of 3 November, **L5 is withdrawn**: watching the
+> public GT's changes on the video means checking labels against the video and drawing rules from specific frames.
+> The same applies to the last sentence of section 2.5. For the same reason, **L4 and L6 decide or calibrate nothing**
+> on the public GT: those decisions and P3's `R` are made on DFL. What remains allowed is understanding the game and
+> the data in general, without checking predictions or public-window labels and without setting rules or thresholds
+> from specific frames. The organisers have not said more on this point, so the cautious reading applies. The
+> original text stays as a record.
 
 ---
 

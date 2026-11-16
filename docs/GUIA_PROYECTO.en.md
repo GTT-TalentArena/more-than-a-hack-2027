@@ -202,8 +202,16 @@ Our initial goal is to beat that result.
 - Submitting a file that the repository can't regenerate exactly.
 - Depending on a private model or a dataset the organisers can't access.
 - Publishing the match data or reconstructable derivatives.
+- Creating hand labels or any other manual data on the provided game, for any purpose, validation included.
+- Checking the model's output against the video.
+- Training, fitting or calibrating on the ground-truth possession data or on the provided video.
 
-Manually labelling a small amount of data to train or validate a model is allowed, but the final labels must come from the algorithm.
+Hand labels are allowed only on other games. Training and parameter tuning must use external data only.
+
+> **Update, 3 November 2026.** The organisers' clarification to all participants takes precedence over this guide, the
+> official documentation and earlier answers. This section previously allowed hand labelling a small amount of data
+> without limiting it to other games. What remains allowed on the provided game: automatic checks that use only the
+> provided data, and inspecting the data and video to understand what counts as possession.
 
 ### LLM restriction
 

@@ -8,6 +8,10 @@
 > It was written by the author of candidate A with Opus, and reviewed on the call by the other two. Any later
 > change is recorded as a deviation in section D.
 
+> **Historical record: do not apply as written (note of 3 November 2026).** The blind review of 40 intervals on the
+> video and the use of the public window as a criterion were withdrawn (#47): the rules forbid both. The text below is
+> kept unchanged for traceability.
+
 Two independent candidates estimate H/A/D/X for the challenge match: **A**, developed by Jimy with Claude
 Opus 5.5, and **B**, developed by Edu with ChatGPT-6 Astra. This document sets the rules **before writing
 code** and the criteria **before seeing any score**.

@@ -6,6 +6,10 @@
 > Lo redactó el autor del candidato A con Opus, y lo revisaron en la llamada los otros dos. Cualquier cambio
 > posterior se registra como desviación en la sección D.
 
+> **Registro histórico: no aplicar tal como está (nota del 3 de noviembre de 2026).** La revisión ciega de 40 intervalos
+> en el vídeo y el uso de la ventana pública como criterio quedaron retirados (#47): las reglas prohíben ambos. El texto
+> siguiente se conserva sin cambios por trazabilidad.
+
 Dos candidatos independientes estiman H/A/D/X para el partido del reto: el **A**, desarrollado por Jimy con Claude
 Opus 5.5, y el **B**, desarrollado por Edu con ChatGPT-6 Astra. Este documento fija las reglas **antes de escribir
 código** y los criterios **antes de ver ninguna puntuación**.
