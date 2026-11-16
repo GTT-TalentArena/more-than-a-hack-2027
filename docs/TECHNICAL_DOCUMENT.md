@@ -1,7 +1,6 @@
 # GTT: possession labelling for BAR–ATH (Phase 1 technical document)
 
 > **Draft of 16 November 2026. Remove this block before submitting.** The candidate is decided (#62). Still open:
-> - the independent reproduction at the frozen tag and the hash of the submitted CSV (section 8, #22);
 > - the **[TEAM]** markers, which need every member's confirmation;
 > - the organisers' written answer on the values estimated at run time (section 3);
 > - a copy named after the team, as `SUBMISSION.md` asks.
@@ -234,9 +233,11 @@ sha256sum salidas/GTT.csv
 
 Expected SHA-256: `a090254caabcbbbc67a9569b9a5a9439aa3d643e5a41988af61e737dcc97fd97`. It was obtained at commit
 `14902d8`, whose Python code is identical to the frozen tag's, in 14–27 s on an AMD Ryzen 5 3600 with 31 GB of RAM,
-Python 3.11.17, NumPy 2.4.6 and pandas 3.0.6, and two runs from a clean clone gave the same file. **[PENDING]**
-Independent reproduction at `final-a-dfl-rc1` by a member who did not write the model (Edu, #22): two runs, the
-validator and the hash.
+Python 3.11.17, NumPy 2.4.6 and pandas 3.0.6, and two runs from a clean clone gave the same file.
+
+Independent reproduction at the frozen tag (16 November 2026, #22): a member who did not write the model cloned the
+repository, checked out `final-a-dfl-rc1` and ran the commands above twice in Docker. Both CSVs have the expected
+SHA-256, and the validator accepts them: 199,319 rows, frames 0–199318, and `X` only on the 40,462 unscored frames.
 
 To regenerate the evidence, using DFL data only (it never mounts the match data):
 
