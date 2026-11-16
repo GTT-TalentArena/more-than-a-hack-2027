@@ -1,7 +1,7 @@
 # GTT: possession labelling for BAR–ATH (Phase 1 technical document)
 
 > **Draft of 16 November 2026. Remove this block before submitting.** The candidate is decided (#62). Still open:
-> - the declarations in section 9, which Alejandro and Edu have yet to confirm;
+> - Edu's declaration in section 9;
 > - the organisers' written answer on the values estimated at run time (section 3);
 > - a copy named after the team, as `SUBMISSION.md` asks.
 
@@ -257,19 +257,19 @@ docker compose run --rm heldout report --a a=configs/candidate_a.json --variant 
 reproduced independently at `final-a-dfl-rc1`, section 8), this document as `GTT.md`, and the public repository. The
 reproduction confirms format and repeatability, not performance against the private ground truth.
 
-**Team.** Four members took part in this submission and each confirmed the statements below for their own work. A fifth
+**Team.** Four members took part in this submission. The statements below describe each member's own reported work. A fifth
 member left the team during the challenge and is not covered by them.
 
 **Video.** No member compared the model's output with the video to score intervals, create annotations, rules or
-constants, or tune the model. One member watched the broadcast video next to our local 2D viewer, which shows the
-tactical tracking and the labels of a model CSV, to understand what the viewer displayed and why the broadcast and
-tactical timelines differ. The broadcast is not synchronised with the tactical frames. The submitted model was frozen
-on 3 November and its code has not changed since.
+constants, or tune the model. Alejandro watched the broadcast next to the local 2D viewer to understand what it
+displayed and why the broadcast and tactical timelines differ. He did not use the viewer to check possession labels,
+create annotations, derive rules or constants, or tune the model. The broadcast is not synchronised with the tactical
+frames. The submitted model was frozen on 3 November and its code has not changed since.
 
 **LLMs.** The match data was processed locally. LLMs received documentation, code, synthetic data, open DFL data, and
 aggregate metrics, hashes and diagnostics computed on the provided match: counts, percentages, durations and fitted
 constants, as described in section 6. No member gave an LLM the video, tracking, homography, Smart Tagging, labels, a
-complete CSV, screenshots or any other extract of the match.
+complete CSV or any other extract of the match.
 
 **Open question.** The organisers have not yet answered in writing whether the per-match estimates of section 3 are
 compatible with the rule of 3 November. We do not claim that they are.
