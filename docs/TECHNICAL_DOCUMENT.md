@@ -2,7 +2,6 @@
 
 > **Draft of 16 November 2026. Remove this block before submitting.** The candidate is decided (#62). Still open:
 > - Edu's declaration in section 9;
-> - the organisers' written answer on the values estimated at run time (section 3);
 > - a copy named after the team, as `SUBMISSION.md` asks.
 
 **Submitted version.** Model `candidate_a_dfl` (`solution.a_dfl`, version `1.6.0+dfl.2`): candidate A v1.6
