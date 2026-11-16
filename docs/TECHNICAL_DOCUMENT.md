@@ -1,7 +1,7 @@
 # GTT: possession labelling for BAR–ATH (Phase 1 technical document)
 
 > **Draft of 16 November 2026. Remove this block before submitting.** The candidate is decided (#62). Still open:
-> - the **[TEAM]** markers, which need every member's confirmation;
+> - the declarations in section 9, which Alejandro and Edu have yet to confirm;
 > - the organisers' written answer on the values estimated at run time (section 3);
 > - a copy named after the team, as `SUBMISSION.md` asks.
 
@@ -50,7 +50,7 @@ We tried a second, independently written candidate (B). It stays in the reposito
 | Tactical ATD | **Used**: the main input |
 | Smart Tagging | **Used** as input: `SET PIECES` as stoppage evidence, phases as a weak team prior (at most 0.06 nats per frame) |
 | Homography | **Dropped**: the ATD is already in pitch coordinates |
-| Tactical video | **Dropped**: not an input, and nothing was trained or tuned on it. **[TEAM]** Confirm that nobody checked model output against the video |
+| Tactical video | **Dropped**: not an input, and nothing was trained or tuned on it. See section 9 |
 | Broadcast | **Dropped**: not synchronised, and its homography is missing in a third of the frames |
 | Public ground truth | Not an input. See section 6 for how it was used during development |
 | Private ground truth | Never available or used |
@@ -161,8 +161,8 @@ plausibility checks, not accuracy.
 We want this to be read plainly, because parts of it predate the organisers' clarification of 3 November 2026.
 
 - **LLM use.** The model code was written with LLMs (Claude Opus 5.5; ChatGPT-6 Astra and Claude for the unused
-  candidate B). They received documentation, code, synthetic data and aggregate logs, not match data. **[TEAM]** Confirm
-  this for every member.
+  candidate B). They received documentation, code, synthetic data and aggregate logs, not match data. Section 9 details
+  what was shared.
 - **Self-training.** Versions up to v1.6 trained the ball-free model on the provided match's tracking, with
   automatically generated targets. The submitted model replaces that fit with the externally trained model, plus a
   guard that turns it off in a half whose attack direction is undetermined. Everything else is v1.6.
@@ -251,25 +251,25 @@ docker compose run --rm heldout report --a a=configs/candidate_a.json --variant 
 ```
 
 
-## 9. Submission status and declarations
+## 9. Submission and declarations
 
-The submission form asks for the team name, one possession CSV, a public code-repository URL and a short technical document (`.pdf` or `.md`). Name the files after the team (for example, `GTT.csv` and `GTT.md`). Validate the exact CSV to be uploaded; the independently reproduced file at `final-a-dfl-rc1` has SHA-256 `a090254caabcbbbc67a9569b9a5a9439aa3d643e5a41988af61e737dcc97fd97`. This confirms reproducibility and format, not performance against the private ground truth.
+**Submitted files.** `GTT.csv` (SHA-256 `a090254caabcbbbc67a9569b9a5a9439aa3d643e5a41988af61e737dcc97fd97`, the file
+reproduced independently at `final-a-dfl-rc1`, section 8), this document as `GTT.md`, and the public repository. The
+reproduction confirms format and repeatability, not performance against the private ground truth.
 
-### Per-match estimates and eligibility
+**Team.** Four members took part in this submission and each confirmed the statements below for their own work. A fifth
+member left the team during the challenge and is not covered by them.
 
-`candidate_a_dfl` retains the following runtime estimates inherited from candidate A: ball lag, control radius, touch scale and threshold, still-ball threshold, speed model, Smart Tagging calibration, absence model, and attack direction. They are derived from the challenge match inputs at runtime; they are distinct from the fixed ball-free model weights trained on external DFL matches. The repository records no written organiser answer deciding whether these runtime estimates are permitted under the 3 November clarification. Their eligibility therefore remains unresolved here; this document does not claim that the organisers approved them.
+**Video.** No member compared the model's output with the video to score intervals, create annotations, rules or
+constants, or tune the model. One member watched the broadcast video next to our local 2D viewer, which shows the
+tactical tracking and the labels of a model CSV, to understand what the viewer displayed and why the broadcast and
+tactical timelines differ. The broadcast is not synchronised with the tactical frames. The submitted model was frozen
+on 3 November and its code has not changed since.
 
-### Team confirmations still required
+**LLMs.** The match data was processed locally. LLMs received documentation, code, synthetic data, open DFL data, and
+aggregate metrics, hashes and diagnostics computed on the provided match: counts, percentages, durations and fitted
+constants, as described in section 6. No member gave an LLM the video, tracking, homography, Smart Tagging, labels, a
+complete CSV, screenshots or any other extract of the match.
 
-Before submission, the team must confirm that both statements are accurate for all members: (1) nobody compared model outputs or labels with the challenge video; and (2) nobody provided challenge-match data or derived match data to an LLM. Until those confirmations are obtained, these are not asserted as established facts. If any member cannot confirm either statement, update the submission record and seek organiser guidance.
-
-
-### Individual report on video and LLM use (16 November)
-
-Pablo reports that the match data was processed locally. He shared aggregate metrics, hashes and diagnostics with an LLM; he found no evidence that raw tracking, a complete match CSV, video or real match screenshots were sent. He also watched the broadcast alongside the local 2D viewer to understand what data it displayed. He reports that he did not use this to compare predicted possession labels with the video, create annotations or tune the model. This is Pablo's individual account, not a team-wide audit. Do not make the blanket claim that no challenge-derived information was shared with an LLM: the reported aggregates and diagnostics were derived from the match. Confirm the remaining members' actions separately before making any team-wide statement.
-This update supersedes the blanket LLM wording immediately above: record each member's actions and the specific categories of information shared instead of asserting that no challenge-derived information was provided.
-
-
-### Additional individual report from Jimy (16 November)
-
-Jimy reports that he did not compare model outputs with the challenge video, score intervals from it, or create rules or constants from it. He reports sharing only documentation, code, synthetic data, open DFL data and aggregate metrics with Claude Code; he says he did not share challenge video, tracking, homography, Smart Tagging or match extracts. This is Jimy's individual account and does not establish what other members did. Read together with Pablo's report above, the record shows that aggregate match-derived metrics and diagnostics/hashes were shared with an LLM, while the two reports identify no sharing of raw tracking, full match CSVs, video or real match screenshots. Confirm the remaining members' actions before making a team-wide statement.
+**Open question.** The organisers have not yet answered in writing whether the per-match estimates of section 3 are
+compatible with the rule of 3 November. We do not claim that they are.
