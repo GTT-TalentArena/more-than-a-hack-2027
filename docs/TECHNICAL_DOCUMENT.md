@@ -249,3 +249,16 @@ docker compose run --rm heldout run --heldout --matches J03WN1 J03WR9 \
     --model a=configs/candidate_a.json --model v=configs/candidate_a_dfl.json
 docker compose run --rm heldout report --a a=configs/candidate_a.json --variant v=configs/candidate_a_dfl.json
 ```
+
+
+## 9. Submission status and declarations
+
+The submission form asks for the team name, one possession CSV, a public code-repository URL and a short technical document (`.pdf` or `.md`). Name the files after the team (for example, `GTT.csv` and `GTT.md`). Validate the exact CSV to be uploaded; the independently reproduced file at `final-a-dfl-rc1` has SHA-256 `a090254caabcbbbc67a9569b9a5a9439aa3d643e5a41988af61e737dcc97fd97`. This confirms reproducibility and format, not performance against the private ground truth.
+
+### Per-match estimates and eligibility
+
+`candidate_a_dfl` retains the following runtime estimates inherited from candidate A: ball lag, control radius, touch scale and threshold, still-ball threshold, speed model, Smart Tagging calibration, absence model, and attack direction. They are derived from the challenge match inputs at runtime; they are distinct from the fixed ball-free model weights trained on external DFL matches. The repository records no written organiser answer deciding whether these runtime estimates are permitted under the 3 November clarification. Their eligibility therefore remains unresolved here; this document does not claim that the organisers approved them.
+
+### Team confirmations still required
+
+Before submission, the team must confirm that both statements are accurate for all members: (1) nobody compared model outputs or labels with the challenge video; and (2) nobody provided challenge-match data or derived match data to an LLM. Until those confirmations are obtained, these are not asserted as established facts. If any member cannot confirm either statement, update the submission record and seek organiser guidance.
