@@ -67,7 +67,7 @@ Verification: fourteen viewer tests pass in both Docker/Linux and Windows, plus 
 From the repository root, use Python 3.11 or later with the shared dependencies. Node and Docker are not required to use the UI:
 
 ```powershell
-py -3.11 -m venv .venv
+python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r docker/requirements.lock
 .\.venv\Scripts\python.exe -m tools.match_viewer --synthetic
 ```
@@ -146,10 +146,64 @@ The checks start their own synthetic servers on ports 8766 and 8767 and shut the
 ## Remaining acceptance and limits
 
 - [x] Technical local loading, full-frame decoding, navigation and external-request checks on the authorised match are recorded below. Reports contain only safe aggregate findings, with no observations, predictions, screenshots or match extracts returned to an LLM.
-- [ ] Alejandro reviews privacy and integration; a different teammate follows this guide.
-- [ ] GitHub CI passes on the published PR.
+- [x] The published implementation PR #46 passed [synthetic browser CI](https://github.com/GTT-TalentArena/more-than-a-hack-2027/actions/runs/40123435548/job/120959708672) and [Docker pipeline CI](https://github.com/GTT-TalentArena/more-than-a-hack-2027/actions/runs/40123435788/job/120959709493). The tested main base also has passing browser and pipeline checks; see the dated reconciliation below.
+- [ ] Alejandro records his privacy and integration review, including the optional player estimates.
+- [ ] A teammate other than the author follows this guide and records the result.
 
 Until those checks are recorded, issue #34 remains open. The adapter has been checked against invented exports and the existing reader; actual export variants may need an explicit, tested adapter. There is no claim of model quality, official score improvement or real-match reconstruction accuracy. No model inference, metric or candidate configuration is changed.
+
+## Acceptance reconciliation · 11 November 2026
+
+The [issue #34 acceptance record](experimentos/ISSUE_34_ACCEPTANCE.md) maps every acceptance criterion to
+the existing implementation and fresh checks. Docker passes all **21 viewer tests** and a **199,319-frame
+synthetic benchmark**. The authorised local scan checks all **199,319 frames / 1,595 windows**, preserving
+original observations and ball-reader parity. The three playback tests and synthetic browser checks pass.
+A fresh aggregate-only local browser check passes **40 seeks**, playback/pause, mobile layout, estimate
+toggle and ball-canvas/source parity, with **zero external requests and zero browser errors**.
+
+The implementation is already merged in #46. The issue's 29 October comment still asks for a real-match
+check, but that evidence is in this guide's earlier logs and is reproduced in the acceptance record. The
+issue's checklist and its prose owner are therefore not a reliable summary of remaining work: GitHub assigns
+#34 to Pablo, while the old body names Jimy. Neither a merge nor these automated checks substitutes for the
+two explicit teammate sign-offs above. This reconciliation is independent of PR #63 and changes no model,
+prediction, viewer runtime or inference configuration.
+
+### Teammate acceptance without match data
+
+A reviewer other than the author can exercise the guide with invented inputs only. From the repository root,
+check that `python --version` is 3.11 or later, create the environment with the commands under **Run the viewer**,
+and open the loopback URL. No match downloads, credentials or model inference are needed.
+
+1. Start `.\.venv\Scripts\python.exe -m tools.match_viewer --synthetic`.
+2. Check the invented cases below by entering the zero-based frame and pressing **Go**.
+
+   | Synthetic frame | Expected display |
+   |---|---|
+   | 0 / 1499 | First / last frame; the corresponding step button is disabled. |
+   | 100 | H, missing ball; no invented ball marker. |
+   | 350 | A, 21 observed players and one separately marked player estimate; turning estimates off preserves observations. |
+   | 550 | D; the message identifies out-of-pitch observations. |
+   | 700 | X, no observed players or player estimates. |
+   | 850 | A, HALF 2. |
+
+3. Play, pause, step and seek; try all four speeds and a narrow window. Labels, frame and inspector should
+   remain aligned. In the browser's Network panel, confirm requests stay on the local viewer origin.
+4. Stop the server. Restart with `--synthetic --no-predictions`; verify **No prediction loaded** and the em dash
+   label, distinct from D and X. Stop the server after checking.
+5. Record the reviewer, tested commit, OS/Python/browser, commands, result and any limitations in the issue
+   or review. Alejandro separately records privacy/integration acceptance or requested changes. No real-match
+   screenshot, tracking row, coordinate or prediction needs to be shared.
+
+Example sign-off fields, to be completed by the actual reviewers:
+
+```text
+Reviewer and role:
+Tested commit:
+OS / Python / browser:
+Commands and cases checked:
+Result and limitations:
+Privacy/integration review (Alejandro):
+```
 
 ## Authorised local-match verification · 23 October 2026
 
