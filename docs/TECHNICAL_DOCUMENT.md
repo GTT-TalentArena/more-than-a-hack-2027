@@ -1,10 +1,15 @@
 # GTT: possession labelling for BAR–ATH (Phase 1 technical document)
 
-> **Draft of 3 November 2026. Remove this block before submitting.** It assumes the recommendation in #47 is accepted:
-> the variant `candidate_a_dfl` from #56. Before the freeze (#22):
-> - update the commit and the hash in section 8;
-> - resolve every **[TEAM]** marker;
-> - save a copy named after the team, as `SUBMISSION.md` asks.
+> **Draft of 16 November 2026. Remove this block before submitting.** The candidate is decided (#62). Still open:
+> - the independent reproduction at the frozen tag and the hash of the submitted CSV (section 8, #22);
+> - the **[TEAM]** markers, which need every member's confirmation;
+> - the organisers' written answer on the values estimated at run time (section 3);
+> - a copy named after the team, as `SUBMISSION.md` asks.
+
+**Submitted version.** Model `candidate_a_dfl` (`solution.a_dfl`, version `1.6.0+dfl.2`): candidate A v1.6
+(`solution/a_opus`, unchanged) with its ball-free team model replaced by one trained on external DFL matches. Tag
+`final-a-dfl-rc1`, commit `bf4f994c9711a56c1432fbe71d1a554040af600c`, configuration `configs/candidate_a_dfl.json`
+(seed 0), dependencies in `docker/requirements.lock`. Candidate A itself is kept only as a reference for comparison.
 
 ## 1. Approach
 
@@ -77,18 +82,36 @@ of the training matches. Its weight is fixed at 1.00, set by leave-one-match-out
 
 ### Values estimated at run time
 
-Some values are measured from the input of the match being labelled, with no labels, ground truth or video. They are
-the part of the system closest to the organisers' rule on tuning, so we list them all:
+Two different things adapt the model to data, and they should not be confused:
 
-| Value | How it is measured |
-|---|---|
-| Ball lag behind the players | Speed of carried balls (no correction was applied on this match in the run we logged) |
-| Control radius | Median distance from slow balls to their nearest player, clamped to a fixed range |
-| Touch scale and threshold | Window with the most peaks near a player; 95th percentile of free ground balls |
-| Still-ball threshold | Position noise of the ball |
-| Stopped or moving play | Two-component Gaussian mixture on collective speed |
-| Smart Tagging codes | Polarity and reliability, by agreement with frames where proximity clearly names a team |
-| Long ball absence | Association between long gaps and `D` in a first decoding pass |
+- **Trained weights.** The ball-free model's coefficients (`solution/a_dfl/weights.py`). They come only from the five
+  DFL development matches above, are fixed in the repository, and nothing about the provided game changes them. Its
+  weight is fixed at 1.00 too: candidate A set that weight from agreement on the provided game, and the submitted
+  model no longer does.
+- **Per-match estimates, inherited unchanged from candidate A.** Every run measures a few values from the input of the
+  match it labels (its ATD and Smart Tagging) before decoding. They use no labels, no ground truth (public or
+  private) and no video, and no value is stored between runs. They are listed here because they are the part of the
+  system closest to the organisers' rule of 3 November 2026 that training and tuning use external data only.
+
+All of them are computed in `solution/a_opus/pipeline.py`, in one pass over both scored halves, after the ball track
+is cleaned and before any evidence is added up. The absence model is the only exception: it needs a first decoding.
+
+| Estimate | Input signal | How it is computed | How it is used |
+|---|---|---|---|
+| Ball lag | Ball and nearest-player tracks while a player carries the ball (ball at 1.5–6 m/s, player within 2 m) | The time shift that best matches ball and carrier velocities; applied only if it is at least 2 frames and clearly better than none | Shifts the ball track before everything else. On this match it applied no correction |
+| Control radius (`d0`, `sigma`) | Distance from slow balls (< 4 m/s) to the nearest player | 0.6 and 0.8 × the median, clamped to 0.4–1.5 m and 0.6–2.0 m; defaults if fewer than 500 samples | Shape of the control kernel behind the team evidence |
+| Touch scale | Velocity changes of the ball with a player within reach | Of the half-windows ±6, ±12 and ±25 frames, the one that finds the most peaks above its own free-flight threshold | Time scale of the touch detector |
+| Touch threshold | Velocity changes of free ground balls (nobody within 4 m, ball not in the air) | A fixed quantile (the 95th) of that distribution: the tracker's own noise | Minimum velocity change that counts as a touch |
+| Still-ball threshold | Second differences of consecutive ball detections | Robust estimate of the position noise; the threshold is the larger of a fixed 0.6 m/s and 2.5 × the noise it induces on the fitted speed | Speed below which the ball counts as still, for the dead-ball evidence |
+| Speed model | Smoothed mean speed of the players (frames with enough players, one in five) | Two-component Gaussian mixture: "stopped" and "moving" play | Collective-speed evidence for `D`; switched off if no usable fit |
+| Smart Tagging calibration | Each tagged code's team, against frames where ball proximity clearly names a team | Agreement rate per code: a code that agrees is used as tagged, one that disagrees is flipped, one at chance is ignored | Polarity and reliability of the weak team prior (at most 0.06 nats per frame) |
+| Absence model | Long ball gaps (≥ 2 s), against the states of a first decoding that never looked at visibility | Log odds ratio of `D` in long-gap frames against `D` overall (one hard EM step) | Extra stoppage evidence in long gaps, then a second decoding. Short gaps carry nothing |
+| Attack direction | Where each team's deepest player stands, per half | Sign and margin, in metres | The ball-free model is switched off in a half whose margin is under 10 m, too small to tell the direction. On this match it never acts |
+
+These estimates describe the tracker and the game's tempo, not who has the ball, and none of them looks at a target
+label. They are, however, measured on the provided game. **Whether that is compatible with the rule of 3 November is
+an open question**: we asked the organisers and, at the time of writing, have no written answer. We describe what
+the code does and do not claim the question is settled.
 
 ## 4. Possession rules
 
@@ -149,13 +172,27 @@ We want this to be read plainly, because parts of it predate the organisers' cla
   aggregate detail guided which components to work on (late boundaries, missing possessions). The records state that
   no parameter value was chosen by the public score. Candidate B's records show that public results influenced which
   of its versions to keep.
-- **Constants and the provided match.** Versions v1.0 to v1.6 were revised after reading aggregate logs from the
-  provided match. For example, the change cost went from 5 to 3, and the touch detector was redesigned twice, because
-  the logged counts were far from what synthetic matches gave. Those changes were tested on synthetic matches. The
-  constants were not re-estimated on external data afterwards.
+- **Constants and the provided match.** Between v1.0 and v1.6, all on 21–22 October, some constants and components
+  were revised after reading the model's **aggregate run log** on the provided match. That log holds counts,
+  percentages, durations and fitted constants, never a frame or a label. Each change was then tested on synthetic
+  matches only:
+
+  | Version | Change | What motivated it |
+  |---|---|---|
+  | v1.1 | Change cost λ from 5 to 4, and two bugs fixed | v1.0 decoded very few direct H↔A changes. Decided from the log of the first run, before anything was scored |
+  | v1.3 | λ from 4 to 3, and touches added as evidence | Every synthetic sweep preferred 3, and the log still showed few changes (185 possessions, 71 direct changes) |
+  | v1.4 | Touch detector redesigned: velocity change instead of acceleration | The log showed 70 touches in the whole match against ~1,500 on synthetic matches: the ATD's ball is smoothed |
+  | v1.5 | Touch scale chosen per match, and the ball-free model also used where control is unclear | The log still showed few touches; a synthetic bench with a smoothed ball reproduced the problem |
+  | v1.6 | Touch threshold measured on ground balls only | The log showed aerial balls inflating the threshold (12 m/s) |
+
+  The public window did not choose any of these values: the records state that no parameter was selected by the
+  public score. It did play a part before v1.2: its aggregate detail (boundaries late by more than 1 s, possessions
+  missing) pointed to the components to work on, and v1.3 was written after public evaluation no. 3 had been seen.
+  No rule or constant was written for specific frames, and no observation from the video was turned into a rule,
+  a constant or a label. The constants were not re-estimated on external data afterwards.
 
 The full record is in `prompts/confrontacion/` and has not been rewritten. A blind video review that we had planned was
-withdrawn without being carried out. **[TEAM]** Confirm that no part of it was done.
+withdrawn after the organisers' clarification of 3 November, before it was carried out.
 
 ## 7. Limitations
 
@@ -164,6 +201,9 @@ withdrawn without being carried out. **[TEAM]** Confirm that no part of it was d
 - **Fouls and offsides.** There is no whistle in the tracking, so these stoppages start late, by about 3 s on synthetic
   matches.
 - **Aerial balls.** The ATD projects them onto the ground. The speed gate limits the damage but does not remove it.
+- **Restarts hidden by the tracking.** Missing or smoothed ball observations can delay a restart or prevent it from
+  being confirmed, including the second-half kick-off. Our own restart detector (P2) stays off: its checks did not
+  show an improvement of the full model.
 - **Domain gap.** The ball-free model learned from corrected optical tracking of another league, with another
   definition of possession. We can only measure agreement with ball proximity on the provided game (88.5% and 86.9%).
 - **Team balance.** A model with no team preference cannot use one-sidedness specific to this match.
@@ -182,7 +222,7 @@ Requirements: Docker and the match data bundle. No GPU. Dependencies are pinned 
 ```bash
 git clone https://github.com/GTT-TalentArena/more-than-a-hack-2027.git
 cd more-than-a-hack-2027
-git checkout <FROZEN_TAG>
+git checkout final-a-dfl-rc1
 mkdir -p salidas
 export GTT_UID=$(id -u) GTT_GID=$(id -g) DATOS=/path/to/data   # the folder that contains tactical/
 docker compose build modelo
@@ -192,9 +232,11 @@ docker compose run --rm --entrypoint python modelo evaluation/validate_submissio
 sha256sum salidas/GTT.csv
 ```
 
-Expected at commit `14902d8`: SHA-256 `a090254caabcbbbc67a9569b9a5a9439aa3d643e5a41988af61e737dcc97fd97`, in 14–27 s on
-an AMD Ryzen 5 3600 with 31 GB of RAM, Python 3.11.17, NumPy 2.4.6 and pandas 3.0.6. Two runs from a clean clone gave
-the same file. **[TEAM]** Have another member repeat it at the frozen tag.
+Expected SHA-256: `a090254caabcbbbc67a9569b9a5a9439aa3d643e5a41988af61e737dcc97fd97`. It was obtained at commit
+`14902d8`, whose Python code is identical to the frozen tag's, in 14–27 s on an AMD Ryzen 5 3600 with 31 GB of RAM,
+Python 3.11.17, NumPy 2.4.6 and pandas 3.0.6, and two runs from a clean clone gave the same file. **[PENDING]**
+Independent reproduction at `final-a-dfl-rc1` by a member who did not write the model (Edu, #22): two runs, the
+validator and the hash.
 
 To regenerate the evidence, using DFL data only (it never mounts the match data):
 
