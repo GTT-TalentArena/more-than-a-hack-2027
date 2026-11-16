@@ -261,10 +261,10 @@ displayed and why the broadcast and tactical timelines differ. He did not use th
 create annotations, derive rules or constants, or tune the model. The broadcast is not synchronised with the tactical
 frames. The submitted model was frozen on 3 November and its code has not changed since.
 
-**LLMs.** The match data was processed locally. LLMs received documentation, code, synthetic data, open DFL data, and
-aggregate metrics, hashes and diagnostics computed on the provided match: counts, percentages, durations and fitted
-constants, as described in section 6. No member gave an LLM the video, tracking, homography, Smart Tagging, labels, a
-complete CSV or any other extract of the match.
+**LLMs.** The match data was processed locally. LLMs received documentation, code, synthetic data, open DFL data,
+aggregate metrics and hashes, plus error traces from development runs. The match-derived diagnostics shared were aggregate
+counts, percentages, durations and fitted constants, as described in section 6. No member gave an LLM the video, tracking,
+homography, Smart Tagging, labels, a complete CSV or any other extract of the match.
 
 **Open question.** The organisers have not yet answered in writing whether the per-match estimates of section 3 are
 compatible with the rule of 3 November. We do not claim that they are.
